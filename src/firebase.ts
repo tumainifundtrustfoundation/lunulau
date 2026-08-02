@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore,
+  getFirestore,
   setLogLevel,
   doc,
   getDoc,
@@ -49,37 +50,27 @@ try {
   // Ignore if unsupported
 }
 
-// Use initializeFirestore with a highly resilient fallback chain to handle sandboxed iframe restrictions and proxy limitations
+// Initialize Firestore with standard memory cache to ensure instant, reliable connection without 10-second long-polling probes
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
 const dbId = firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : undefined;
 
 let dbInstance: any;
 
 try {
-  // Try 1: Auto-detect long polling with memory cache (most reliable across browsers and iframe sandboxes)
   dbInstance = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
     localCache: memoryLocalCache()
   }, dbId);
 } catch (err1) {
-  console.warn("Auto-detect long-polling with memory cache init failed, trying persistent cache:", err1);
   try {
-    // Try 2: Force long-polling connection with persistent cache
-    dbInstance = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      })
-    }, dbId);
-  } catch (err2) {
-    console.warn("Long-polling init fallback to default initialization:", err2);
     dbInstance = initializeFirestore(app, {}, dbId);
+  } catch (err2) {
+    dbInstance = getFirestore(app, dbId);
   }
 }
 
 export const db = dbInstance;
 
-// Validate Connection to Firestore safely (Skill Requirement)
+// Validate Connection to Firestore safely
 async function testConnection() {
   try {
     await getDoc(doc(db, 'test', 'connection'));

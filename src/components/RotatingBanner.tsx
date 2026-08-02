@@ -235,7 +235,7 @@ export default function RotatingBanner({ onNavigate }: RotatingBannerProps) {
             </div>
 
             {/* Action button */}
-            <div className="bg-white hover:bg-slate-100 text-slate-950 font-black text-xs px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl shadow-lg flex items-center gap-1.5 uppercase tracking-wider group-hover:scale-105 active:scale-98 transition-all">
+            <div className="bg-white hover:bg-slate-100 text-slate-950 font-black text-xs px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl shadow-lg flex items-center gap-1.5 uppercase tracking-wider group-hover:scale-105 active:scale-95 transition-all">
               <span>{activeSlide.actionText}</span>
               <ChevronRight size={14} className="stroke-[3] group-hover:translate-x-0.5 transition-transform" />
             </div>
@@ -249,7 +249,7 @@ export default function RotatingBanner({ onNavigate }: RotatingBannerProps) {
       <div className="absolute right-4 top-4 hidden md:flex gap-1.5 z-20">
         <button 
           onClick={handlePrev}
-          className="w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
+          className="w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
           title="Nyuma"
         >
           <ChevronLeft size={16} className="stroke-[2.5]" />
@@ -264,7 +264,7 @@ export default function RotatingBanner({ onNavigate }: RotatingBannerProps) {
 
         <button 
           onClick={handleNext}
-          className="w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
+          className="w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
           title="Mbele"
         >
           <ChevronRight size={16} className="stroke-[2.5]" />

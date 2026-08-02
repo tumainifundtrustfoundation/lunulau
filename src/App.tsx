@@ -30,7 +30,8 @@ import {
   EyeOff,
   Zap,
   GraduationCap,
-  ArrowRight
+  ArrowRight,
+  Globe
 } from 'lucide-react';
 
 import { UserProfile, AppTheme } from './types';
@@ -1168,12 +1169,26 @@ export default function App() {
           </div>
 
           <div className="space-y-3.5">
-            <h4 className="font-display font-extrabold text-[10px] text-white uppercase tracking-widest mb-4">Mawasiliano yetu</h4>
-            <p className="text-[11px] leading-relaxed font-semibold">
-              Kama una maoni au unahitaji usaidizi wa haraka kujiunga na Premium, wasiliana nasi:
+            <h4 className="font-display font-extrabold text-[10px] text-white uppercase tracking-widest mb-4">Mshirika wa Hosting &amp; Domain</h4>
+            <p className="text-[11px] leading-relaxed font-semibold text-slate-300">
+              Je, unahitaji Website, Domain ya <span className="text-cyan-400 font-bold">.co.tz</span> au Web Hosting yenye kasi kubwa Tanzania? 
             </p>
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-850 rounded-xl p-2.5 w-fit">
-              <ShieldCheck size={16} className="text-cyan-400" />
+            <a 
+              href="https://my.wazohost.co.tz/aff.php?aff=64" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 bg-gradient-to-r from-cyan-950 via-slate-900 to-blue-950 hover:from-cyan-900 hover:to-blue-900 border border-cyan-500/30 hover:border-cyan-400 rounded-2xl p-3 text-white transition-all shadow-md hover:scale-[1.02] group cursor-pointer"
+            >
+              <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl group-hover:bg-cyan-500 group-hover:text-slate-950 transition-colors shrink-0">
+                <Globe size={18} />
+              </div>
+              <div className="space-y-0.5 overflow-hidden">
+                <p className="text-xs font-black text-cyan-300 group-hover:text-white transition-colors truncate">WazoHost Tanzania (.co.tz)</p>
+                <p className="text-[10px] text-slate-400 font-medium truncate">Nunua Domain na Hosting Hapa &rarr;</p>
+              </div>
+            </a>
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-850 rounded-xl p-2.5 w-fit text-[11px]">
+              <ShieldCheck size={15} className="text-emerald-400 shrink-0" />
               <span>Google Drive &amp; Firebase Secured</span>
             </div>
           </div>

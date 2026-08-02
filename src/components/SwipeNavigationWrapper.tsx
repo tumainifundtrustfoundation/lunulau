@@ -189,7 +189,7 @@ export default function SwipeNavigationWrapper({
                     triggerHapticFeedback();
                     onNavigate(v.id);
                   }}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all flex items-center gap-1 border ${
+                  className={`px-2 py-1 rounded-lg text-[10px] font-black transition-all flex items-center gap-1 border active:scale-95 ${
                     isActive
                       ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm shadow-cyan-500/30 scale-105'
                       : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'

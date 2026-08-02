@@ -726,6 +726,34 @@ export default function MatangazoView({ userProfile }: { userProfile: any }) {
             </div>
           </div>
 
+          {/* WazoHost Official Partner Card */}
+          <div className="bg-gradient-to-br from-sky-950 via-slate-900 to-indigo-950 border-2 border-sky-500/40 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden group">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <span className="bg-sky-500/20 text-sky-300 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-sky-500/30">
+                Official Hosting Partner
+              </span>
+              <Globe size={16} className="text-sky-400 group-hover:rotate-12 transition-transform" />
+            </div>
+
+            <h4 className="font-display font-black text-sm uppercase tracking-tight text-white group-hover:text-sky-300 transition-colors">
+              WazoHost Tanzania (.co.tz)
+            </h4>
+
+            <p className="text-slate-300 text-xs leading-relaxed mt-2 font-semibold">
+              Je, unataka kusajili Domain ya shule au biashara yako (<code className="text-cyan-300">.co.tz</code>, <code className="text-cyan-300">.tz</code>, <code className="text-cyan-300">.com</code>) na kupata Hosting yenye kasi ya juu Tanzania?
+            </p>
+
+            <a 
+              href="https://my.wazohost.co.tz/aff.php?aff=64" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="mt-4 w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-slate-950 font-black text-xs py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md group-hover:scale-[1.02]"
+            >
+              <span>Sajili Domain &amp; Hosting Hapa</span>
+              <ExternalLink size={14} />
+            </a>
+          </div>
+
           {/* AdSense Square Unit in Sidebar */}
           <div className="space-y-2">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Toleo la Udhamini</h4>

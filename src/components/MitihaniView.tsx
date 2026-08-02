@@ -1253,6 +1253,39 @@ export default function MitihaniView({
   const paperRequestKey = `${nectaWizardLevel}-${nectaWizardSubject}-${nectaWizardYear}`;
   const isPaperAlreadyRequested = requestedPapers.includes(paperRequestKey);
 
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+
+  const handleAdminAddPaperForWizard = () => {
+    const levelName = levelLabels[nectaWizardLevel] || nectaWizardLevel;
+    const subObj = (NECTA_SUBJECTS[nectaWizardLevel] || []).find(s => s.id === nectaWizardSubject);
+    const subName = subObj ? subObj.name : nectaWizardSubject;
+    
+    setEditingExam(null);
+    setExamTitle(`NECTA ${subName} (${levelName}) - ${nectaWizardYear}`);
+    setExamDescription(`Mtihani rasmi wa Kitaifa wa NECTA wa somo la ${subName} kwa mwaka ${nectaWizardYear}. Unapatikana kupitia Google Drive PDF link.`);
+    setExamSubject(subName);
+    setExamYear(Number(nectaWizardYear) || new Date().getFullYear());
+    
+    let lvlStr = 'O-Level';
+    let classLvlStr = 'Form 4';
+    if (nectaWizardLevel === 'std4') { lvlStr = 'Primary'; classLvlStr = 'Standard 4'; }
+    else if (nectaWizardLevel === 'std7') { lvlStr = 'Primary'; classLvlStr = 'Standard 7'; }
+    else if (nectaWizardLevel === 'f2') { lvlStr = 'O-Level'; classLvlStr = 'Form 2'; }
+    else if (nectaWizardLevel === 'f4') { lvlStr = 'O-Level'; classLvlStr = 'Form 4'; }
+    else if (nectaWizardLevel === 'f6') { lvlStr = 'A-Level'; classLvlStr = 'Form 6'; }
+
+    setExamLevel(lvlStr);
+    setExamClassLevel(classLvlStr);
+    setExamDriveUrl('');
+    setExamFileId(`necta-${nectaWizardLevel}-${nectaWizardSubject}-${nectaWizardYear}`);
+    setExamCategory('Past Papers');
+    setExamTagsInput(`NECTA, ${nectaWizardLevel}, ${nectaWizardSubject}, ${subName}, ${nectaWizardYear}, ${levelName}`);
+    setExamPaperNo('Paper 1');
+    setExamIsForSale(false);
+    setExamPrice(0);
+    setIsAddExamModalOpen(true);
+  };
+
   const handleRequestPaper = () => {
     setIsRequesting(true);
     setTimeout(() => {
@@ -1833,6 +1866,35 @@ export default function MitihaniView({
                     {isRequesting ? 'Inatuma...' : 'Omba Uhakiki na Majibu'}
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Admin Direct Google Drive Link Management Bar */}
+            {isAdmin && (
+              <div className="border-t border-cyan-500/30 pt-4 mt-4 bg-cyan-950/60 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 rounded-b-3xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs text-cyan-200 font-bold">
+                  <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                  <span>Msimamizi (Admin): {matchingDoc ? 'Mtihani huu una Google Drive Link iliyohifadhiwa.' : 'Bado hujaweka Google Drive Link ya mtihani huu.'}</span>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                  {matchingDoc ? (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(matchingDoc)}
+                      className="flex-1 sm:flex-none bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <Edit size={14} /> Hariri / Badilisha Drive Link
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAdminAddPaperForWizard}
+                      className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                      <Plus size={14} /> Weka Link ya Google Drive (Admin)
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -2479,15 +2541,28 @@ export default function MitihaniView({
                 </div>
 
                 {/* Google Drive PDF URL */}
-                <div className="md:col-span-2 space-y-1">
+                <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Google Drive au Link ya PDF (URL) *</label>
+                  
+                  <div className="bg-sky-50 border border-sky-200 rounded-2xl p-3 text-xs space-y-1.5 text-sky-900 font-medium">
+                    <p className="font-extrabold text-[11px] text-sky-950 flex items-center gap-1.5">
+                      <HelpCircle size={14} className="text-sky-600 shrink-0" /> Jinsi ya Kuweka Link ya Google Drive (Admin Guide):
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-sky-800 leading-relaxed">
+                      <li>Fungua Google Drive yako (<code>drive.google.com</code>) kisha upakie mtihani wa PDF.</li>
+                      <li>Bofya kulia (Right Click) kwenye mtihani &rarr; Chagua <strong>Share (Shiriki)</strong>.</li>
+                      <li>Badilisha ruhusa (General Access) iwe <strong>'Anyone with the link' (Kila mtu mwenye kiungo anaweza kutazama)</strong>.</li>
+                      <li>Bofya <strong>Copy link (Nakili kiungo)</strong> kisha ubandike (paste) hapa chini.</li>
+                    </ol>
+                  </div>
+
                   <input 
                     type="url" 
                     required
                     value={examDriveUrl}
                     onChange={(e) => setExamDriveUrl(e.target.value)}
-                    placeholder="https://drive.google.com/file/d/.../view"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-800"
+                    placeholder="https://drive.google.com/file/d/1ABC.../view?usp=sharing"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 font-mono placeholder-slate-400"
                   />
                 </div>
 

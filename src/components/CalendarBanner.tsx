@@ -117,18 +117,20 @@ export default function CalendarBanner({ userProfile, onNavigate }: CalendarBann
 
   // Combine NECTA exams with upcoming user-created events for the marquee
   const getScrollingEvents = () => {
-    const list = NECTA_EXAMS.map(exam => ({
-      id: exam.id,
-      title: `🚨 MTIIHANI WA TAIFA: ${exam.name}`,
-      rawDate: exam.date,
-      type: 'necta_exam',
-      badge: 'NECTA National',
-      desc: exam.desc,
-      color: 'bg-rose-600 text-white'
-    }));
+    const todayStr = new Date().toISOString().split('T')[0];
+    const list = NECTA_EXAMS
+      .filter(exam => exam.date >= todayStr)
+      .map(exam => ({
+        id: exam.id,
+        title: `🚨 MTIIHANI WA TAIFA: ${exam.name}`,
+        rawDate: exam.date,
+        type: 'necta_exam',
+        badge: 'NECTA National',
+        desc: exam.desc,
+        color: 'bg-rose-600 text-white'
+      }));
 
     // Add user study events (not completed yet, from today onwards)
-    const todayStr = new Date().toISOString().split('T')[0];
     const upcomingUserEvents = events
       .filter(e => !e.isCompleted && e.date >= todayStr)
       .map(e => ({

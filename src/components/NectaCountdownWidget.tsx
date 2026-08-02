@@ -36,11 +36,11 @@ const PRESET_EXAMS: PresetExam[] = [
     defaultDate: '2026-11-02'
   },
   {
-    id: 'acsee-2026',
+    id: 'acsee-2027',
     nameSw: 'NECTA ACSEE (Form 6)',
     nameEn: 'NECTA ACSEE (Form 6)',
     level: 'Form 6',
-    defaultDate: '2026-05-04'
+    defaultDate: '2027-05-03'
   },
   {
     id: 'ftna-2026',

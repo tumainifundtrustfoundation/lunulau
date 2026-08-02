@@ -197,7 +197,7 @@ export default function Navbar({
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all duration-150 tracking-wide ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all duration-150 tracking-wide active:scale-95 ${
                     isActive
                       ? 'bg-cyan-500 text-slate-950 font-black'
                       : item.highlight
@@ -215,7 +215,7 @@ export default function Navbar({
             <div className="relative">
               <button 
                 onClick={() => setExtraToolsOpen(!extraToolsOpen)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all duration-150 tracking-wide text-slate-300 hover:bg-slate-900 hover:text-white`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase transition-all duration-150 tracking-wide text-slate-300 hover:bg-slate-900 hover:text-white active:scale-95`}
               >
                 <Compass size={14} />
                 <span>Ziada</span>
@@ -230,7 +230,7 @@ export default function Navbar({
                       <button
                         key={tool.id}
                         onClick={() => handleNavClick(tool.id)}
-                        className="w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2 active:scale-95 transition-transform"
                       >
                         <ToolIcon size={14} className="text-cyan-400" />
                         <span>{tool.label}</span>
@@ -248,7 +248,7 @@ export default function Navbar({
             <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1">
               <button
                 onClick={() => onChangeLanguage('sw')}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase transition-all active:scale-95 ${
                   language === 'sw'
                     ? 'bg-cyan-500 text-slate-950 font-black'
                     : 'text-slate-400 hover:text-white'
@@ -259,7 +259,7 @@ export default function Navbar({
               </button>
               <button
                 onClick={() => onChangeLanguage('en')}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase transition-all active:scale-95 ${
                   language === 'en'
                     ? 'bg-cyan-500 text-slate-950 font-black'
                     : 'text-slate-400 hover:text-white'
@@ -274,7 +274,7 @@ export default function Navbar({
             <div className="relative">
               <button
                 onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-                className="p-2 text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold uppercase"
+                className="p-2 text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl flex items-center gap-1.5 transition-all text-xs font-bold uppercase active:scale-95"
                 title="Badili Mada (Themes)"
               >
                 <Palette className="w-4 h-4 text-cyan-400" />
@@ -669,10 +669,11 @@ export default function Navbar({
                       <motion.button
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
+                        whileTap={{ scale: 0.95 }}
                         transition={{ delay: index * 0.03, type: 'spring', stiffness: 200 }}
                         key={item.id}
                         onClick={() => handleNavClick(item.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all active:scale-95 ${
                           isActive
                             ? 'bg-gradient-to-r from-cyan-500/20 to-cyan-500/5 text-cyan-400 border border-cyan-500/20 font-extrabold'
                             : 'text-slate-300 hover:bg-slate-900 hover:text-white border border-transparent'
@@ -698,10 +699,11 @@ export default function Navbar({
                       <motion.button
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
+                        whileTap={{ scale: 0.95 }}
                         transition={{ delay: (primaryMenuItems.length + index) * 0.03, type: 'spring', stiffness: 200 }}
                         key={tool.id}
                         onClick={() => handleNavClick(tool.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all active:scale-95 ${
                           isActive
                             ? 'bg-gradient-to-r from-purple-500/20 to-purple-500/5 text-purple-300 border border-purple-500/20 font-extrabold'
                             : 'text-slate-300 hover:bg-slate-900 hover:text-white border border-transparent'

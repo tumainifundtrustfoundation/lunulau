@@ -210,8 +210,16 @@ export default function AjiraView() {
     );
   });
 
-  // Filter and search logic for live google jobs
+  // Filter and search logic for live google jobs (excluding expired ones)
+  const now = new Date();
   const filteredJobs = jobs.filter(job => {
+    if ((job as any).deadline) {
+      const deadlineDate = new Date((job as any).deadline);
+      if (!isNaN(deadlineDate.getTime()) && deadlineDate < now) {
+        return false; // Exclude outdated/expired job posting
+      }
+    }
+
     const matchesSearch = 
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.school.toLowerCase().includes(searchQuery.toLowerCase()) ||

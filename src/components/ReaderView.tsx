@@ -1713,6 +1713,81 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
         </div>
       )}
 
+      {/* Print-Specific Dedicated Layout for Student Notes */}
+      <div className="hidden print:block print-only-container p-6 bg-white text-slate-900 font-sans">
+        {/* Printable Header with Branding */}
+        <div className="border-b-2 border-slate-900 pb-4 mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-black text-slate-900 tracking-tight uppercase">
+              Lupanulla Elimu Hub
+            </h1>
+            <p className="text-xs font-bold text-cyan-700 tracking-wider uppercase mt-0.5">
+              Kitovu cha Elimu ya Kidijitali Tanzania &bull; www.lupanulla.co.tz
+            </p>
+          </div>
+          <div className="text-right text-[10px] text-slate-500 font-bold uppercase">
+            <p>Tarehe ya Kuchapa: {new Date().toLocaleDateString('sw-TZ')}</p>
+            <p>Hati Rasmi ya Kujisomea</p>
+          </div>
+        </div>
+
+        {/* Document Title & Meta Box */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+          <h2 className="text-lg font-extrabold text-slate-900 mb-2">{doc?.title}</h2>
+          <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 font-medium">
+            <p><strong className="text-slate-900">Somo / Mada:</strong> {doc?.category || 'General'}</p>
+            <p><strong className="text-slate-900">Aina ya Hati:</strong> {doc?.type || 'Notisi za Somo'}</p>
+            <p><strong className="text-slate-900">Mwaka:</strong> {doc?.year || '2026'}</p>
+            <p><strong className="text-slate-900">Mchapishaji:</strong> {doc?.uploadedByName || 'Lupanulla Academic Team'}</p>
+          </div>
+          {doc?.description && (
+            <div className="mt-3 pt-2 border-t border-slate-200 text-xs italic text-slate-700">
+              <strong>Muhtasari:</strong> {doc.description}
+            </div>
+          )}
+        </div>
+
+        {/* Main Notes Content */}
+        <div className="space-y-4 mb-8">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1">
+            Muhtasari na Notisi za Somo (Smart Notes)
+          </h2>
+          {(smartNotes || doc?.description || 'Notisi hazikupatikana.').split('\n\n').map((paragraph, idx) => (
+            <p key={idx} className="text-sm leading-relaxed text-slate-800 text-justify">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+
+        {/* Student Highlights & Annotations (If available) */}
+        {highlights.length > 0 && (
+          <div className="mb-8 page-break-inside-avoid">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-1 mb-3">
+              Highlight na Dokezo za Mwanafunzi ({highlights.length})
+            </h2>
+            <div className="space-y-3">
+              {highlights.map((h, i) => (
+                <div key={i} className="highlight-item bg-amber-50/80 border-l-4 border-amber-500 p-3 text-xs rounded-r-md">
+                  <p className="font-semibold italic text-slate-900">"{h.text}"</p>
+                  {h.note && (
+                    <p className="mt-1 font-bold text-cyan-800">Dokezo langu: {h.note}</p>
+                  )}
+                  <p className="mt-1 text-[9px] text-slate-500 font-mono">
+                    Hifadhi: {new Date(h.createdAt).toLocaleDateString('sw-TZ')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Print Footer */}
+        <div className="border-t border-slate-300 pt-4 mt-8 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+          <p>&copy; {new Date().getFullYear()} Lupanulla Elimu Hub. Haki zote zimehifadhiwa.</p>
+          <p>www.lupanulla.co.tz</p>
+        </div>
+      </div>
+
     </div>
   );
 }

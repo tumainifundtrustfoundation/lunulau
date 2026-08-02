@@ -54,27 +54,11 @@ import {
   ChevronRight, 
   CheckCircle2 
 } from 'lucide-react';
+import { academicData, Topic, ClassLevel } from './MasomoAcademicData';
 
 interface MasomoViewProps {
   onNavigate: (view: string, id?: string) => void;
   userProfile: any;
-}
-
-interface Topic {
-  title: string;
-  subtopics: string[];
-  content: string;
-  notesSample: string;
-  isDownloadable?: boolean;
-}
-
-interface ClassLevel {
-  id: string;
-  name: string;
-  subjects: {
-    name: string;
-    topics: Topic[];
-  }[];
 }
 
 export interface SavedBookmark {
@@ -351,8 +335,8 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
     EGM: ['Economics', 'Geography', 'Advanced Mathematics', 'General Studies (GS)']
   };
 
-  // Tanzanian Academic Structure
-  const academicData: ClassLevel[] = [
+  // Tanzanian Academic Structure (Data loaded from MasomoAcademicData.ts)
+  const _unusedAcademicData: ClassLevel[] = [
     {
       id: 'msingi',
       name: 'Elimu ya Msingi (TIE Curriculum - Darasa 5-7)',
@@ -1393,13 +1377,13 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 <motion.button
                   key={tab.id}
                   whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     setActiveLevelTab(tab.id as any);
                     setOpenSubject(null);
                     setSelectedTopic(null);
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${
                     activeLevelTab === tab.id 
                       ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/20' 
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
@@ -2665,8 +2649,9 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {(() => {
-                    const currentLevelData = academicData.find(l => l.id === activeLevelTab);
-                    const currentSubjectData = currentLevelData?.subjects.find(s => s.name === openSubject);
+                    const parentLevel = academicData.find(l => l.subjects.some(s => s.topics.some(t => t.title === selectedTopic.title)));
+                    const currentSubjectData = parentLevel?.subjects.find(s => s.topics.some(t => t.title === selectedTopic.title)) || 
+                                               parentLevel?.subjects.find(s => s.name === openSubject);
                     const currentSubjectTopics = currentSubjectData?.topics || [];
                     const related = currentSubjectTopics
                       .filter(t => t.title !== selectedTopic.title)

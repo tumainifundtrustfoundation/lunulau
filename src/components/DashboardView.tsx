@@ -313,13 +313,13 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
           <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-2">
             <button 
               onClick={() => onNavigate('masomo')}
-              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm px-6 py-3 rounded-full transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-1.5"
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm px-6 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-cyan-500/25 flex items-center gap-1.5"
             >
               <Compass size={16} /> Vinjari Notisi
             </button>
             <button 
               onClick={() => onNavigate('fisimaji')}
-              className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm px-6 py-3 rounded-full transition-all border border-slate-700/60"
+              className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm px-6 py-3 rounded-full transition-all active:scale-95 border border-slate-700/60"
             >
               Uliza Lupanulla AI
             </button>
@@ -327,7 +327,7 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
             {/* Exam Mode Toggle Button */}
             <button
               onClick={toggleExamMode}
-              className={`px-5 py-3 rounded-full font-black text-xs transition-all flex items-center gap-2 border shadow-md ${
+              className={`px-5 py-3 rounded-full font-black text-xs transition-all flex items-center gap-2 border shadow-md active:scale-95 ${
                 examMode
                   ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-amber-400/20 ring-2 ring-amber-400/50'
                   : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-500/30'
