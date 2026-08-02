@@ -82,6 +82,8 @@ import NectaProgressView from './components/NectaProgressView';
 import RotatingBanner from './components/RotatingBanner';
 import WelcomeNotification from './components/WelcomeNotification';
 import DownloadProgressToast from './components/DownloadProgressToast';
+import SwipeNavigationWrapper from './components/SwipeNavigationWrapper';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Shimmer Loading Skeleton Fallback for Smooth Cumulative Layout Shift (CLS) Mitigation
 const ViewLoadingSkeleton = () => (
@@ -130,6 +132,8 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState<boolean>(true);
 
   const [theme, setTheme] = useState<AppTheme>((localStorage.getItem('lupanulla-theme') as AppTheme) || 'theme-tanzania-forest');
+  const [isThemeTransitioning, setIsThemeTransitioning] = useState<boolean>(false);
+  const isFirstRender = React.useRef(true);
   const [language, setLanguage] = useState<'sw' | 'en'>((localStorage.getItem('lupanulla-lang') as 'sw' | 'en') || 'sw');
 
   // Synchronize language with localStorage
@@ -152,12 +156,24 @@ export default function App() {
     };
   }, []);
 
-  // Synchronize theme with localStorage and DOM body
+  // Synchronize theme with localStorage and DOM body with smooth global fade-through transition
   useEffect(() => {
     localStorage.setItem('lupanulla-theme', theme);
     const body = document.body;
     body.classList.remove('theme-tanzania-forest', 'theme-night-mode', 'theme-high-contrast');
     body.classList.add(theme);
+
+    if (!isFirstRender.current) {
+      body.classList.add('theme-transitioning');
+      setIsThemeTransitioning(true);
+      const timer = setTimeout(() => {
+        body.classList.remove('theme-transitioning');
+        setIsThemeTransitioning(false);
+      }, 450);
+      return () => clearTimeout(timer);
+    } else {
+      isFirstRender.current = false;
+    }
   }, [theme]);
 
   // Routing State - defaults to 'portal' (the landing page)
@@ -822,6 +838,14 @@ export default function App() {
   return (
     <div id="lupanulla-app" className={`min-h-screen flex flex-col font-sans selection:bg-cyan-100 selection:text-cyan-950 ${theme}`}>
       
+      {/* Global Theme Transition Fade-Through Overlay */}
+      {isThemeTransitioning && (
+        <div 
+          aria-hidden="true" 
+          className="fixed inset-0 pointer-events-none z-[99999] theme-transition-overlay backdrop-blur-[0.5px] bg-slate-900/10"
+        />
+      )}
+
       {/* Email Link Verifying Overlay */}
       {emailLinkVerifying && (
         <div id="email-link-verifying-overlay" className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[200] flex flex-col items-center justify-center p-6 text-center text-white animate-fade-in">
@@ -933,178 +957,180 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <Suspense fallback={<ViewLoadingSkeleton />}>
-            {user && !userProfile?.isSuspended && ['portal', 'dashboard', 'masomo', 'mitihani', 'fisimaji', 'duka', 'library', 'forum'].includes(activeView) && (
-              <RotatingBanner onNavigate={navigateTo} />
-            )}
+          <SwipeNavigationWrapper activeView={activeView} onNavigate={navigateTo}>
+            <Suspense fallback={<ViewLoadingSkeleton />}>
+              {user && !userProfile?.isSuspended && ['portal', 'dashboard', 'masomo', 'mitihani', 'fisimaji', 'duka', 'library', 'forum'].includes(activeView) && (
+                <RotatingBanner onNavigate={navigateTo} />
+              )}
 
-            {activeView === 'portal' && (
-              <PortalView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'portal' && (
+                <PortalView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'dashboard' && (
-              <DashboardView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-                language={language}
-                onAwardPoints={handleAwardPoints}
-              />
-            )}
+              {activeView === 'dashboard' && (
+                <DashboardView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                  language={language}
+                  onAwardPoints={handleAwardPoints}
+                />
+              )}
 
-            {activeView === 'masomo' && (
-              <MasomoView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'masomo' && (
+                <MasomoView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'mitihani' && (
-              <MitihaniView 
-                onNavigate={navigateTo} 
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'mitihani' && (
+                <MitihaniView 
+                  onNavigate={navigateTo} 
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'duka' && (
-              <DukaView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'duka' && (
+                <DukaView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'library' && (
-              <LibraryView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'library' && (
+                <LibraryView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'fisimaji' && (
-              <FisiMajiView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'fisimaji' && (
+                <FisiMajiView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'videos' && (
-              <VideosView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'videos' && (
+                <VideosView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'calculator' && (
-              <CalculatorView />
-            )}
+              {activeView === 'calculator' && (
+                <CalculatorView />
+              )}
 
-            {activeView === 'combinations' && (
-              <CombinationsView />
-            )}
+              {activeView === 'combinations' && (
+                <CombinationsView />
+              )}
 
-            {activeView === 'kamusi' && (
-              <KamusiView />
-            )}
+              {activeView === 'kamusi' && (
+                <KamusiView />
+              )}
 
-            {activeView === 'mikoa' && (
-              <MikoaView />
-            )}
+              {activeView === 'mikoa' && (
+                <MikoaView />
+              )}
 
-            {activeView === 'ajira' && (
-              <AjiraView />
-            )}
+              {activeView === 'ajira' && (
+                <AjiraView />
+              )}
 
-            {activeView === 'mwalimu-hub' && (
-              <MwalimuHubView />
-            )}
+              {activeView === 'mwalimu-hub' && (
+                <MwalimuHubView />
+              )}
 
-            {activeView === 'matangazo' && (
-              <MatangazoView 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'matangazo' && (
+                <MatangazoView 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'workspace' && (
-              <WorkspaceView theme={theme} onChangeTheme={setTheme} />
-            )}
+              {activeView === 'workspace' && (
+                <WorkspaceView theme={theme} onChangeTheme={setTheme} />
+              )}
 
-            {activeView === 'upload' && (
-              <UploadView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'upload' && (
+                <UploadView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'reader' && activeDocumentId && (
-              <ReaderView 
-                documentId={activeDocumentId} 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'reader' && activeDocumentId && (
+                <ReaderView 
+                  documentId={activeDocumentId} 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'premium' && (
-              <PremiumView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-                onProfileUpdate={() => refreshProfile(user?.uid || '')}
-              />
-            )}
+              {activeView === 'premium' && (
+                <PremiumView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                  onProfileUpdate={() => refreshProfile(user?.uid || '')}
+                />
+              )}
 
-            {activeView === 'resources' && (
-              <ResourcesView 
-                language={language}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'resources' && (
+                <ResourcesView 
+                  language={language}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'necta-progress' && (
-              <NectaProgressView 
-                userProfile={userProfile}
-                onNavigate={navigateTo}
-              />
-            )}
+              {activeView === 'necta-progress' && (
+                <NectaProgressView 
+                  userProfile={userProfile}
+                  onNavigate={navigateTo}
+                />
+              )}
 
-            {activeView === 'forum' && (
-              <ForumView 
-                language={language}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'forum' && (
+                <ForumView 
+                  language={language}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'live' && (
-              <LiveClassesView 
-                language={language}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'live' && (
+                <LiveClassesView 
+                  language={language}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'certificates' && (
-              <CertificatesView 
-                language={language}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'certificates' && (
+                <CertificatesView 
+                  language={language}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'leaderboard' && (
-              <LeaderboardView 
-                language={language}
-                userProfile={userProfile} 
-              />
-            )}
+              {activeView === 'leaderboard' && (
+                <LeaderboardView 
+                  language={language}
+                  userProfile={userProfile} 
+                />
+              )}
 
-            {activeView === 'admin' && (
-              <AdminView 
-                onNavigate={navigateTo} 
-                userProfile={userProfile} 
-                initialTab={activeAdminTab || 'approvals'}
-              />
-            )}
-          </Suspense>
+              {activeView === 'admin' && (
+                <AdminView 
+                  onNavigate={navigateTo} 
+                  userProfile={userProfile} 
+                  initialTab={activeAdminTab || 'approvals'}
+                />
+              )}
+            </Suspense>
+          </SwipeNavigationWrapper>
         )}
 
       </main>
@@ -2276,6 +2302,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Progressive Web App (PWA) Install Banner & iOS Guidance */}
+      <PWAInstallPrompt />
 
     </div>
   );

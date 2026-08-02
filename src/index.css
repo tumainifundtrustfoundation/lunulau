@@ -9,14 +9,98 @@
 /* Custom App Themes configuration */
 
 :root, .theme-tanzania-forest {
-  --color-bg: #f5fcf8; /* Calming forest-tinted pale green */
-  --color-card: #ffffff;
-  --color-text: #0b2516; /* Deep dark forest pine text */
-  --color-text-muted: #3d5e4a; /* Medium foliage green-gray */
-  --color-primary: #10b981; /* Emerald green (Tanzania Forest core teal/green) */
-  --color-primary-hover: #059669; /* Slightly deeper emerald green */
-  --color-primary-light: #ecfdf5; /* Emerald 50 soft background */
-  --color-border: #e2f2e7; /* Light mint/forest-border lines */
+  --color-bg: #FAF6EE; /* Warm, rich Ivory background */
+  --color-card: #FFFDF9; /* Soft Ivory card surface */
+  --color-text: #1c1917; /* Deep warm stone text */
+  --color-text-muted: #57534e; /* Medium stone gray */
+  --color-primary: #10b981; /* Emerald green */
+  --color-primary-hover: #059669; /* Deep emerald */
+  --color-primary-light: #F4EFE6; /* Soft ivory light accent */
+  --color-border: #E8E3D7; /* Warm ivory border lines */
+}
+
+body {
+  background-color: #FAF6EE;
+  color: #1c1917;
+  transition: background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Theme Fade-Through Smooth Transition */
+@keyframes themeFadeThrough {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.theme-transition-overlay {
+  animation: themeFadeThrough 450ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+body.theme-transitioning,
+body.theme-transitioning *,
+#lupanulla-app {
+  transition: background-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              fill 450ms cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 450ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Smooth Theme Cross-Fade Transition for containers & theme targets */
+.theme-tanzania-forest, 
+.theme-night-mode, 
+.theme-high-contrast,
+.theme-tanzania-forest .bg-white,
+.theme-night-mode .bg-white,
+.theme-high-contrast .bg-white,
+.theme-tanzania-forest input,
+.theme-night-mode input,
+.theme-high-contrast input,
+.theme-tanzania-forest select,
+.theme-night-mode select,
+.theme-high-contrast select,
+.theme-tanzania-forest textarea,
+.theme-night-mode textarea,
+.theme-high-contrast textarea,
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-white,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-white,
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-50,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-50,
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-gray-50,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-gray-50,
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-100,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-100 {
+  transition: background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transform pure white backgrounds into warm, comfortable Ivory across all light mode views */
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-white,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-white {
+  background-color: #FFFDF9 !important;
+}
+
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-50,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-50 {
+  background-color: #FAF6EE !important;
+}
+
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-gray-50,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-gray-50 {
+  background-color: #F5F0E6 !important;
+}
+
+:root:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-100,
+body:not(.theme-night-mode):not(.theme-high-contrast) .bg-slate-100 {
+  background-color: #EFEBE0 !important;
 }
 
 .theme-night-mode {

@@ -1281,9 +1281,9 @@ export default function MitihaniView({
               <TrendingUp size={12} className="text-amber-400" />
               Scribd-Drive File Sharing Integrated
             </span>
-            <h1 className="text-3xl sm:text-4xl font-display font-extrabold uppercase leading-none">Past Papers &amp; Mitihani</h1>
+            <h1 className="text-3xl sm:text-4xl font-display font-extrabold uppercase leading-none">Past Papers &amp; Mitihani (1994 - 2025)</h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Vinjari maktaba yetu kubwa ya past papers za NECTA, majaribio ya Mock ya mikoa na wilaya, na mitihani ya kawaida ya muhula. Soma mtandaoni na pakua bure!
+              Vinjari maktaba yetu kubwa ya Past Papers za NECTA (1994 - 2025), majaribio ya Mock ya mikoa na wilaya, na mitihani ya kawaida ya muhula. Soma mtandaoni na pakua bure!
             </p>
           </div>
           
@@ -1981,6 +1981,27 @@ export default function MitihaniView({
             </select>
           </div>
 
+        </div>
+
+        {/* Quick Year Selection Chips (1994 - 2025) */}
+        <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <span className="text-[10px] font-black uppercase text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+            <Calendar size={12} className="text-cyan-600" />
+            Vinjari Mwaka:
+          </span>
+          {['', '2025', '2024', '2023', '2022', '2020', '2018', '2015', '2010', '2005', '2000', '1995', '1994'].map(yr => (
+            <button
+              key={yr || 'all'}
+              onClick={() => setSelectedYear(yr)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all shrink-0 border ${
+                selectedYear === yr
+                  ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {yr === '' ? 'Miaka Yote (1994-2025)' : yr}
+            </button>
+          ))}
         </div>
 
       </div>

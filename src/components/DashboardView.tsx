@@ -22,11 +22,16 @@ import {
   TrendingUp,
   Clock,
   Bookmark,
-  Trash2
+  Trash2,
+  Target,
+  EyeOff,
+  MessageSquare
 } from 'lucide-react';
 import { fetchDocuments, fetchUserBookmarks, toggleBookmark } from '../firebase';
 import { DocumentMetadata, UserBookmark } from '../types';
 import FocusTimer from './FocusTimer';
+import NectaCountdownWidget from './NectaCountdownWidget';
+import AchievementsModule from './AchievementsModule';
 import CalendarBanner from './CalendarBanner';
 import {
   ResponsiveContainer,
@@ -87,6 +92,19 @@ export default function DashboardView({ onNavigate, userProfile, language = 'sw'
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(true);
   const [activeLeaderboard, setActiveLeaderboard] = useState<'darasa' | 'mkoa'>('darasa');
+  
+  // Exam Mode State (Hali ya Mtihani - Hides Forum & Leaderboard, Focuses on Mitihani & Countdown)
+  const [examMode, setExamMode] = useState<boolean>(() => {
+    return localStorage.getItem('necta_exam_mode') === 'true';
+  });
+
+  const toggleExamMode = () => {
+    setExamMode(prev => {
+      const next = !prev;
+      localStorage.setItem('necta_exam_mode', String(next));
+      return next;
+    });
+  };
 
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartFilter, setChartFilter] = useState<'all' | 'minutes' | 'xp'>('all');
@@ -305,6 +323,20 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
             >
               Uliza Lupanulla AI
             </button>
+
+            {/* Exam Mode Toggle Button */}
+            <button
+              onClick={toggleExamMode}
+              className={`px-5 py-3 rounded-full font-black text-xs transition-all flex items-center gap-2 border shadow-md ${
+                examMode
+                  ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-amber-400/20 ring-2 ring-amber-400/50'
+                  : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-amber-500/30'
+              }`}
+              title={examMode ? 'Zima Hali ya Mtihani (Disable Exam Mode)' : 'Washa Hali ya Mtihani (Enable Exam Mode)'}
+            >
+              <Target size={16} className={examMode ? 'text-slate-950 animate-pulse' : 'text-amber-400'} />
+              <span>{examMode ? 'Hali ya Mtihani: IMEWASHA 🎯' : 'Hali ya Mtihani (Exam Mode)'}</span>
+            </button>
           </div>
         </div>
 
@@ -339,6 +371,45 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
           </div>
         </div>
       </section>
+
+      {/* ── Active Exam Focus Mode Banner ── */}
+      {examMode && (
+        <section className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 text-slate-950 rounded-3xl p-5 sm:p-6 shadow-xl border border-amber-400/50 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center shrink-0 shadow-lg">
+              <Target size={24} className="animate-pulse" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-slate-950/20 text-slate-950 px-2.5 py-0.5 rounded-full mb-1">
+                <Zap size={10} /> HALI YA MTIHANI IPO WAZI (EXAM FOCUS MODE ACTIVE)
+              </div>
+              <h3 className="font-display font-extrabold text-base sm:text-lg text-slate-950 uppercase leading-snug">
+                Mawazo Yote Kwenye Mitihani Na Past Papers (1994 - 2025)
+              </h3>
+              <p className="text-slate-900 text-xs font-semibold leading-relaxed max-w-xl">
+                Bodi ya Washindi (Leaderboard) na Jukwaa la Jamii (Forum) zimefichwa kwa muda ili kuzuia usumbufu. Focus 100% kwenye mazoezi ya mitihani na NECTA Countdown!
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onNavigate('mitihani')}
+              className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 font-extrabold text-xs transition-all shadow-md flex items-center gap-1.5"
+            >
+              <BookOpen size={15} />
+              Fungua Mitihani Sasa &rarr;
+            </button>
+            <button
+              onClick={toggleExamMode}
+              className="px-3 py-2.5 rounded-xl bg-amber-400/40 hover:bg-amber-400/60 text-slate-950 font-bold text-xs transition-all border border-slate-950/20"
+              title="Zima Hali ya Mtihani"
+            >
+              Acha Exam Mode
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ── Interactive Date & Calendar Planner Banner ── */}
       <CalendarBanner userProfile={userProfile} onNavigate={onNavigate} />
@@ -608,6 +679,53 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
         
         {/* Main Left Content Column: Active courses & Fasihi section */}
         <div className="lg:col-span-2 space-y-8">
+
+          {/* Exam Mode Focused Spotlight Card for Mitihani & Past Papers */}
+          {examMode && (
+            <div className="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-950 text-white rounded-3xl p-6 shadow-xl border border-cyan-500/30 space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+                    <FileText size={20} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-cyan-400 tracking-wider">Mkusanyiko Mkuu wa Past Papers</span>
+                    <h3 className="font-display font-extrabold text-base sm:text-lg text-white uppercase">
+                      Mitihani ya Kitaifa NECTA (1994 - 2025)
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onNavigate('mitihani')}
+                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all shadow-md flex items-center gap-1 shrink-0 font-bold"
+                >
+                  <BookOpen size={14} /> Vinjari Zote &rarr;
+                </button>
+              </div>
+
+              <p className="text-slate-300 text-xs font-medium leading-relaxed">
+                Soma na pakua mitihani halisi ya miaka iliyopita ya Darasa la 4, Darasa la 7 (PSLE), Form 2 (FTNA), Form 4 (CSEE), na Form 6 (ACSEE). Pia majaribio ya kanda (Mock Exams) na Marking Schemes rasmi.
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                {[
+                  { title: 'Form 4 (CSEE)', sub: '1994 - 2025' },
+                  { title: 'Form 6 (ACSEE)', sub: '1994 - 2025' },
+                  { title: 'Form 2 (FTNA)', sub: '2010 - 2025' },
+                  { title: 'Darasa la 7 (PSLE)', sub: '2005 - 2025' }
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => onNavigate('mitihani')}
+                    className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 hover:border-cyan-400 cursor-pointer transition-all space-y-1 group hover:bg-slate-800"
+                  >
+                    <span className="text-[9px] font-black text-cyan-400 uppercase tracking-wider block">{item.sub}</span>
+                    <h4 className="font-bold text-xs text-white group-hover:text-cyan-300 transition-colors">{item.title}</h4>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Active Study Progress */}
           <div className="space-y-4">
@@ -677,14 +795,29 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
 
         </div>
 
-        {/* Right Sidebar Column: Pomodoro Study Timer, Results checker, leaderboards */}
+        {/* Right Sidebar Column: NECTA Exam Countdown, Pomodoro Study Timer, Results checker, leaderboards */}
         <div className="space-y-8">
           
+          {/* NECTA Exam Countdown Widget */}
+          <NectaCountdownWidget 
+            language={language}
+            userProfile={userProfile}
+            onNavigate={onNavigate}
+          />
+
           {/* Pomodoro Study Timer */}
           <FocusTimer 
             language={language}
             userProfile={userProfile}
             onAwardPoints={onAwardPoints}
+          />
+          
+          {/* Profile Achievements & Study Badges Module */}
+          <AchievementsModule 
+            userProfile={userProfile}
+            language={language}
+            onNavigate={onNavigate}
+            compact={true}
           />
           
           {/* NECTA Exam Progress Revision Journal Card */}
@@ -772,71 +905,89 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
             )}
           </div>
 
-          {/* National Leaderboard Rankings podium */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl space-y-5 relative overflow-hidden">
-            <div className="absolute -right-16 -top-16 w-36 h-36 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <div className="flex justify-between items-center">
-              <h3 className="font-display font-bold text-base uppercase flex items-center gap-2">
-                <Trophy size={18} className="text-amber-500" />
-                Mashindano ya Wiki
-              </h3>
-              {/* Small tab selector */}
-              <div className="flex bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/50">
-                <button 
-                  onClick={() => setActiveLeaderboard('darasa')}
-                  className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${activeLeaderboard === 'darasa' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Darasa
-                </button>
-                <button 
-                  onClick={() => setActiveLeaderboard('mkoa')}
-                  className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${activeLeaderboard === 'mkoa' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Mkoa
-                </button>
+          {/* National Leaderboard Rankings podium (Hidden in Exam Mode) */}
+          {!examMode ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl space-y-5 relative overflow-hidden">
+              <div className="absolute -right-16 -top-16 w-36 h-36 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              
+              <div className="flex justify-between items-center">
+                <h3 className="font-display font-bold text-base uppercase flex items-center gap-2">
+                  <Trophy size={18} className="text-amber-500" />
+                  Mashindano ya Wiki
+                </h3>
+                {/* Small tab selector */}
+                <div className="flex bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/50">
+                  <button 
+                    onClick={() => setActiveLeaderboard('darasa')}
+                    className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${activeLeaderboard === 'darasa' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Darasa
+                  </button>
+                  <button 
+                    onClick={() => setActiveLeaderboard('mkoa')}
+                    className={`px-2 py-0.5 text-[9px] font-bold rounded-md transition-all ${activeLeaderboard === 'mkoa' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    Mkoa
+                  </button>
+                </div>
+              </div>
+
+              {/* Podium Rank representation */}
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className="w-5 text-center font-display font-extrabold text-amber-500 text-sm">#1</span>
+                    <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold text-xs">AM</div>
+                    <div>
+                      <h4 className="font-bold text-xs text-white">Aneth Mwanga</h4>
+                      <span className="text-[9px] text-slate-400 font-semibold">Mwanza Sec &bull; 1,840 XP</span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2 py-0.5 rounded-full">Kinara</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className="w-5 text-center font-display font-extrabold text-slate-400 text-sm">#2</span>
+                    <div className="w-8 h-8 rounded-full bg-slate-400/10 border border-slate-400/30 text-slate-400 flex items-center justify-center font-bold text-xs">JM</div>
+                    <div>
+                      <h4 className="font-bold text-xs text-white">John Mapunda</h4>
+                      <span className="text-[9px] text-slate-400 font-semibold">Feza Boys &bull; 1,620 XP</span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold bg-slate-400/10 text-slate-400 border border-slate-400/20 px-2 py-0.5 rounded-full">Mshindi</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className="w-5 text-center font-display font-extrabold text-amber-700 text-sm">#3</span>
+                    <div className="w-8 h-8 rounded-full bg-amber-700/10 border border-amber-700/30 text-amber-700 flex items-center justify-center font-bold text-xs">SK</div>
+                    <div>
+                      <h4 className="font-bold text-xs text-white">Salma Kiboko</h4>
+                      <span className="text-[9px] text-slate-400 font-semibold">St. Marys &bull; 1,450 XP</span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold bg-amber-700/10 text-amber-700 border border-amber-700/20 px-2 py-0.5 rounded-full">Mshindi</span>
+                </div>
               </div>
             </div>
-
-            {/* Podium Rank representation */}
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="w-5 text-center font-display font-extrabold text-amber-500 text-sm">#1</span>
-                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold text-xs">AM</div>
-                  <div>
-                    <h4 className="font-bold text-xs text-white">Aneth Mwanga</h4>
-                    <span className="text-[9px] text-slate-400 font-semibold">Mwanza Sec &bull; 1,840 XP</span>
-                  </div>
-                </div>
-                <span className="text-[9px] font-bold bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2 py-0.5 rounded-full">Kinara</span>
+          ) : (
+            <div className="bg-slate-900/60 border border-amber-500/20 rounded-3xl p-5 text-slate-300 shadow-md space-y-3 text-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
+                <EyeOff size={20} />
               </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="w-5 text-center font-display font-extrabold text-slate-400 text-sm">#2</span>
-                  <div className="w-8 h-8 rounded-full bg-slate-400/10 border border-slate-400/30 text-slate-400 flex items-center justify-center font-bold text-xs">JM</div>
-                  <div>
-                    <h4 className="font-bold text-xs text-white">John Mapunda</h4>
-                    <span className="text-[9px] text-slate-400 font-semibold">Feza Boys &bull; 1,620 XP</span>
-                  </div>
-                </div>
-                <span className="text-[9px] font-bold bg-slate-400/10 text-slate-400 border border-slate-400/20 px-2 py-0.5 rounded-full">Mshindi</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:border-cyan-500/40 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="w-5 text-center font-display font-extrabold text-amber-700 text-sm">#3</span>
-                  <div className="w-8 h-8 rounded-full bg-amber-700/10 border border-amber-700/30 text-amber-700 flex items-center justify-center font-bold text-xs">SK</div>
-                  <div>
-                    <h4 className="font-bold text-xs text-white">Salma Kiboko</h4>
-                    <span className="text-[9px] text-slate-400 font-semibold">St. Marys &bull; 1,450 XP</span>
-                  </div>
-                </div>
-                <span className="text-[9px] font-bold bg-amber-700/10 text-amber-700 border border-amber-700/20 px-2 py-0.5 rounded-full">Mshindi</span>
-              </div>
+              <h4 className="font-display font-bold text-sm text-white uppercase">Leaderboard Imefichwa (Exam Mode)</h4>
+              <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                Bodi ya Washindi imefichwa kwa muda ili kukusaidia kutilia mkazo mtihani na masomo pekee bila usumbufu.
+              </p>
+              <button
+                onClick={toggleExamMode}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 font-bold transition-all border border-slate-700"
+              >
+                Zima Hali ya Mtihani
+              </button>
             </div>
-          </div>
+          )}
 
         </div>
 

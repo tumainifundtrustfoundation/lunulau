@@ -1,5 +1,8 @@
 /**
- * Lupanulla Elimu Hub - Service Worker (sw.js alias)
+ * Lupanulla Elimu Hub - Service Worker
+ * -------------------------------------
+ * High-performance PWA Service Worker supporting full offline access,
+ * dynamic precaching, assets caching, and background synchronization.
  */
 
 const CACHE_NAME = 'lupanulla-pwa-v2';
@@ -27,10 +30,11 @@ const GOOGLE_FONTS_STYLING = 'https://fonts.googleapis.com';
 const CDN_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 const CDN_PHOSPHOR = 'https://unpkg.com/@phosphor-icons/web';
 
+// Install Event - Precache App Shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Lupanulla SW] Precaching core assets');
+      console.log('[Lupanulla SW] Precaching app shell assets');
       return cache.addAll(PRECACHE_ASSETS).catch((err) => {
         console.warn('[Lupanulla SW] Error precaching assets:', err);
       });
@@ -38,6 +42,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Activate Event - Clean Up Stale Caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -53,10 +58,12 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Fetch Event - Strategic Offline & Asset Handlers
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // 1. Navigation requests (HTML pages & SPA routes)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -79,6 +86,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 2. Ignore Non-GET requests, Firebase WebSockets/Auth, and Vite HMR
   if (
     request.method !== 'GET' ||
     url.hostname.includes('firestore.googleapis.com') ||
@@ -89,6 +97,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 3. Static Assets & External Fonts (Stale-While-Revalidate)
   const isStaticAsset = 
     url.origin === self.location.origin || 
     url.origin === GOOGLE_FONTS_ORIGIN || 
@@ -117,6 +126,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 4. API Requests (Network-First with Offline JSON fallback)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
@@ -146,6 +156,7 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// Client Messaging
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

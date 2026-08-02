@@ -282,9 +282,77 @@
         "createdAt": { "type": "integer" }
       },
       "required": ["id", "userId", "title", "date", "isCompleted", "createdAt"]
+    },
+    "UserReadingProgress": {
+      "title": "User Reading Progress",
+      "description": "Saves scroll position and document reading state to automatically restore reading position.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "documentId": { "type": "string" },
+        "documentTitle": { "type": "string" },
+        "scrollPosition": { "type": "number" },
+        "scrollPercentage": { "type": "number" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["id", "userId", "documentId", "scrollPosition", "updatedAt"]
+    },
+    "UserVideoProgress": {
+      "title": "User Video Progress",
+      "description": "Tracks video playback progress so users can resume watching from where they left off.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "videoId": { "type": "string" },
+        "videoTitle": { "type": "string" },
+        "currentTime": { "type": "number" },
+        "duration": { "type": "number" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["id", "userId", "videoId", "currentTime", "updatedAt"]
+    },
+    "DukaVideoAdItem": {
+      "title": "Duka Video Ad Item",
+      "description": "Custom promotional videos for educational store products.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "titleSw": { "type": "string" },
+        "titleEn": { "type": "string" },
+        "badge": { "type": "string" },
+        "descriptionSw": { "type": "string" },
+        "descriptionEn": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "posterUrl": { "type": "string" },
+        "featuredProductId": { "type": "string" },
+        "promoCode": { "type": "string" },
+        "discountText": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["id", "titleSw", "videoUrl"]
     }
   },
   "firestore": {
+    "/user_video_progress/{progressId}": {
+      "schema": {
+        "$ref": "#/entities/UserVideoProgress"
+      },
+      "description": "Tracks video playback progress per user per video."
+    },
+    "/duka_video_ads/{adId}": {
+      "schema": {
+        "$ref": "#/entities/DukaVideoAdItem"
+      },
+      "description": "Promotional video ads displayed in the Duka section."
+    },
+    "/user_reading_progress/{progressId}": {
+      "schema": {
+        "$ref": "#/entities/UserReadingProgress"
+      },
+      "description": "Tracks scroll position and reading progress per user per document."
+    },
     "/study_events/{eventId}": {
       "schema": {
         "$ref": "#/entities/StudyEvent"

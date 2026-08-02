@@ -20,7 +20,13 @@ import {
   Zap,
   BookOpen,
   FileText,
-  User
+  User,
+  Video,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Share2,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -33,6 +39,7 @@ import {
   fetchDocuments
 } from '../firebase';
 import { Product, Order, QuickBuyOrder } from '../types';
+import DukaVideoAd from './DukaVideoAd';
 
 interface DukaViewProps {
   onNavigate: (view: string, id?: string) => void;
@@ -82,6 +89,9 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
   // Wishlist state
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [showWishlistOnly, setShowWishlistOnly] = useState(false);
+
+  // Video Upload Tips state
+  const [showVideoTips, setShowVideoTips] = useState<boolean>(true);
 
   const defaultProducts: Product[] = [
     {
@@ -424,6 +434,103 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
       {checkoutStep === 'browse' && (
         <div className="space-y-6">
           
+          {/* Promotional Video Advertisement Component */}
+          <DukaVideoAd onAddToCart={addToCart} products={products} userProfile={userProfile} />
+
+          {/* Video Upload Tips Section (Dondoo Za Kuweka Video za Tangazo) */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-slate-700/80 my-4 transition-all">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-700/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-black shrink-0">
+                  <Video size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400">Mwongozo & Dondoo</span>
+                    <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
+                      Video Upload Tips
+                    </span>
+                  </div>
+                  <h3 className="font-extrabold text-base text-white">
+                    Dondoo za Kuweka Video za Tangazo (Hosting & Sharing Tips)
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowVideoTips(!showVideoTips)}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl border border-slate-600 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+              >
+                <HelpCircle size={15} className="text-cyan-400" />
+                <span>{showVideoTips ? 'Ficha Dondoo' : 'Soma Mwongozo Wa Video'}</span>
+                {showVideoTips ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
+
+            {showVideoTips && (
+              <div className="mt-5 space-y-4 animate-fade-in">
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Ili kuweka video yako ya tangazo kwenye Lupanulla Duka kwa ufanisi bila kupoteza ubora au kutumia bando nyingi, unaweza kutumia njia hizi rahisi kuitunza mtandaoni kisha kuweka link yake au kuwasiliana na Admin:
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Tip 1: Google Drive */}
+                  <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-2 hover:border-cyan-500/40 transition-all">
+                    <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-black text-[11px]">1</span>
+                      <span>Google Drive (Inashauriwa)</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-300 space-y-1.5 list-disc pl-4 leading-relaxed">
+                      <li>Pakia video yako kwenye Google Drive yako.</li>
+                      <li>Gusa pointi 3 (Share) &rarr; Badili ruhusa kuwa <strong>"Anyone with the link"</strong> (Kila mwenye kiunganishi).</li>
+                      <li>Kilipe (Copy link) kisha weka moja kwa moja kwenye fomu ya Video Ad au uitume kwa Admin!</li>
+                    </ul>
+                  </div>
+
+                  {/* Tip 2: YouTube */}
+                  <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-2 hover:border-red-500/40 transition-all">
+                    <div className="flex items-center gap-2 text-red-400 font-bold text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-red-500/20 text-red-300 flex items-center justify-center font-black text-[11px]">2</span>
+                      <span>YouTube Share Link</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-300 space-y-1.5 list-disc pl-4 leading-relaxed">
+                      <li>Weka video YouTube kama <strong>"Unlisted"</strong> (Ili isionekane bila link) au "Public".</li>
+                      <li>Gusa kitufe cha <strong>Share</strong> kisha nakili (Copy) kiunganishi cha video hiyo.</li>
+                      <li>Weka link kwenye sehemu ya kuongeza Video ya Duka kupitia kitufe cha juu.</li>
+                    </ul>
+                  </div>
+
+                  {/* Tip 3: Direct Upload & Admin Contact */}
+                  <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-2 hover:border-emerald-500/40 transition-all">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-black text-[11px]">3</span>
+                      <span>Direct Upload au Admin</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-300 space-y-1.5 list-disc pl-4 leading-relaxed">
+                      <li>Unaweza kupakia file la MP4 moja kwa moja (chini ya 50MB) kutoka kifaa chako.</li>
+                      <li>Ukinyanyapaliwa au ukihitaji msaada, mtumie Admin video au link yake kupitia WhatsApp kwa uwezeshaji.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-cyan-950/40 border border-cyan-500/30 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs text-cyan-200">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle size={16} className="text-cyan-400 shrink-0" />
+                    <span>Unahitaji msaada wa kurekodi au kuweka video ya kitabu chako kwenye Duka?</span>
+                  </div>
+                  <a
+                    href="https://wa.me/255699479032?text=Habari%20Admin,%20ninahitaji%20msaada%20wa%20kuweka%20video%20ya%20tangazo%20la%20kitabu/bidhaa%20yangu%20Lupanulla%20Duka."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[11px] px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5"
+                  >
+                    <MessageSquare size={14} /> Muulize Admin WhatsApp
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Categories and Search pills bar */}
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-5">
             <div className="relative">

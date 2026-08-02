@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { fetchDocuments, fetchLibraryConfig, incrementDocumentViews, incrementDocumentDownloads, LibraryConfig, DEFAULT_LIBRARY_CONFIG, toggleBookmark, fetchUserBookmarks, saveOrder } from '../firebase';
 import { DocumentMetadata, UserProfile, UserBookmark } from '../types';
+import { localSeedDocs } from '../data/seedDocs';
 
 interface LibraryViewProps {
   onNavigate: (view: string, id?: string) => void;
@@ -84,11 +85,17 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
       setLibraryConfig(config);
 
       const docs = await fetchDocuments({ status: 'approved' });
-      setDocuments(docs);
+      const combinedDocs = [...docs];
+      localSeedDocs.forEach(seed => {
+        if (!combinedDocs.some(d => d.id === seed.id)) {
+          combinedDocs.push(seed);
+        }
+      });
+      setDocuments(combinedDocs);
 
       // Extract unique years and regions dynamically from existing records
-      const years = Array.from(new Set(docs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
-      const regions = Array.from(new Set(docs.map(d => String(d.accent || '')).filter(Boolean))).sort(); // Using accent/other fields or preset list
+      const years = Array.from(new Set(combinedDocs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+      const regions = Array.from(new Set(combinedDocs.map(d => String((d as any).region || d.accent || '')).filter(Boolean))).sort();
       
       setDynamicYears(years);
       setDynamicRegions(regions);
@@ -253,12 +260,16 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
     }
   };
 
-  const handlePreview = async (doc: DocumentMetadata) => {
+  const handlePreview = (doc: DocumentMetadata) => {
     if (!canAccessDirectly(doc)) {
       handlePurchasePrompt(doc, 'read');
       return;
     }
-    await incrementDocumentViews(doc.id);
+    try {
+      incrementDocumentViews(doc.id).catch(err => console.warn('Non-blocking view increment failed:', err));
+    } catch (e) {
+      console.warn('View increment error ignored:', e);
+    }
     onNavigate('reader', doc.id);
   };
 
@@ -625,7 +636,10 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
                 className="group bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1"
               >
                 {/* Visual Thumbnail Frame */}
-                <div className={`h-40 bg-gradient-to-br ${design.bg} relative flex items-center justify-center p-4 overflow-hidden`}>
+                <div 
+                  onClick={() => handlePreview(doc)} 
+                  className={`h-40 bg-gradient-to-br ${design.bg} relative flex items-center justify-center p-4 overflow-hidden cursor-pointer`}
+                >
                   {/* Dynamic background curves */}
                   <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-slate-900 to-transparent scale-150"></div>
                   
@@ -707,7 +721,10 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
                     </div>
 
                     {/* Document Title */}
-                    <h3 className="font-sans font-extrabold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-emerald-700 transition-colors">
+                    <h3 
+                      onClick={() => handlePreview(doc)} 
+                      className="font-sans font-extrabold text-slate-900 text-sm leading-snug line-clamp-2 hover:text-emerald-700 transition-colors cursor-pointer"
+                    >
                       {doc.title}
                     </h3>
 

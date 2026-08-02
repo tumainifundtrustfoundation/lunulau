@@ -286,6 +286,30 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // User Reading Progress collection
+    match /user_reading_progress/{progressId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == progressId
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // User Video Progress collection
+    match /user_video_progress/{progressId} {
+      allow read, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == progressId
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Duka Video Ads collection
+    match /duka_video_ads/{adId} {
+      allow read, list: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

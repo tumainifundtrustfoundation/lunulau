@@ -410,3 +410,40 @@ export interface StudyEvent {
   isCompleted: boolean;
   createdAt: number;
 }
+
+export interface UserReadingProgress {
+  id: string; // `${userId}_${documentId}`
+  userId: string;
+  documentId: string;
+  documentTitle?: string;
+  scrollPosition: number;
+  scrollPercentage: number;
+  updatedAt: number;
+}
+
+export interface UserVideoProgress {
+  id: string; // `${userId}_${videoId}`
+  userId: string;
+  videoId: string;
+  videoTitle?: string;
+  currentTime: number;
+  duration: number;
+  updatedAt: number;
+}
+
+export interface DukaVideoAdItem {
+  id: string;
+  titleSw: string;
+  titleEn: string;
+  badge: string;
+  descriptionSw: string;
+  descriptionEn: string;
+  videoUrl: string;
+  posterUrl: string;
+  featuredProductId?: string;
+  promoCode?: string;
+  discountText?: string;
+  createdAt?: number;
+  createdBy?: string;
+}
+

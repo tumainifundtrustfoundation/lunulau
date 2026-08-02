@@ -36,6 +36,7 @@ import {
 import { UserProfile, AppNotification, AppTheme } from '../types';
 import { subscribeNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../firebase';
 import Logo from './Logo';
+import ProfileModal from './ProfileModal';
 
 interface NavbarProps {
   activeView: string;
@@ -70,6 +71,7 @@ export default function Navbar({
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const navRef = useRef<HTMLElement>(null);
 
@@ -437,6 +439,17 @@ export default function Navbar({
                     </div>
                     
                     <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-slate-800 text-amber-300 hover:text-amber-200 flex items-center gap-2"
+                    >
+                      <Award size={14} className="text-amber-400" />
+                      <span>Beji na Akaunti Yangu</span>
+                    </button>
+
+                    <button
                       onClick={() => handleNavClick('upload')}
                       className="w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-2"
                     >
@@ -782,6 +795,17 @@ export default function Navbar({
                     
                     <div className="grid grid-cols-1 gap-1.5">
                       <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setIsProfileModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-amber-300 hover:bg-slate-900 rounded-xl border border-amber-400/20 transition-all"
+                      >
+                        <Award size={14} className="text-amber-400" />
+                        <span>Beji & Akaunti Yangu</span>
+                      </button>
+
+                      <button
                         onClick={() => handleNavClick('upload')}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold uppercase text-slate-300 hover:bg-slate-900 hover:text-white rounded-xl border border-slate-900 transition-all"
                       >
@@ -828,6 +852,14 @@ export default function Navbar({
           </>
         )}
       </AnimatePresence>
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        userProfile={userProfile}
+        onNavigate={onNavigate}
+        language={language}
+      />
     </nav>
   );
 }

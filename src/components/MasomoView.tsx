@@ -35,7 +35,9 @@ import {
   Bookmark,
   Share2,
   Heart,
-  X
+  X,
+  Filter,
+  Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdSenseWidget from './AdSenseWidget';
@@ -75,13 +77,168 @@ interface ClassLevel {
   }[];
 }
 
+export interface SavedBookmark {
+  id: string;
+  type: 'topic' | 'note' | 'past_paper';
+  title: string;
+  subject: string;
+  level: string;
+  content: string;
+  subtopics?: string[];
+  notesSample?: string;
+  savedAt: string;
+}
+
 export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps) {
   // Navigation & Categorization states
-  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'favorites'>('all');
+  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'favorites' | 'saved'>('all');
   const [activeStreamTab, setActiveStreamTab] = useState<'all' | 'PCB' | 'HGE' | 'EGM'>('all');
   const [openSubject, setOpenSubject] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   
+  // Subject & Category Filter states
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'science' | 'arts' | 'languages' | 'commercial'>('all');
+
+  // Offline Saved Bookmarks state
+  const [savedBookmarks, setSavedBookmarks] = useState<SavedBookmark[]>(() => {
+    try {
+      const local = localStorage.getItem('lupanulla_saved_bookmarks');
+      return local ? JSON.parse(local) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [savedFilterType, setSavedFilterType] = useState<'all' | 'topic' | 'note' | 'past_paper'>('all');
+  const [savedSearchQuery, setSavedSearchQuery] = useState<string>('');
+
+  // Persist saved bookmarks to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('lupanulla_saved_bookmarks', JSON.stringify(savedBookmarks));
+    } catch (e) {
+      console.error('Failed to save bookmarks to localStorage:', e);
+    }
+  }, [savedBookmarks]);
+
+  const isTopicBookmarked = (topicTitle: string) => {
+    return savedBookmarks.some(b => b.title === topicTitle || b.id === `topic_${topicTitle}`);
+  };
+
+  const handleToggleBookmark = (topic: Topic, subjectName?: string) => {
+    const bookmarkId = `topic_${topic.title}`;
+    const isBookmarked = savedBookmarks.some(b => b.id === bookmarkId);
+
+    if (isBookmarked) {
+      setSavedBookmarks(prev => prev.filter(b => b.id !== bookmarkId));
+      showToast('info', `Imeondolewa: "${topic.title}" imeondolewa kwenye vitu vilivyohifadhiwa.`);
+    } else {
+      const parentLevel = academicData.find(l => l.subjects.some(s => s.topics.some(t => t.title === topic.title)));
+      const levelName = parentLevel ? parentLevel.name.split(' (')[0] : 'Elimu Hub';
+      const subjName = subjectName || openSubject || 'Somo';
+
+      const newBookmark: SavedBookmark = {
+        id: bookmarkId,
+        type: 'topic',
+        title: topic.title,
+        subject: subjName,
+        level: levelName,
+        content: topic.content,
+        subtopics: topic.subtopics,
+        notesSample: topic.notesSample,
+        savedAt: new Date().toLocaleDateString('sw-TZ', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+
+      setSavedBookmarks(prev => [newBookmark, ...prev]);
+      showToast('success', `🔖 Imefanikiwa! "${topic.title}" imeondolewa/imehifadhiwa kwa matumizi ya bila mtandao (Offline Saved).`);
+    }
+  };
+
+  const handleRemoveBookmark = (bookmarkId: string, title: string) => {
+    setSavedBookmarks(prev => prev.filter(b => b.id !== bookmarkId));
+    showToast('info', `Imeondolewa: "${title}" imeondolewa kwenye vitu vilivyohifadhiwa.`);
+  };
+
+  const handleOpenBookmarkedTopic = (bookmark: SavedBookmark) => {
+    let foundTopic: Topic | null = null;
+    let foundSubject: string | null = null;
+
+    for (const level of academicData) {
+      for (const subj of level.subjects) {
+        const t = subj.topics.find(top => top.title === bookmark.title);
+        if (t) {
+          foundTopic = t;
+          foundSubject = subj.name;
+          break;
+        }
+      }
+      if (foundTopic) break;
+    }
+
+    if (!foundTopic) {
+      foundTopic = {
+        title: bookmark.title,
+        content: bookmark.content,
+        subtopics: bookmark.subtopics || [],
+        notesSample: bookmark.notesSample || bookmark.content
+      };
+      foundSubject = bookmark.subject;
+    }
+
+    if (foundSubject) {
+      setOpenSubject(foundSubject);
+    }
+    setSelectedTopic(foundTopic);
+    setActiveReaderTab('notes');
+    showToast('info', `Inafungua "${bookmark.title}" (Kutoka Vitu Vilivyohifadhiwa)...`);
+    document.getElementById('masomo-reader-top')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Dynamically extract unique subjects and compute topic counts & category icons
+  const allSubjectsList = React.useMemo(() => {
+    const map = new Map<string, { name: string; count: number; category: 'science' | 'arts' | 'languages' | 'commercial'; icon: string }>();
+
+    const getCategoryAndIcon = (name: string) => {
+      const lower = name.toLowerCase();
+      if (lower.includes('hisabati') || lower.includes('math') || lower.includes('sayansi') || lower.includes('physics') || lower.includes('chem') || lower.includes('bio') || lower.includes('science')) {
+        let icon = '🧪';
+        if (lower.includes('math') || lower.includes('hisabati')) icon = '📐';
+        else if (lower.includes('physic')) icon = '⚡';
+        else if (lower.includes('bio')) icon = '🧬';
+        return { category: 'science' as const, icon };
+      }
+      if (lower.includes('history') || lower.includes('historia') || lower.includes('geography') || lower.includes('jiografia') || lower.includes('maarifa') || lower.includes('uraia') || lower.includes('civic') || lower.includes('general studies')) {
+        let icon = '📜';
+        if (lower.includes('geogr') || lower.includes('jiogr')) icon = '🌍';
+        else if (lower.includes('uraia') || lower.includes('civic') || lower.includes('general')) icon = '🏛️';
+        return { category: 'arts' as const, icon };
+      }
+      if (lower.includes('kiswahili') || lower.includes('english') || lower.includes('kiingereza')) {
+        return { category: 'languages' as const, icon: '💬' };
+      }
+      if (lower.includes('economic') || lower.includes('uchumi') || lower.includes('commerce') || lower.includes('bookkeeping')) {
+        return { category: 'commercial' as const, icon: '📈' };
+      }
+      return { category: 'arts' as const, icon: '📚' };
+    };
+
+    academicData.forEach(level => {
+      level.subjects.forEach(subj => {
+        const topicCount = subj.topics.length;
+        const existing = map.get(subj.name);
+        if (existing) {
+          existing.count += topicCount;
+        } else {
+          const { category, icon } = getCategoryAndIcon(subj.name);
+          map.set(subj.name, { name: subj.name, count: topicCount, category, icon });
+        }
+      });
+    });
+
+    return Array.from(map.values());
+  }, []);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1005,9 +1162,48 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
 
   const filteredLevels = activeLevelTab === 'favorites' 
     ? [] 
-    : academicData.filter(level => 
-        activeLevelTab === 'all' || level.id === activeLevelTab
-      );
+    : academicData.map(level => {
+        if (activeLevelTab !== 'all' && level.id !== activeLevelTab) return null;
+        
+        let subjects = level.subjects;
+
+        // Stream filtering for A-Level
+        if (level.id === 'alevel' && activeStreamTab !== 'all') {
+          subjects = subjects.filter(s => (streams as any)[activeStreamTab].includes(s.name));
+        }
+
+        // Subject Category Filtering
+        if (selectedCategory !== 'all') {
+          subjects = subjects.filter(s => {
+            const lower = s.name.toLowerCase();
+            if (selectedCategory === 'science') {
+              return lower.includes('hisabati') || lower.includes('math') || lower.includes('sayansi') || lower.includes('physics') || lower.includes('chem') || lower.includes('bio') || lower.includes('science');
+            }
+            if (selectedCategory === 'arts') {
+              return lower.includes('history') || lower.includes('historia') || lower.includes('geography') || lower.includes('jiografia') || lower.includes('maarifa') || lower.includes('uraia') || lower.includes('civic') || lower.includes('general studies');
+            }
+            if (selectedCategory === 'languages') {
+              return lower.includes('kiswahili') || lower.includes('english') || lower.includes('kiingereza');
+            }
+            if (selectedCategory === 'commercial') {
+              return lower.includes('economic') || lower.includes('uchumi') || lower.includes('commerce') || lower.includes('bookkeeping');
+            }
+            return true;
+          });
+        }
+
+        // Specific Subject Name Filtering
+        if (selectedSubject !== 'all') {
+          subjects = subjects.filter(s => s.name === selectedSubject || s.name.toLowerCase().includes(selectedSubject.toLowerCase()));
+        }
+
+        if (subjects.length === 0) return null;
+
+        return {
+          ...level,
+          subjects
+        };
+      }).filter(Boolean) as ClassLevel[];
 
   return (
     <div id="masomo-view" className="space-y-6 animate-fade-in text-slate-800 bg-slate-50 min-h-screen pb-12">
@@ -1175,18 +1371,24 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
         </div>
       </div>
 
-      {/* ── Level Filter Navigation Tabs ── */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ngazi ya Shule</h3>
+      {/* ── Level & Subject Filter Navigation Controls ── */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+          
+          {/* Level Filter Tabs */}
+          <div className="space-y-1.5 flex-1">
+            <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Layers size={13} className="text-cyan-600" />
+              Ngazi ya Shule (School Level)
+            </h3>
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'all', name: 'Zote' },
                 { id: 'msingi', name: 'Shule ya Msingi' },
                 { id: 'olevel', name: 'Kidato 1-4' },
                 { id: 'alevel', name: 'Kidato 5-6' },
-                { id: 'favorites', name: 'Zilizopendwa ★' }
+                { id: 'favorites', name: 'Zilizopendwa ★' },
+                { id: 'saved', name: `Vitu Vilivyohifadhiwa 🔖 (${savedBookmarks.length})` }
               ].map((tab) => (
                 <motion.button
                   key={tab.id}
@@ -1197,7 +1399,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                     setOpenSubject(null);
                     setSelectedTopic(null);
                   }}
-                  className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
                     activeLevelTab === tab.id 
                       ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/20' 
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
@@ -1209,42 +1411,158 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
             </div>
           </div>
 
-          {activeLevelTab === 'alevel' && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-1"
-            >
-              <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Mchepuo (Stream)</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'all', name: 'Zote' },
-                  { id: 'PCB', name: 'PCB' },
-                  { id: 'HGE', name: 'HGE' },
-                  { id: 'EGM', name: 'EGM' }
-                ].map((tab) => (
-                  <motion.button
-                    key={tab.id}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+          {/* Subject Dropdown Select */}
+          <div className="space-y-1.5 min-w-[250px]">
+            <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Filter size={13} className="text-amber-500" />
+              Chagua Somo Mahususi (Select Subject)
+            </h3>
+            <div className="relative">
+              <select
+                value={selectedSubject}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedSubject(val);
+                  if (val !== 'all') {
+                    setOpenSubject(val);
+                  } else {
+                    setOpenSubject(null);
+                  }
+                }}
+                className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold py-2 px-3 pr-8 rounded-xl outline-none focus:border-cyan-500 transition-all cursor-pointer appearance-none shadow-sm"
+              >
+                <option value="all">📚 Masomo Yote (All Subjects)</option>
+                {allSubjectsList.map(subj => (
+                  <option key={subj.name} value={subj.name}>
+                    {subj.icon} {subj.name} ({subj.count} {subj.count === 1 ? 'Mada' : 'Mada'})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Subject Category Chips & Quick Chips Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+              <span>Makundi ya Masomo (Subject Categories)</span>
+            </h4>
+            
+            {(selectedSubject !== 'all' || selectedCategory !== 'all') && (
+              <button
+                onClick={() => {
+                  setSelectedSubject('all');
+                  setSelectedCategory('all');
+                  setOpenSubject(null);
+                }}
+                className="text-[10px] font-black uppercase text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg transition-all flex items-center gap-1"
+              >
+                <X size={12} />
+                Ondoa Kichujio (Clear Filters)
+              </button>
+            )}
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'all', label: 'Masomo Yote', icon: '📚' },
+              { id: 'science', label: 'Sayansi & Hisabati', icon: '🧪' },
+              { id: 'arts', label: 'Sanaa & Jamii', icon: '📜' },
+              { id: 'languages', label: 'Lugha', icon: '💬' },
+              { id: 'commercial', label: 'Biashara & Uchumi', icon: '📈' },
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategory(cat.id as any);
+                  setSelectedSubject('all');
+                }}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 border ${
+                  selectedCategory === cat.id
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Subject Quick Selector Pills */}
+          <div className="pt-2 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            {allSubjectsList
+              .filter(s => selectedCategory === 'all' || s.category === selectedCategory)
+              .map(subj => {
+                const isSelected = selectedSubject === subj.name;
+                return (
+                  <button
+                    key={subj.name}
                     onClick={() => {
-                      setActiveStreamTab(tab.id as any);
-                      setOpenSubject(null);
-                      setSelectedTopic(null);
+                      if (isSelected) {
+                        setSelectedSubject('all');
+                        setOpenSubject(null);
+                      } else {
+                        setSelectedSubject(subj.name);
+                        setOpenSubject(subj.name);
+                      }
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeStreamTab === tab.id 
-                        ? 'bg-amber-400 text-amber-950 shadow-md shadow-amber-400/20' 
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1.5 border ${
+                      isSelected
+                        ? 'bg-amber-400 text-amber-950 border-amber-400 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300 hover:bg-amber-50/30'
                     }`}
                   >
-                    {tab.name}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          )}
+                    <span>{subj.icon}</span>
+                    <span>{subj.name}</span>
+                    <span className={`px-1 rounded text-[9px] ${isSelected ? 'bg-amber-900/20 text-amber-950' : 'bg-slate-100 text-slate-500'}`}>
+                      {subj.count}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
         </div>
+
+        {/* Stream selector for A-level if active */}
+        {activeLevelTab === 'alevel' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="pt-2 border-t border-slate-100 space-y-1"
+          >
+            <h3 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Mchepuo (Stream)</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', name: 'Zote' },
+                { id: 'PCB', name: 'PCB' },
+                { id: 'HGE', name: 'HGE' },
+                { id: 'EGM', name: 'EGM' }
+              ].map((tab) => (
+                <motion.button
+                  key={tab.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    setActiveStreamTab(tab.id as any);
+                    setOpenSubject(null);
+                    setSelectedTopic(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                    activeStreamTab === tab.id 
+                      ? 'bg-amber-400 text-amber-950 shadow-md shadow-amber-400/20' 
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                  }`}
+                >
+                  {tab.name}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* ── Google AdSense Responsive Ad Unit (Masomo-top) ── */}
@@ -1256,13 +1574,167 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
         {/* Left Side: Levels and Subjects Accordion */}
         <div className="lg:col-span-1 space-y-4">
           <h2 className="font-display font-black text-base text-slate-900 uppercase tracking-wide">
-            {activeLevelTab === 'all' ? 'Mada zote za Kusoma' : 
+            {selectedSubject !== 'all' ? `Mada za ${selectedSubject}` :
+             selectedCategory !== 'all' ? `Masomo ya ${selectedCategory === 'science' ? 'Sayansi & Hisabati' : selectedCategory === 'arts' ? 'Sanaa & Jamii' : selectedCategory === 'languages' ? 'Lugha' : 'Biashara & Uchumi'}` :
+             activeLevelTab === 'all' ? 'Mada zote za Kusoma' : 
+             activeLevelTab === 'saved' ? 'Vitu Vilivyohifadhiwa (Offline Library)' :
              activeLevelTab === 'favorites' ? 'Mada Unazozipenda' :
              activeLevelTab === 'alevel' && activeStreamTab !== 'all' ? `Masomo ya ${activeStreamTab}` : 'Mada Yilizochujwa'}
           </h2>
           
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-            {activeLevelTab === 'favorites' ? (
+            {activeLevelTab === 'saved' ? (
+              <div className="space-y-3 animate-fade-in">
+                {/* Saved Offline Banner */}
+                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bookmark size={16} className="text-amber-600 fill-amber-500" />
+                      <span className="text-xs font-black text-amber-950 uppercase tracking-wide">
+                        Vitu Vilivyohifadhiwa ({savedBookmarks.length})
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase bg-amber-200/80 text-amber-950 px-2 py-0.5 rounded-md">
+                      Offline Saved
+                    </span>
+                  </div>
+                  
+                  <p className="text-[11px] text-amber-900/80 leading-relaxed font-semibold">
+                    Mada na notisi ulizohifadhi zimehifadhiwa kikamilifu kwenye kivinjari chako. Unaweza kuzisoma mtandaoni au mahali popote bila mtandao wa intaneti!
+                  </p>
+
+                  {/* Filter and search bar inside saved items */}
+                  {savedBookmarks.length > 0 && (
+                    <div className="pt-2 space-y-2 border-t border-amber-200/60">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={savedSearchQuery}
+                          onChange={(e) => setSavedSearchQuery(e.target.value)}
+                          placeholder="Tafuta mada au somo lililohifadhiwa..."
+                          className="w-full bg-white border border-amber-200 text-slate-800 text-xs font-bold py-1.5 px-3 pl-8 rounded-xl outline-none focus:border-amber-400 placeholder:text-amber-700/50 shadow-sm"
+                        />
+                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-600" />
+                        {savedSearchQuery && (
+                          <button 
+                            onClick={() => setSavedSearchQuery('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-600 hover:text-amber-900"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                        {[
+                          { id: 'all', label: 'Zote' },
+                          { id: 'topic', label: 'Mada' },
+                          { id: 'note', label: 'Notisi' },
+                          { id: 'past_paper', label: 'Past Papers' },
+                        ].map(f => (
+                          <button
+                            key={f.id}
+                            onClick={() => setSavedFilterType(f.id as any)}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all shrink-0 ${
+                              savedFilterType === f.id
+                                ? 'bg-amber-900 text-white shadow-sm'
+                                : 'bg-amber-100/80 text-amber-900 hover:bg-amber-200/80'
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Saved Items List */}
+                {savedBookmarks.length > 0 ? (
+                  (() => {
+                    const filtered = savedBookmarks.filter(b => {
+                      const matchesFilter = savedFilterType === 'all' || b.type === savedFilterType;
+                      const q = savedSearchQuery.toLowerCase();
+                      const matchesQuery = !q || b.title.toLowerCase().includes(q) || b.subject.toLowerCase().includes(q) || b.content.toLowerCase().includes(q);
+                      return matchesFilter && matchesQuery;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-2 shadow-sm">
+                          <p className="text-xs font-extrabold text-slate-700">Hakuna kilichopatikana</p>
+                          <p className="text-[10px] text-slate-400">Jaribu kubadilisha jina au aina ya kichujio cha utafutaji.</p>
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((bookmark) => {
+                      const isSelected = selectedTopic?.title === bookmark.title;
+                      return (
+                        <motion.div
+                          key={bookmark.id}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`p-3.5 rounded-2xl border transition-all space-y-2.5 shadow-sm ${
+                            isSelected 
+                              ? 'bg-amber-500/10 border-amber-400 ring-1 ring-amber-400/50' 
+                              : 'bg-white border-slate-200/80 hover:border-amber-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <Bookmark size={16} className="text-amber-500 fill-amber-400 shrink-0" />
+                              <div className="truncate min-w-0">
+                                <span className="text-[9px] font-black text-cyan-700 uppercase tracking-widest block truncate">
+                                  {bookmark.subject} &bull; {bookmark.level}
+                                </span>
+                                <h4 className="text-xs font-black text-slate-900 truncate leading-tight">
+                                  {bookmark.title}
+                                </h4>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleRemoveBookmark(bookmark.id, bookmark.title)}
+                              className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                              title="Ondoa kwenye vitu vilivyohifadhiwa"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-t border-slate-100 pt-2">
+                            <span className="flex items-center gap-1 text-slate-500">
+                              <History size={11} /> {bookmark.savedAt}
+                            </span>
+
+                            <button
+                              onClick={() => handleOpenBookmarkedTopic(bookmark)}
+                              className="px-3 py-1 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shadow-sm shrink-0"
+                            >
+                              <BookOpen size={11} />
+                              <span>Soma Sasa</span>
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    });
+                  })()
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-4 shadow-sm">
+                    <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+                      <Bookmark size={28} />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Bado Haujahifadhi Kitu Chochote</h3>
+                      <p className="text-[10px] text-slate-500 max-w-[220px] mx-auto leading-relaxed font-medium">
+                        Wakati unaposoma mada au notisi yoyote, bonyeza button ya <strong className="text-amber-600">🔖 Hifadhi (Bookmark)</strong> iliyo juu ya kisomaji ili uiweke hapa kwa ajili ya kusoma bila mtandao.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeLevelTab === 'favorites' ? (
               <div className="space-y-3 animate-fade-in">
                 {/* Offline Study Sync Panel */}
                 <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-3">
@@ -1497,8 +1969,21 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                   </div>
                 </div>
                 
-                {/* PDF and Audio Playback Bar */}
+                {/* PDF, Audio Playback & Bookmark Bar */}
                 <div className="flex flex-wrap gap-2 shrink-0">
+                  <button 
+                    onClick={() => handleToggleBookmark(selectedTopic, openSubject || 'Somo')}
+                    className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm border ${
+                      isTopicBookmarked(selectedTopic.title)
+                        ? 'bg-amber-400 text-amber-950 border-amber-400 shadow-amber-400/20'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                    title={isTopicBookmarked(selectedTopic.title) ? "Ondoa kwenye vitu vilivyohifadhiwa" : "Hifadhi mada hii kwa ajili ya kusoma bila mtandao (Offline)"}
+                  >
+                    <Bookmark size={14} className={isTopicBookmarked(selectedTopic.title) ? 'fill-current' : ''} />
+                    <span>{isTopicBookmarked(selectedTopic.title) ? 'Imehifadhiwa (Saved)' : 'Hifadhi (Bookmark)'}</span>
+                  </button>
+
                   <button 
                     onClick={handleToggleSpeech}
                     className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm ${

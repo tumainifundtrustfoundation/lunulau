@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore,
+  setLogLevel,
   doc,
   getDoc,
   setDoc,
@@ -34,12 +35,19 @@ import {
   getDocFromServer,
   serverTimestamp
 } from 'firebase/firestore';
-import { UserProfile, DocumentMetadata, Comment, UserRole, SubscriptionTier, DocumentStatus, Announcement, Product, Video, Order, AppNotification, Feedback, Certificate, ExamResult, AuditLog, SystemConfig, EducationalResource, HighlightAnnotation, UserBookmark, WebsiteNews, PaymentTransaction, QuickBuyOrder, NectaProgress, StudyEvent } from './types';
+import { UserProfile, DocumentMetadata, Comment, UserRole, SubscriptionTier, DocumentStatus, Announcement, Product, Video, Order, AppNotification, Feedback, Certificate, ExamResult, AuditLog, SystemConfig, EducationalResource, HighlightAnnotation, UserBookmark, WebsiteNews, PaymentTransaction, QuickBuyOrder, NectaProgress, StudyEvent, UserReadingProgress, UserVideoProgress, DukaVideoAdItem } from './types';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Suppress verbose internal Firestore transport warnings in sandboxed iframe environments
+try {
+  setLogLevel('error');
+} catch {
+  // Ignore if unsupported
+}
 
 // Use initializeFirestore with a highly resilient fallback chain to handle sandboxed iframe restrictions and proxy limitations
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
@@ -48,33 +56,24 @@ const dbId = firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : un
 let dbInstance: any;
 
 try {
-  // Try 1: Force long polling with persistent cache (eliminates gRPC stream failure in iframe/proxy environments)
+  // Try 1: Auto-detect long polling with memory cache (most reliable across browsers and iframe sandboxes)
   dbInstance = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
+    experimentalAutoDetectLongPolling: true,
+    localCache: memoryLocalCache()
   }, dbId);
 } catch (err1) {
-  console.warn("Force long-polling with persistent cache init failed, trying memory cache:", err1);
+  console.warn("Auto-detect long-polling with memory cache init failed, trying persistent cache:", err1);
   try {
-    // Try 2: Force long-polling connection with memory cache
+    // Try 2: Force long-polling connection with persistent cache
     dbInstance = initializeFirestore(app, {
       experimentalForceLongPolling: true,
-      localCache: memoryLocalCache()
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
     }, dbId);
   } catch (err2) {
-    console.warn("Force long-polling memory cache init failed, trying auto-detect long-polling:", err2);
-    try {
-      // Try 3: Auto-detect long-polling with memory cache
-      dbInstance = initializeFirestore(app, {
-        experimentalAutoDetectLongPolling: true,
-        localCache: memoryLocalCache()
-      }, dbId);
-    } catch (err3) {
-      console.warn("Long-polling init failed, falling back to default initialization:", err3);
-      dbInstance = initializeFirestore(app, {}, dbId);
-    }
+    console.warn("Long-polling init fallback to default initialization:", err2);
+    dbInstance = initializeFirestore(app, {}, dbId);
   }
 }
 
@@ -84,9 +83,8 @@ export const db = dbInstance;
 async function testConnection() {
   try {
     await getDoc(doc(db, 'test', 'connection'));
-    console.log("Firestore initialized successfully.");
-  } catch (error) {
-    console.warn("Firestore offline mode active or initial sync pending:", error);
+  } catch {
+    // Handled silently for offline mode
   }
 }
 testConnection();
@@ -114,8 +112,11 @@ interface FirestoreErrorInfo {
 }
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
+  const errCode = (error as any)?.code;
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -125,6 +126,13 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path
   };
+
+  // If error is network unavailable or offline, log warning and return cleanly to allow callers to use offline fallbacks
+  if (errCode === 'unavailable' || errMsg.includes('unavailable') || errMsg.includes('offline') || errMsg.includes('Could not reach Cloud Firestore')) {
+    console.warn(`Firestore network offline/unavailable warning [${operationType} ${path}]:`, errMsg);
+    return;
+  }
+
   console.error('Firestore Error Details:', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
@@ -1811,3 +1819,227 @@ export const deleteStudyEvent = async (eventId: string): Promise<void> => {
     throw error;
   }
 };
+
+/**
+ * User Reading Progress (Continue Reading) helpers
+ */
+export const saveReadingProgress = async (
+  userId: string,
+  documentId: string,
+  scrollPosition: number,
+  scrollPercentage: number,
+  documentTitle?: string
+): Promise<string> => {
+  const path = 'user_reading_progress';
+  const progressId = `${userId}_${documentId}`;
+  const payload: UserReadingProgress = {
+    id: progressId,
+    userId,
+    documentId,
+    documentTitle: documentTitle || '',
+    scrollPosition,
+    scrollPercentage,
+    updatedAt: Date.now()
+  };
+
+  // Always save locally for instant offline/speed access
+  try {
+    localStorage.setItem(`reading_progress_${progressId}`, JSON.stringify(payload));
+  } catch {}
+
+  if (!userId) return progressId;
+
+  try {
+    const docRef = doc(db, path, progressId);
+    await setDoc(docRef, payload, { merge: true });
+    return progressId;
+  } catch (error: any) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    return progressId;
+  }
+};
+
+export const fetchReadingProgress = async (
+  userId: string,
+  documentId: string
+): Promise<UserReadingProgress | null> => {
+  const path = 'user_reading_progress';
+  const progressId = `${userId}_${documentId}`;
+
+  // Check localStorage first for immediate recovery
+  let localData: UserReadingProgress | null = null;
+  try {
+    const raw = localStorage.getItem(`reading_progress_${progressId}`);
+    if (raw) {
+      localData = JSON.parse(raw);
+    }
+  } catch {}
+
+  if (!userId) return localData;
+
+  try {
+    const docRef = doc(db, path, progressId);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as UserReadingProgress;
+      try {
+        localStorage.setItem(`reading_progress_${progressId}`, JSON.stringify(data));
+      } catch {}
+      return data;
+    }
+  } catch (error: any) {
+    console.warn('fetchReadingProgress fallback to local cache:', error);
+  }
+
+  return localData;
+};
+
+/**
+ * Duka Video Ads helpers
+ */
+export const fetchDukaVideoAds = async (): Promise<DukaVideoAdItem[]> => {
+  const path = 'duka_video_ads';
+  let firestoreAds: DukaVideoAdItem[] = [];
+  try {
+    const colRef = collection(db, path);
+    const snap = await getDocs(colRef);
+    if (!snap.empty) {
+      firestoreAds = snap.docs.map(d => ({ id: d.id, ...d.data() } as DukaVideoAdItem));
+    }
+  } catch (err: any) {
+    console.warn('fetchDukaVideoAds error, fallback to local/defaults:', err.message || err);
+  }
+
+  // Combine with localStorage ads if any
+  try {
+    const localRaw = localStorage.getItem('custom_duka_video_ads');
+    if (localRaw) {
+      const localAds: DukaVideoAdItem[] = JSON.parse(localRaw);
+      const ids = new Set(firestoreAds.map(a => a.id));
+      for (const la of localAds) {
+        if (!ids.has(la.id)) {
+          firestoreAds.push(la);
+        }
+      }
+    }
+  } catch {}
+
+  return firestoreAds;
+};
+
+export const saveDukaVideoAd = async (ad: Omit<DukaVideoAdItem, 'id'> & { id?: string }): Promise<string> => {
+  const path = 'duka_video_ads';
+  const adId = ad.id || `video-ad-${Date.now()}`;
+  const payload: DukaVideoAdItem = {
+    ...ad,
+    id: adId,
+    createdAt: ad.createdAt || Date.now()
+  };
+
+  try {
+    const docRef = doc(db, path, adId);
+    await setDoc(docRef, payload, { merge: true });
+  } catch (err: any) {
+    console.warn('saveDukaVideoAd error (saving locally):', err.message || err);
+  }
+
+  // Also save to localStorage cache so it works offline/instantly
+  try {
+    const localAds = JSON.parse(localStorage.getItem('custom_duka_video_ads') || '[]');
+    const filtered = localAds.filter((a: any) => a.id !== adId);
+    localStorage.setItem('custom_duka_video_ads', JSON.stringify([payload, ...filtered]));
+  } catch {}
+
+  return adId;
+};
+
+export const deleteDukaVideoAd = async (adId: string): Promise<void> => {
+  const path = 'duka_video_ads';
+  try {
+    const docRef = doc(db, path, adId);
+    await deleteDoc(docRef);
+  } catch (err: any) {
+    console.warn('deleteDukaVideoAd error:', err.message || err);
+  }
+
+  try {
+    const localAds = JSON.parse(localStorage.getItem('custom_duka_video_ads') || '[]');
+    const filtered = localAds.filter((a: any) => a.id !== adId);
+    localStorage.setItem('custom_duka_video_ads', JSON.stringify(filtered));
+  } catch {}
+};
+
+/**
+ * User Video Progress (Resume Watching) helpers
+ */
+export const saveVideoProgress = async (
+  userId: string,
+  videoId: string,
+  currentTime: number,
+  duration: number,
+  videoTitle?: string
+): Promise<string> => {
+  const path = 'user_video_progress';
+  const progressId = `${userId || 'guest'}_${videoId}`;
+  const payload: UserVideoProgress = {
+    id: progressId,
+    userId: userId || 'guest',
+    videoId,
+    videoTitle: videoTitle || '',
+    currentTime,
+    duration: duration || 0,
+    updatedAt: Date.now()
+  };
+
+  // Always save locally for instant offline/speed access
+  try {
+    localStorage.setItem(`video_progress_${progressId}`, JSON.stringify(payload));
+  } catch {}
+
+  if (!userId) return progressId;
+
+  try {
+    const docRef = doc(db, path, progressId);
+    await setDoc(docRef, payload, { merge: true });
+    return progressId;
+  } catch (error: any) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    return progressId;
+  }
+};
+
+export const fetchVideoProgress = async (
+  userId: string,
+  videoId: string
+): Promise<UserVideoProgress | null> => {
+  const path = 'user_video_progress';
+  const progressId = `${userId || 'guest'}_${videoId}`;
+
+  // Check localStorage first for immediate speed
+  let localData: UserVideoProgress | null = null;
+  try {
+    const raw = localStorage.getItem(`video_progress_${progressId}`);
+    if (raw) {
+      localData = JSON.parse(raw);
+    }
+  } catch {}
+
+  if (!userId) return localData;
+
+  try {
+    const docRef = doc(db, path, progressId);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as UserVideoProgress;
+      try {
+        localStorage.setItem(`video_progress_${progressId}`, JSON.stringify(data));
+      } catch {}
+      return data;
+    }
+  } catch (error: any) {
+    console.warn('fetchVideoProgress fallback to local cache:', error);
+  }
+
+  return localData;
+};
+

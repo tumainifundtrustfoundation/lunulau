@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0057B8" />
+      <stop offset="50%" stop-color="#00418A" />
+      <stop offset="100%" stop-color="#002B5C" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00E5FF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Subtle Inner Ring Glow -->
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="6" />
+
+  <!-- Central Graduation Cap & Book Illustration -->
+  <g transform="translate(256, 256) scale(1.6)">
+    <!-- Book Shadow -->
+    <path d="M-80 30 C-40 20 0 35 0 35 C0 35 40 20 80 30 L80 40 C40 30 0 45 0 45 C0 45 -40 30 -80 40 Z" fill="#001838" opacity="0.4" />
+    
+    <!-- Open Book Pages -->
+    <path d="M-75 15 C-35 5 0 20 0 20 L0 55 C0 55 -35 40 -75 50 Z" fill="#FFFFFF" />
+    <path d="M75 15 C35 5 0 20 0 20 L0 55 C0 55 35 40 75 50 Z" fill="#F1F5F9" />
+
+    <!-- Book Lines / Content representation -->
+    <path d="M-60 25 C-40 18 -20 25 -10 27" stroke="#0057B8" stroke-width="4" stroke-linecap="round" fill="none" />
+    <path d="M-60 35 C-40 28 -20 35 -10 37" stroke="#94A3B8" stroke-width="3" stroke-linecap="round" fill="none" />
+    <path d="M10 27 C20 25 40 18 60 25" stroke="#0057B8" stroke-width="4" stroke-linecap="round" fill="none" />
+    <path d="M10 37 C20 35 40 28 60 35" stroke="#94A3B8" stroke-width="3" stroke-linecap="round" fill="none" />
+
+    <!-- Graduation Cap Top Diamond -->
+    <path d="M0 -65 L70 -30 L0 5 L-70 -30 Z" fill="url(#goldGrad)" stroke="#FFFFFF" stroke-width="3" />
+    
+    <!-- Graduation Cap Base -->
+    <path d="M-35 -13 L-35 15 C-35 25 35 25 35 15 L35 -13 C25 -5 -25 -5 -35 -13 Z" fill="#D97706" />
+
+    <!-- Tassel -->
+    <path d="M45 -18 L60 10 L60 30" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" />
+    <circle cx="60" cy="32" r="5" fill="#FFFFFF" />
+    <circle cx="0" cy="-30" r="6" fill="#FFFFFF" />
+  </g>
+
+  <!-- App Label Text at bottom -->
+  <text x="256" y="450" text-anchor="middle" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="34" letter-spacing="4">LUPANULLA</text>
+</svg>
