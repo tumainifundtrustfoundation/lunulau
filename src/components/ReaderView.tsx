@@ -21,13 +21,24 @@ import {
   Maximize2,
   Minimize2,
   Printer,
-  ShieldAlert
+  ShieldAlert,
+  StickyNote,
+  Save,
+  Pencil,
+  Edit3,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Heading2,
+  Quote
 } from 'lucide-react';
-import { fetchDocuments, saveHighlight, fetchHighlights, deleteHighlight, toggleBookmark, fetchUserBookmarks, submitFeedback, updateDocument, saveReadingProgress, fetchReadingProgress } from '../firebase';
+import { fetchDocuments, saveHighlight, fetchHighlights, deleteHighlight, toggleBookmark, fetchUserBookmarks, submitFeedback, updateDocument, saveReadingProgress, fetchReadingProgress, saveUserPrivateNote } from '../firebase';
 import { DocumentMetadata, HighlightAnnotation, UserBookmark, UserReadingProgress } from '../types';
 import { localSeedDocs } from '../data/seedDocs';
 import FlashcardsModal from './FlashcardsModal';
 import PDFPreviewer from './PDFPreviewer';
+import MarkdownRenderer from './MarkdownRenderer';
 import { jsPDF } from 'jspdf';
 
 interface ReaderViewProps {
@@ -122,6 +133,91 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
   const [savingHighlight, setSavingHighlight] = useState(false);
   const [smartNotes, setSmartNotes] = useState('');
   const [loadingSmartNotes, setLoadingSmartNotes] = useState(false);
+
+  // Private Note State per documentId
+  const [privateNoteText, setPrivateNoteText] = useState('');
+  const [savedPrivateNote, setSavedPrivateNote] = useState('');
+  const [isEditingPrivateNote, setIsEditingPrivateNote] = useState(false);
+  const [savingPrivateNote, setSavingPrivateNote] = useState(false);
+  const [privateNoteSavedMsg, setPrivateNoteSavedMsg] = useState(false);
+  const privateNoteInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyNoteFormatting = (prefix: string, suffix: string = '') => {
+    const textarea = privateNoteInputRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentText = privateNoteText;
+    const selectedText = currentText.substring(start, end);
+
+    let replacement = '';
+    if (selectedText) {
+      replacement = `${prefix}${selectedText}${suffix}`;
+    } else {
+      const placeholder = prefix === '### ' ? 'Kichwa cha habari' : prefix === '> ' ? 'Nukuu...' : 'Maandishi';
+      replacement = `${prefix}${placeholder}${suffix}`;
+    }
+
+    const newText = currentText.substring(0, start) + replacement + currentText.substring(end);
+    setPrivateNoteText(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = selectedText ? start + replacement.length : start + prefix.length;
+      textarea.setSelectionRange(newCursorPos, selectedText ? newCursorPos : start + replacement.length);
+    }, 50);
+  };
+
+  useEffect(() => {
+    let note = '';
+    if (userProfile?.personalNotes && userProfile.personalNotes[documentId]) {
+      note = userProfile.personalNotes[documentId];
+    } else {
+      try {
+        const stored = localStorage.getItem('lupa_private_notes');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed[documentId]) {
+            note = parsed[documentId];
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    setPrivateNoteText(note);
+    setSavedPrivateNote(note);
+    setIsEditingPrivateNote(!note);
+  }, [documentId, userProfile]);
+
+  const handleSavePrivateNote = async () => {
+    setSavingPrivateNote(true);
+    try {
+      if (userProfile?.uid) {
+        await saveUserPrivateNote(userProfile.uid, documentId, privateNoteText);
+        if (userProfile.personalNotes) {
+          userProfile.personalNotes[documentId] = privateNoteText;
+        } else {
+          userProfile.personalNotes = { [documentId]: privateNoteText };
+        }
+      } else {
+        const stored = localStorage.getItem('lupa_private_notes');
+        let parsed: Record<string, string> = stored ? JSON.parse(stored) : {};
+        parsed[documentId] = privateNoteText;
+        localStorage.setItem('lupa_private_notes', JSON.stringify(parsed));
+      }
+      setSavedPrivateNote(privateNoteText);
+      setIsEditingPrivateNote(false);
+      setPrivateNoteSavedMsg(true);
+      setTimeout(() => setPrivateNoteSavedMsg(false), 3000);
+    } catch (err) {
+      console.error('Failed to save private note:', err);
+      alert('Hitilafu imetokea wakati wa kuhifadhi dokezo lako binafsi.');
+    } finally {
+      setSavingPrivateNote(false);
+    }
+  };
 
   const loadHighlights = async () => {
     if (!userProfile?.uid) return;
@@ -1176,6 +1272,20 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
           >
             <Bookmark size={15} className={isBookmarked ? 'fill-current' : ''} />
           </button>
+
+          <button
+            onClick={() => {
+              setIsEditingPrivateNote(true);
+              const el = document.getElementById('private-note-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              setTimeout(() => privateNoteInputRef.current?.focus(), 150);
+            }}
+            className="p-2 rounded-xl border bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 transition-all flex items-center gap-1 font-bold text-xs"
+            title="Weka Dokezo Binafsi (Add/Edit Private Note)"
+          >
+            <StickyNote size={15} />
+            <span className="hidden sm:inline">Dokezo Binafsi</span>
+          </button>
           
           <button 
             onClick={() => {
@@ -1355,6 +1465,217 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
 
         {/* Right Sidebar: Details and related tags */}
         <div className="lg:col-span-1 space-y-6">
+          {/* Add Private Note Widget for activeDocumentId */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 animate-fade-in" id="private-note-section">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <StickyNote size={15} className="text-amber-500" />
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Dokezo Langu Binafsi</h4>
+              </div>
+              <span className="text-[9px] bg-amber-50 text-amber-700 font-extrabold px-2 py-0.5 rounded-full uppercase border border-amber-200/60">
+                PRIVATE NOTE
+              </span>
+            </div>
+
+            <p className="text-[10px] text-slate-500 leading-normal font-medium">
+              Andika na uhifadhi dokezo au kumbukumbu zako binafsi kuhusu nyaraka hii kwenye akaunti yako.
+            </p>
+
+            {!isEditingPrivateNote && savedPrivateNote ? (
+              <div
+                onClick={() => {
+                  setIsEditingPrivateNote(true);
+                  setTimeout(() => privateNoteInputRef.current?.focus(), 80);
+                }}
+                className="bg-amber-50/80 hover:bg-amber-100/70 border border-amber-200/90 hover:border-amber-300 rounded-2xl p-4 transition-all duration-200 cursor-pointer group relative shadow-xs space-y-2.5"
+                title="Bonyeza hapa ili kubadilisha au kuhariri dokezo hili (Click to edit note)"
+              >
+                <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+                  <span className="text-[10px] font-extrabold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Pencil size={11} className="text-amber-600" />
+                    Dokezo Lililohifadhiwa
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingPrivateNote(true);
+                      setTimeout(() => privateNoteInputRef.current?.focus(), 80);
+                    }}
+                    className="text-[9px] bg-amber-200/80 text-amber-950 font-black px-2.5 py-1 rounded-lg group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors flex items-center gap-1 shadow-2xs"
+                  >
+                    <Edit3 size={10} />
+                    Hariri / Edit
+                  </button>
+                </div>
+
+                <div className="text-xs text-amber-950 font-medium leading-relaxed">
+                  <MarkdownRenderer content={savedPrivateNote} />
+                </div>
+
+                <div className="pt-2 border-t border-amber-200/50 flex items-center justify-between text-[9.5px] text-amber-800 font-semibold group-hover:text-amber-950">
+                  <span>Bonyeza hapa wakati wowote ili kufanya marekebisho.</span>
+                  <span className="font-extrabold underline flex items-center gap-0.5">Badilisha &rarr;</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {/* Lightweight Rich-Text Formatting Toolbar */}
+                <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl overflow-x-auto text-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('**', '**')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 font-bold transition-all flex items-center justify-center"
+                    title="Koleza (Bold) **maandishi**"
+                  >
+                    <Bold size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('*', '*')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 transition-all flex items-center justify-center"
+                    title="Muinamo (Italic) *maandishi*"
+                  >
+                    <Italic size={13} />
+                  </button>
+                  <div className="h-4 w-px bg-slate-300 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('### ')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 font-bold transition-all flex items-center justify-center"
+                    title="Kichwa cha Habari (Heading 3)"
+                  >
+                    <Heading2 size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('- ')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 transition-all flex items-center justify-center"
+                    title="Orodha ya Nukta (Bullet List)"
+                  >
+                    <List size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('1. ')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 transition-all flex items-center justify-center"
+                    title="Orodha ya Namba (Numbered List)"
+                  >
+                    <ListOrdered size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('> ')}
+                    className="p-1.5 hover:bg-white hover:shadow-2xs rounded-lg text-slate-700 hover:text-amber-600 transition-all flex items-center justify-center"
+                    title="Nukuu (Quote)"
+                  >
+                    <Quote size={13} />
+                  </button>
+                  <div className="h-4 w-px bg-slate-300 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => applyNoteFormatting('[Muhimu] ')}
+                    className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-[9px] rounded-lg transition-all"
+                    title="Tag Muhimu"
+                  >
+                    [Muhimu]
+                  </button>
+                </div>
+
+                <textarea
+                  ref={privateNoteInputRef}
+                  rows={4}
+                  value={privateNoteText}
+                  onChange={(e) => setPrivateNoteText(e.target.value)}
+                  placeholder="Andika dokezo au notisi yako binafsi hapa... Tumia vitufe vya juu kuongeza **Koleza**, *Muinamo*, au Orodha."
+                  className="w-full text-xs font-medium p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-800 resize-none leading-relaxed"
+                />
+                {savedPrivateNote && (
+                  <div className="flex items-center justify-between text-[10px] text-amber-700 font-semibold px-1">
+                    <span className="flex items-center gap-1">
+                      <Pencil size={11} className="text-amber-600" /> Unahariri dokezo lako lililopo
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrivateNoteText(savedPrivateNote);
+                        setIsEditingPrivateNote(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-600 underline text-[9.5px]"
+                    >
+                      Ghairi (Cancel)
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {privateNoteSavedMsg && (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-bold rounded-xl flex items-center gap-2 animate-fade-in shadow-xs">
+                <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Check size={12} className="stroke-[3]" />
+                </div>
+                <span>Dokezo lako binafsi limehifadhiwa kikamilifu!</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {privateNoteText || savedPrivateNote ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm('Je, una uhakika unataka kufuta dokezo hili binafsi?')) {
+                      setPrivateNoteText('');
+                      setSavedPrivateNote('');
+                      setIsEditingPrivateNote(true);
+                      if (userProfile?.uid) {
+                        await saveUserPrivateNote(userProfile.uid, documentId, '');
+                        if (userProfile.personalNotes) {
+                          delete userProfile.personalNotes[documentId];
+                        }
+                      } else {
+                        const stored = localStorage.getItem('lupa_private_notes');
+                        if (stored) {
+                          let parsed = JSON.parse(stored);
+                          delete parsed[documentId];
+                          localStorage.setItem('lupa_private_notes', JSON.stringify(parsed));
+                        }
+                      }
+                    }
+                  }}
+                  className="px-2.5 py-2 text-slate-400 hover:text-red-500 text-[10px] font-bold uppercase transition-all"
+                >
+                  Futa Dokezo
+                </button>
+              ) : <div />}
+
+              {isEditingPrivateNote && (
+                <button
+                  type="button"
+                  onClick={handleSavePrivateNote}
+                  disabled={savingPrivateNote}
+                  className={`px-4 py-2 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer ml-auto ${
+                    privateNoteSavedMsg
+                      ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                      : 'bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950'
+                  }`}
+                >
+                  {privateNoteSavedMsg ? (
+                    <>
+                      <Check size={14} className="stroke-[3] animate-bounce" />
+                      <span>Saved! / Limehifadhiwa</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save size={13} />
+                      {savingPrivateNote ? 'Inahifadhi...' : savedPrivateNote ? 'Hifadhi Mabadiliko' : 'Hifadhi Dokezo'}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Highlighter / Annotation Widget when in Notes Mode or when text is selected */}
           {(readerMode === 'notes' || selectedText) && (
             <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 animate-fade-in">
@@ -1787,6 +2108,19 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
           <p>www.lupanulla.co.tz</p>
         </div>
       </div>
+
+      {/* Floating Saved Toast Notification */}
+      {privateNoteSavedMsg && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900/95 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/40 backdrop-blur-md animate-bounce-short">
+          <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-md">
+            <Check size={16} className="stroke-[3]" />
+          </div>
+          <div className="flex flex-col pr-1">
+            <span className="text-emerald-400 font-extrabold text-[11px] uppercase tracking-wider">Limehifadhiwa! / Saved!</span>
+            <span className="text-slate-300 text-[10px] font-medium">Dokezo lako binafsi limehifadhiwa kwenye akaunti yako.</span>
+          </div>
+        </div>
+      )}
 
     </div>
   );

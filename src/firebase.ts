@@ -362,6 +362,21 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
 };
 
 /**
+ * Save or update a private note for a specific document in user's profile
+ */
+export const saveUserPrivateNote = async (uid: string, documentId: string, noteText: string): Promise<void> => {
+  const path = `users/${uid}`;
+  try {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+      [`personalNotes.${documentId}`]: noteText
+    });
+  } catch (err: any) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
+  }
+};
+
+/**
  * Award study points and track study time
  */
 export const awardStudyPoints = async (uid: string, points: number, durationMinutes: number): Promise<void> => {
