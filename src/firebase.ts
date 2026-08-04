@@ -70,15 +70,20 @@ try {
 
 export const db = dbInstance;
 
-// Validate Connection to Firestore safely
+// Validate Connection to Firestore safely without blocking initial renders
 async function testConnection() {
   try {
-    await getDoc(doc(db, 'test', 'connection'));
-  } catch {
-    // Handled silently for offline mode
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('Could not reach Cloud Firestore'))) {
+      console.warn("Firestore running in offline mode.");
+    }
   }
 }
-testConnection();
+// Run connection check asynchronously after initial mount
+setTimeout(() => {
+  testConnection().catch(() => {});
+}, 1500);
 
 // --- Firestore Error Handling (Skill Requirement) ---
 export enum OperationType {
@@ -104,7 +109,6 @@ interface FirestoreErrorInfo {
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errMsg = error instanceof Error ? error.message : String(error);
-  const errCode = (error as any)?.code;
 
   const errInfo: FirestoreErrorInfo = {
     error: errMsg,
@@ -118,13 +122,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     path
   };
 
-  // If error is network unavailable or offline, log warning and return cleanly to allow callers to use offline fallbacks
-  if (errCode === 'unavailable' || errMsg.includes('unavailable') || errMsg.includes('offline') || errMsg.includes('Could not reach Cloud Firestore')) {
-    console.warn(`Firestore network offline/unavailable warning [${operationType} ${path}]:`, errMsg);
-    return;
-  }
-
-  console.error('Firestore Error Details:', JSON.stringify(errInfo));
+  console.error('Firestore Error:', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 // ----------------------------------------------------

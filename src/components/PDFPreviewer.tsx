@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -803,6 +804,53 @@ export default function PDFPreviewer({
   }, []);
   const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>('iframe');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // PDF loading progress & detailed skeleton states
+  const [isIframeLoading, setIsIframeLoading] = useState<boolean>(true);
+  const [pdfProgress, setPdfProgress] = useState<number>(15);
+  const [pdfStageText, setPdfStageText] = useState<string>('Kuunganisha na kuhakiki mtandao wa Lupanulla Document Cloud...');
+
+  useEffect(() => {
+    setIsIframeLoading(true);
+    setPdfProgress(15);
+    setPdfStageText('Kuunganisha na kuhakiki mtandao wa Lupanulla Document Cloud...');
+
+    const stages = [
+      { progress: 35, text: 'Inasoma na kuthibitisha muundo wa PDF...' },
+      { progress: 60, text: 'Inatengeneza kurasa za mtihani (Vector PDF Engine)...' },
+      { progress: 82, text: 'Inaandaa taswira na maandishi ya mtihani...' },
+      { progress: 95, text: 'Inakamilisha utengenezaji wa kurasa za mtihani...' }
+    ];
+
+    let step = 0;
+    const interval = setInterval(() => {
+      if (step < stages.length) {
+        setPdfProgress(stages[step].progress);
+        setPdfStageText(stages[step].text);
+        step++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 550);
+
+    const timer = setTimeout(() => {
+      setPdfProgress(100);
+      setIsIframeLoading(false);
+    }, 3200);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, [driveUrl, viewMode]);
+
+  const handleIframeLoad = () => {
+    setPdfProgress(100);
+    setPdfStageText('Mtihani umekamilika kupakiwa!');
+    setTimeout(() => {
+      setIsIframeLoading(false);
+    }, 250);
+  };
   
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -3294,7 +3342,161 @@ export default function PDFPreviewer({
               className="w-full h-full border-0 rounded-2xl bg-slate-900"
               title={documentTitle}
               allowFullScreen
+              onLoad={handleIframeLoad}
             ></iframe>
+
+            {/* Detailed Progress Indicator & Skeleton Loader while PDF is rendering */}
+            <AnimatePresence>
+              {isIframeLoading && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.25 } }}
+                  className="absolute inset-0 z-20 bg-slate-950/95 backdrop-blur-md p-6 sm:p-8 flex flex-col justify-between rounded-2xl border border-slate-800"
+                >
+                  {/* Header info bar */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                    <div className="flex items-center gap-3">
+                      <motion.div 
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                        className="p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20 shrink-0"
+                      >
+                        <FileText size={20} className="text-cyan-400" />
+                      </motion.div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-cyan-300">
+                            {documentTitle}
+                          </span>
+                          <span className="bg-cyan-500/20 text-cyan-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border border-cyan-400/30">
+                            HD PDF ENGINE
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          Inatengeneza kurasa za mtihani kwenye kivinjari chako kwa kutumia Lupanulla Cloud...
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <motion.span 
+                        key={pdfProgress}
+                        initial={{ scale: 1.15 }}
+                        animate={{ scale: 1 }}
+                        className="text-xs font-mono font-black text-cyan-300 bg-slate-900 border border-slate-800 px-3 py-1 rounded-xl shadow-inner"
+                      >
+                        {pdfProgress}%
+                      </motion.span>
+                    </div>
+                  </div>
+
+                  {/* Main Progress & Stage Dashboard */}
+                  <div className="my-auto space-y-6 max-w-2xl mx-auto w-full">
+                    {/* Glowing progress bar */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-slate-200 flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                          {pdfStageText}
+                        </span>
+                        <span className="text-cyan-400 font-mono font-extrabold">{pdfProgress}%</span>
+                      </div>
+
+                      <div className="w-full bg-slate-900 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-800 shadow-inner relative">
+                        <motion.div 
+                          className="bg-gradient-to-r from-cyan-500 via-emerald-400 to-indigo-500 h-full rounded-full shadow-[0_0_15px_rgba(6,182,212,0.7)] relative overflow-hidden"
+                          animate={{ width: `${pdfProgress}%` }}
+                          transition={{ duration: 0.4, ease: 'easeOut' }}
+                        >
+                          {/* Shimmer effect inside progress bar */}
+                          <motion.div
+                            className="absolute inset-0 bg-white/20"
+                            animate={{ x: ['-100%', '200%'] }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                          />
+                        </motion.div>
+                      </div>
+                    </div>
+
+                    {/* Document Skeleton Paper Wireframe */}
+                    <motion.div 
+                      initial={{ opacity: 0.8, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4 relative overflow-hidden shadow-2xl"
+                    >
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-slate-800 animate-pulse border border-slate-700/50" />
+                          <div className="space-y-1">
+                            <div className="w-32 h-3 bg-slate-800 rounded animate-pulse" />
+                            <div className="w-20 h-2 bg-slate-800/60 rounded animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="w-16 h-3 bg-slate-800 rounded animate-pulse" />
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <div className="w-full h-3 bg-slate-800/90 rounded animate-pulse" />
+                        <div className="w-11/12 h-3 bg-slate-800/80 rounded animate-pulse" />
+                        <div className="w-4/5 h-3 bg-slate-800/70 rounded animate-pulse" />
+                        <div className="w-2/3 h-3 bg-slate-800/50 rounded animate-pulse" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="h-16 bg-slate-800/40 rounded-xl border border-slate-800 animate-pulse flex items-center justify-center text-slate-600 text-[10px] font-mono">
+                          [ Formula / Diagram Frame ]
+                        </div>
+                        <div className="h-16 bg-slate-800/40 rounded-xl border border-slate-800 animate-pulse flex items-center justify-center text-slate-600 text-[10px] font-mono">
+                          [ Answers / Workspace ]
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Helpful quick actions & advice */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800/80 text-xs">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Info size={14} className="text-cyan-400 shrink-0" />
+                      <p className="text-[11px] font-medium">
+                        Je, mtihani ni mkubwa na unachelewa? Unaweza kuusoma kama Interactive Reader au kuufungua kwenye Tab mpya.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => setViewMode('interactive')}
+                        className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[10px] font-black uppercase rounded-xl transition-all shadow cursor-pointer"
+                      >
+                        Interactive Reader
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => setIsIframeLoading(false)}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold uppercase rounded-xl border border-slate-700 transition-all cursor-pointer"
+                      >
+                        Skip Wait
+                      </motion.button>
+                      <motion.a
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        href={formattedUrl || driveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-extrabold uppercase rounded-xl border border-slate-700 transition-all cursor-pointer"
+                      >
+                        Tab Mpya ↗
+                      </motion.a>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {/* Responsive floating hint widget */}
             <div className={`absolute left-4 right-4 bg-slate-950/95 border border-slate-800 p-3 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xl backdrop-blur-sm z-10 animate-fade-in ${isMobile ? 'bottom-4' : 'top-4 max-w-md md:max-w-none'}`}>

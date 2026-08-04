@@ -28,6 +28,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { fetchDocuments, fetchUserBookmarks, toggleBookmark } from '../firebase';
+import { openPWAInstallModal } from './PWAInstallPrompt';
 import { DocumentMetadata, UserBookmark } from '../types';
 import FocusTimer from './FocusTimer';
 import NectaCountdownWidget from './NectaCountdownWidget';
@@ -292,25 +293,29 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
     <div id="dashboard-view" className="space-y-8 animate-fade-in text-slate-800 bg-slate-50">
       
       {/* ── PWA Install CTA Banner ── */}
-      {showInstallBtn && (
-        <section className="bg-cyan-600 rounded-3xl p-4 sm:p-5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-cyan-600/20 border border-cyan-500/30 animate-bounce-subtle">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <Sparkles size={24} className="text-white animate-pulse" />
-            </div>
-            <div>
-              <h3 className="font-bold text-sm sm:text-base">Weka Lupanulla kwenye Home Screen</h3>
-              <p className="text-white/80 text-[10px] sm:text-xs font-medium">Pata uzoefu wa app, notisi za haraka, na soma offline ukiwa na icon yako mwenyewe!</p>
-            </div>
+      <section className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 rounded-3xl p-4 sm:p-5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl border border-cyan-500/30">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+            <Sparkles size={24} className="text-amber-400 animate-pulse" />
           </div>
-          <button 
-            onClick={handleInstallClick}
-            className="bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0"
-          >
-            Weka App Sasa
-          </button>
-        </section>
-      )}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+                PWA WebApp Ready
+              </span>
+            </div>
+            <h3 className="font-extrabold text-sm sm:text-base text-white mt-0.5">Weka Lupanulla Elimu Hub Kwenye Simu/Kompyuta Yako</h3>
+            <p className="text-slate-300 text-[10px] sm:text-xs font-medium">Sakinisha App bure kwenye kivinjari chochote (Chrome, Safari, Edge, Samsung) ili kusoma notisi offline!</p>
+          </div>
+        </div>
+        <button 
+          onClick={openPWAInstallModal}
+          className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-6 py-2.5 rounded-xl transition-all shadow-lg flex items-center gap-2 shrink-0 cursor-pointer active:scale-95"
+        >
+          <Sparkles size={14} className="text-slate-950" />
+          <span>Sakinisha WebApp Sasa</span>
+        </button>
+      </section>
 
       {/* ── Welcome Banner with Floating Ambient Particles ── */}
       <section className="relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">

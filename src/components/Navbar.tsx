@@ -31,12 +31,15 @@ import {
   Award,
   CheckCircle2,
   Globe,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Download,
+  Smartphone
 } from 'lucide-react';
 import { UserProfile, AppNotification, AppTheme } from '../types';
 import { subscribeNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../firebase';
 import Logo from './Logo';
 import ProfileModal from './ProfileModal';
+import { openPWAInstallModal } from './PWAInstallPrompt';
 
 interface NavbarProps {
   activeView: string;
@@ -243,7 +246,17 @@ export default function Navbar({
           </div>
 
           {/* User profile action buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            {/* Install WebApp Button */}
+            <button
+              onClick={openPWAInstallModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wide shadow-md transition-all active:scale-95 cursor-pointer"
+              title="Sakinisha Lupanulla WebApp"
+            >
+              <Download size={14} className="stroke-[2.5]" />
+              <span className="hidden xl:inline">Sakinisha App</span>
+            </button>
+
             {/* Language Switcher */}
             <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-1 gap-1">
               <button
@@ -721,6 +734,25 @@ export default function Navbar({
 
                 {/* Preferences */}
                 <div className="space-y-3 pt-3 border-t border-slate-900">
+                  {/* PWA Install Button Banner in Drawer */}
+                  <div className="px-1">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        openPWAInstallModal();
+                      }}
+                      className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Download size={16} className="shrink-0 stroke-[2.5]" />
+                        <span>Sakinisha Lupanulla App</span>
+                      </div>
+                      <span className="text-[9px] bg-slate-950 text-amber-300 font-extrabold px-2 py-0.5 rounded-full border border-amber-300/30">
+                        FREE PWA
+                      </span>
+                    </button>
+                  </div>
+
                   {/* Language Switcher */}
                   <div className="space-y-1.5">
                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-3">Lugha / Language</p>

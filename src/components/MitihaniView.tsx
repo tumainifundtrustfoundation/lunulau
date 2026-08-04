@@ -49,6 +49,7 @@ import { DocumentMetadata, ExamResult, UserBookmark, NectaProgress, NectaProgres
 import { GoogleAdSenseUnit } from './MatangazoView';
 import ExamTimer from './ExamTimer';
 import MatokeoValidationModal from './MatokeoValidationModal';
+import PDFPreviewer from './PDFPreviewer';
 
 interface MitihaniViewProps {
   onNavigate: (view: string, id?: string) => void;
@@ -1774,216 +1775,230 @@ export default function MitihaniView({
         </div>
 
         {/* Selected past paper detail card */}
-        {nectaWizardLevel && nectaWizardSubject && nectaWizardYear && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 mt-2">
-            <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 animate-fade-in">
-              <div className="space-y-3 max-w-xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="bg-cyan-500/10 text-cyan-300 border border-cyan-400/20 text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                    <ShieldCheck size={10} className="text-emerald-400 animate-pulse" />
-                    {matchingDoc ? 'ILIYOHAKIKIWA (VERIFIED)' : 'LUPANULLA DOCUMENT CLOUD'}
-                  </span>
-                  <span className="bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded">
-                    MWAKA {nectaWizardYear}
-                  </span>
+        {nectaWizardLevel && nectaWizardSubject && nectaWizardYear && (() => {
+          const levelName = nectaWizardLevel === 'std4' ? 'Darasa la 4' :
+                            nectaWizardLevel === 'std7' ? 'Darasa la 7' :
+                            nectaWizardLevel === 'f2' ? 'Kidato cha 2' :
+                            nectaWizardLevel === 'f4' ? 'Kidato cha 4' : 'Kidato cha 6';
+
+          const autoDocId = matchingDoc ? matchingDoc.id : `necta-${nectaWizardLevel}-${nectaWizardSubject}-${nectaWizardYear}`;
+          const autoDocTitle = matchingDoc ? matchingDoc.title : `NECTA ${currentSubjectLabel} (${levelName}) - ${nectaWizardYear}`;
+
+          const maktabaLevel = nectaWizardLevel === 'std7' ? 'psle' :
+                               nectaWizardLevel === 'std4' ? 'sf' :
+                               nectaWizardLevel === 'f2' ? 'ftsee' :
+                               nectaWizardLevel === 'f4' ? 'csee' : 'acsee';
+          const maktabaSubjectMap: Record<string, string> = {
+            'basic-math': 'basic-math',
+            'adv-math': 'adv-math',
+            'kiswahili': 'kiswahili',
+            'english': 'english'
+          };
+          const maktabaSubject = maktabaSubjectMap[nectaWizardSubject] || nectaWizardSubject;
+
+          let fileSubject = nectaWizardSubject === 'basic-math' ? 'Basic-Mathematics' :
+                            nectaWizardSubject === 'adv-math' ? 'Advanced-Mathematics' :
+                            nectaWizardSubject === 'kiswahili' ? 'Kiswahili' :
+                            nectaWizardSubject === 'english' ? 'English-Language' :
+                            nectaWizardSubject === 'science' ? 'Science-and-Technology' :
+                            nectaWizardSubject === 'social-studies' ? 'Social-Studies' :
+                            nectaWizardSubject === 'civic-moral' ? 'Civic-and-Moral-Education' :
+                            nectaWizardSubject === 'mathematics' ? 'Mathematics' :
+                            nectaWizardSubject.charAt(0).toUpperCase() + nectaWizardSubject.slice(1);
+
+          let paperSuffix = '';
+          if (nectaWizardLevel === 'f4' || nectaWizardLevel === 'f6') {
+            if (!['basic-math', 'civics', 'kiswahili', 'bookkeeping', 'commerce'].includes(nectaWizardSubject)) {
+              paperSuffix = '-1';
+            }
+          }
+
+          const constructedMaktabaUrl = `https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}${paperSuffix}-${nectaWizardYear}.pdf`;
+          const autoDocDriveUrl = matchingDoc?.driveUrl || constructedMaktabaUrl;
+
+          return (
+            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 mt-2 shadow-2xl">
+              <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 animate-fade-in">
+                <div className="space-y-3 max-w-xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1">
+                      <ShieldCheck size={10} className="text-emerald-400 animate-pulse" />
+                      {matchingDoc ? 'ILIYOHAKIKIWA (VERIFIED)' : 'MTIHANI UMETAMBULIKA (AUTO-DETECTED)'}
+                    </span>
+                    <span className="bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded">
+                      MWAKA {nectaWizardYear}
+                    </span>
+                  </div>
+                  <h3 className="font-sans font-black text-white text-base sm:text-lg leading-tight">
+                    {autoDocTitle}
+                  </h3>
+                  <p className="text-xs text-slate-350 leading-relaxed font-semibold">
+                    {matchingDoc ? matchingDoc.description : `Soma na upakue mtihani rasmi wa kitaifa wa NECTA wa mwaka ${nectaWizardYear} kwa somo la ${currentSubjectLabel}. Karatasi hii ipo kwenye mfumo wa Lupanulla Document Cloud na inakuwezesha kujipima uwezo wako.`}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 font-mono">
+                    <span>Matazamaji: {matchingDoc ? matchingDoc.views.toLocaleString() : '1,500+'}</span>
+                    <span>•</span>
+                    <span>Saizi: {matchingDoc ? `${matchingDoc.sizeKB} KB` : '1.2 MB'}</span>
+                  </div>
+
+                  {/* Progress Status Toggle Buttons */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+                    <span className="text-[10px] font-black uppercase text-cyan-400 tracking-wider">Hali ya Maandalizi:</span>
+                    {(['not_started', 'completed', 'needs_review'] as const).map((st) => {
+                      const currentSt = getPaperProgressStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear);
+                      const isSelected = currentSt === st;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => handleUpdatePaperStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear, st)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                            isSelected
+                              ? st === 'completed' ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
+                                : st === 'needs_review' ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                                : 'bg-slate-700 text-white font-bold'
+                              : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700'
+                          }`}
+                        >
+                          {st === 'completed' && <CheckCircle2 size={11} />}
+                          {st === 'needs_review' && <AlertCircle size={11} />}
+                          {st === 'not_started' && <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />}
+                          <span>{st === 'completed' ? 'Imekamilika' : st === 'needs_review' ? 'Inahitaji Marudio' : 'Bado'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <h3 className="font-sans font-black text-white text-base sm:text-lg leading-tight">
-                  {matchingDoc ? matchingDoc.title : `NECTA ${currentSubjectLabel} - ${currentLevelLabel} Past Paper (${nectaWizardYear})`}
-                </h3>
-                <p className="text-xs text-slate-350 leading-relaxed font-semibold">
-                  {matchingDoc ? matchingDoc.description : `Soma na upakue mtihani rasmi wa kitaifa wa NECTA wa mwaka ${nectaWizardYear} kwa somo la ${currentSubjectLabel}. Karatasi hii ipo kwenye mfumo wa Lupanulla Document Cloud na inakuwezesha kujipima uwezo wako.`}
-                </p>
-                <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 font-mono">
-                  <span>Matazamaji: {matchingDoc ? matchingDoc.views.toLocaleString() : '1,500+'}</span>
-                  <span>•</span>
-                  <span>Saizi: {matchingDoc ? `${matchingDoc.sizeKB} KB` : '1.2 MB'}</span>
-                </div>
 
-                {/* Progress Status Toggle Buttons */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
-                  <span className="text-[10px] font-black uppercase text-cyan-400 tracking-wider">Hali ya Maandalizi:</span>
-                  {(['not_started', 'completed', 'needs_review'] as const).map((st) => {
-                    const currentSt = getPaperProgressStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear);
-                    const isSelected = currentSt === st;
-                    return (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => handleUpdatePaperStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear, st)}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 cursor-pointer ${
-                          isSelected
-                            ? st === 'completed' ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
-                              : st === 'needs_review' ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
-                              : 'bg-slate-700 text-white font-bold'
-                            : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700'
-                        }`}
-                      >
-                        {st === 'completed' && <CheckCircle2 size={11} />}
-                        {st === 'needs_review' && <AlertCircle size={11} />}
-                        {st === 'not_started' && <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />}
-                        <span>{st === 'completed' ? 'Imekamilika' : st === 'needs_review' ? 'Inahitaji Marudio' : 'Bado'}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch gap-3 shrink-0 justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    let docToPreview: DocumentMetadata;
-                    if (matchingDoc) {
-                      docToPreview = matchingDoc;
-                    } else {
-                      const levelName = nectaWizardLevel === 'std4' ? 'Darasa la 4' :
-                                        nectaWizardLevel === 'std7' ? 'Darasa la 7' :
-                                        nectaWizardLevel === 'f2' ? 'Kidato cha 2' :
-                                        nectaWizardLevel === 'f4' ? 'Kidato cha 4' : 'Kidato cha 6';
-                      const label = `NECTA ${currentSubjectLabel} (${levelName}) - ${nectaWizardYear}`;
-                      docToPreview = {
-                        id: `necta-${nectaWizardLevel}-${nectaWizardSubject}-${nectaWizardYear}`,
-                        title: label,
-                        description: `Soma na upakue mtihani rasmi wa kitaifa wa NECTA wa mwaka ${nectaWizardYear} kwa somo la ${currentSubjectLabel}. Karatasi hii ipo kwenye mfumo wa Lupanulla Document Cloud na inakuwezesha kujipima uwezo wako.`,
-                        category: 'NECTA',
-                        type: 'NECTA',
-                        tags: ['NECTA', nectaWizardLevel, nectaWizardSubject, String(nectaWizardYear)],
-                        year: parseInt(nectaWizardYear, 10),
-                        views: 1540,
-                        downloadsCount: 380,
-                        sizeKB: 1250,
-                        createdAt: Date.now(),
-                        status: 'approved'
-                      } as DocumentMetadata;
-                    }
-                    onNavigate('reader', docToPreview.id);
-                  }}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
-                >
-                  <Eye size={15} />
-                  Soma Mtandaoni
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    let downloadUrl = '';
-                    let downloadTitle = '';
-                    if (matchingDoc && matchingDoc.driveUrl) {
-                      downloadUrl = matchingDoc.driveUrl;
-                      downloadTitle = matchingDoc.title;
-                    } else {
-                      const maktabaLevel = nectaWizardLevel === 'std7' ? 'psle' :
-                                           nectaWizardLevel === 'std4' ? 'sf' :
-                                           nectaWizardLevel === 'f2' ? 'ftsee' :
-                                           nectaWizardLevel === 'f4' ? 'csee' : 'acsee';
-                      const maktabaSubject = nectaWizardSubject === 'basic-math' ? 'basic-math' :
-                                             nectaWizardSubject === 'adv-math' ? 'adv-math' :
-                                             nectaWizardSubject === 'kiswahili' ? 'kiswahili' :
-                                             nectaWizardSubject === 'english' ? 'english' : nectaWizardSubject;
-                      let fileSubject = nectaWizardSubject === 'basic-math' ? 'Basic-Mathematics' :
-                                        nectaWizardSubject === 'adv-math' ? 'Advanced-Mathematics' :
-                                        nectaWizardSubject === 'kiswahili' ? 'Kiswahili' :
-                                        nectaWizardSubject === 'english' ? 'English-Language' :
-                                        nectaWizardSubject === 'science' ? 'Science-and-Technology' :
-                                        nectaWizardSubject === 'social-studies' ? 'Social-Studies' :
-                                        nectaWizardSubject === 'civic-moral' ? 'Civic-and-Moral-Education' :
-                                        nectaWizardSubject === 'mathematics' ? 'Mathematics' :
-                                        nectaWizardSubject.charAt(0).toUpperCase() + nectaWizardSubject.slice(1);
-                      let paperSuffix = '';
-                      if (nectaWizardLevel === 'f4' || nectaWizardLevel === 'f6') {
-                        if (!['basic-math', 'civics', 'kiswahili', 'bookkeeping'].includes(nectaWizardSubject)) {
-                          paperSuffix = '-1';
-                        }
-                      }
-                      downloadUrl = `https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}${paperSuffix}-${nectaWizardYear}.pdf`;
-                      const levelName = nectaWizardLevel === 'std4' ? 'Darasa la 4' :
-                                        nectaWizardLevel === 'std7' ? 'Darasa la 7' :
-                                        nectaWizardLevel === 'f2' ? 'Kidato cha 2' :
-                                        nectaWizardLevel === 'f4' ? 'Kidato cha 4' : 'Kidato cha 6';
-                      downloadTitle = `NECTA ${fileSubject.replace(/-/g, ' ')} (${levelName}) - ${nectaWizardYear}`;
-                    }
-
-                    window.dispatchEvent(new CustomEvent('start-pdf-download', {
-                      detail: { 
-                        title: downloadTitle, 
-                        url: downloadUrl 
-                      }
-                    }));
-                  }}
-                  className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-5 py-3 rounded-2xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
-                >
-                  <Download size={15} />
-                  Pakua PDF
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTimer(true);
-                    alert(`⏱️ Kipima muda kimeanzishwa! Una dakika 180 (Masaa 3) kufanya mtihani huu. Unaweza kuona saa inayorudi nyuma juu ya skrini yako sasa.`);
-                  }}
-                  className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
-                >
-                  <Clock size={15} />
-                  Zoezi la Saa (Timer)
-                </button>
-              </div>
-            </div>
-
-            {/* Verification & Request section at the bottom */}
-            {!matchingDoc && (
-              <div className="border-t border-slate-800/80 pt-4 mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <p className="text-[10.5px] text-slate-400 font-semibold max-w-xl">
-                  💡 <strong className="text-slate-300">Ukaguzi wa Ubora:</strong> Karatasi hii imepakiwa moja kwa moja kutoka kwenye Lupanulla Public Index. Unaweza kuomba jopo la walimu wetu kuikagua, kuisahihisha, au kuweka majibu yake (marking scheme) kwenye mfumo wetu.
-                </p>
-                {isPaperAlreadyRequested ? (
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-black uppercase tracking-wider shrink-0 flex items-center gap-1">
-                    ✓ Ombi la Uhakiki Limepokelewa
-                  </span>
-                ) : (
+                <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch gap-3 shrink-0 justify-center">
                   <button
                     type="button"
-                    onClick={handleRequestPaper}
-                    disabled={isRequesting}
-                    className="text-[10px] bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 hover:text-amber-200 border border-amber-400/20 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer"
+                    onClick={() => {
+                      onNavigate('reader', autoDocId);
+                    }}
+                    className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                   >
-                    {isRequesting ? 'Inatuma...' : 'Omba Uhakiki na Majibu'}
+                    <Eye size={15} />
+                    Soma Kwenye Reader Mzima
                   </button>
-                )}
-              </div>
-            )}
 
-            {/* Admin Direct Google Drive Link Management Bar */}
-            {isAdmin && (
-              <div className="border-t border-cyan-500/30 pt-4 mt-4 bg-cyan-950/60 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 rounded-b-3xl flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-cyan-200 font-bold">
-                  <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
-                  <span>Msimamizi (Admin): {matchingDoc ? 'Mtihani huu una Google Drive Link iliyohifadhiwa.' : 'Bado hujaweka Google Drive Link ya mtihani huu.'}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('start-pdf-download', {
+                        detail: { 
+                          title: autoDocTitle, 
+                          url: autoDocDriveUrl 
+                        }
+                      }));
+                    }}
+                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-5 py-3 rounded-2xl border border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
+                  >
+                    <Download size={15} />
+                    Pakua PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTimer(true);
+                      alert(`⏱️ Kipima muda kimeanzishwa! Una dakika 180 (Masaa 3) kufanya mtihani huu. Unaweza kuona saa inayorudi nyuma juu ya skrini yako sasa.`);
+                    }}
+                    className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
+                  >
+                    <Clock size={15} />
+                    Zoezi la Saa (Timer)
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                  {matchingDoc ? (
+              </div>
+
+              {/* Embedded Interactive Reader directly in this section */}
+              <div className="mt-6 border-t border-slate-800/80 pt-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <h4 className="font-extrabold text-sm text-white uppercase tracking-wider">
+                      Soma Mtihani Huu Hapa Hapa (Auto-Detected Live Reader)
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono font-bold px-2.5 py-1 rounded-lg uppercase">
+                      {autoDocId}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => handleOpenEditModal(matchingDoc)}
-                      className="flex-1 sm:flex-none bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                      onClick={() => onNavigate('reader', autoDocId)}
+                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 px-3 py-1 rounded-lg font-bold uppercase transition-all cursor-pointer"
                     >
-                      <Edit size={14} /> Hariri / Badilisha Drive Link
+                      Fungua Ukurasa Mzima ↗
                     </button>
+                  </div>
+                </div>
+
+                <PDFPreviewer
+                  documentId={autoDocId}
+                  documentTitle={autoDocTitle}
+                  driveUrl={autoDocDriveUrl}
+                  category="NECTA"
+                  year={parseInt(nectaWizardYear, 10)}
+                  type="NECTA"
+                />
+              </div>
+
+              {/* Verification & Request section at the bottom */}
+              {!matchingDoc && (
+                <div className="border-t border-slate-800/80 pt-4 mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <p className="text-[10.5px] text-slate-400 font-semibold max-w-xl">
+                    💡 <strong className="text-slate-300">Ukaguzi wa Ubora:</strong> Karatasi hii imepakiwa moja kwa moja kutoka kwenye Lupanulla Public Index. Unaweza kuomba jopo la walimu wetu kuikagua, kuisahihisha, au kuweka majibu yake (marking scheme) kwenye mfumo wetu.
+                  </p>
+                  {isPaperAlreadyRequested ? (
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-black uppercase tracking-wider shrink-0 flex items-center gap-1">
+                      ✓ Ombi la Uhakiki Limepokelewa
+                    </span>
                   ) : (
                     <button
                       type="button"
-                      onClick={handleAdminAddPaperForWizard}
-                      className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                      onClick={handleRequestPaper}
+                      disabled={isRequesting}
+                      className="text-[10px] bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 hover:text-amber-200 border border-amber-400/20 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer"
                     >
-                      <Plus size={14} /> Weka Link ya Google Drive (Admin)
+                      {isRequesting ? 'Inatuma...' : 'Omba Uhakiki na Majibu'}
                     </button>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+
+              {/* Admin Direct Google Drive Link Management Bar */}
+              {isAdmin && (
+                <div className="border-t border-cyan-500/30 pt-4 mt-4 bg-cyan-950/60 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 rounded-b-3xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs text-cyan-200 font-bold">
+                    <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                    <span>Msimamizi (Admin): {matchingDoc ? 'Mtihani huu una Google Drive Link iliyohifadhiwa.' : 'Bado hujaweka Google Drive Link ya mtihani huu.'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                    {matchingDoc ? (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(matchingDoc)}
+                        className="flex-1 sm:flex-none bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                      >
+                        <Edit size={14} /> Hariri / Badilisha Drive Link
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleAdminAddPaperForWizard}
+                        className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                      >
+                        <Plus size={14} /> Weka Link ya Google Drive (Admin)
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </section>
 
       {/* ── Trending & Popular Past Papers Carousel Slider ── */}

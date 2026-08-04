@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   FileText, 
   ArrowLeft, 
@@ -22,6 +23,7 @@ import {
   Minimize2,
   Printer,
   ShieldAlert,
+  ShieldCheck,
   StickyNote,
   Save,
   Pencil,
@@ -1208,10 +1210,151 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-3 text-cyan-600">
-        <div className="w-8 h-8 border-4 border-current border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Inafungua Karatasi ya Mtihani...</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="space-y-6 max-w-7xl mx-auto px-2 sm:px-4"
+      >
+        {/* Upper Navigation Action Bar Skeleton */}
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-28 h-9 bg-slate-200 rounded-xl animate-pulse" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 bg-slate-200 rounded-xl animate-pulse" />
+            <div className="w-32 h-9 bg-slate-200 rounded-xl animate-pulse" />
+            <div className="w-9 h-9 bg-slate-200 rounded-xl animate-pulse" />
+            <div className="w-32 h-9 bg-slate-200 rounded-xl animate-pulse" />
+            <div className="w-32 h-9 bg-slate-200 rounded-xl animate-pulse" />
+          </div>
+        </div>
+
+        {/* Tab Switcher Skeleton */}
+        <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit gap-2">
+          <div className="w-44 h-8 bg-slate-300/80 rounded-lg animate-pulse" />
+          <div className="w-44 h-8 bg-slate-200/80 rounded-lg animate-pulse" />
+        </div>
+
+        {/* Main Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Viewer Skeleton */}
+          <div className="lg:col-span-3 space-y-4">
+            <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 min-h-[650px] flex flex-col justify-between shadow-2xl relative overflow-hidden">
+              {/* Top status & progress header */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      animate={{ scale: [1, 1.08, 1] }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                      className="p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20"
+                    >
+                      <FileText size={22} className="text-cyan-400" />
+                    </motion.div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black uppercase text-cyan-300 tracking-wider">Lupanulla PDF Rendering Engine</span>
+                        <span className="bg-cyan-500/20 text-cyan-300 text-[10px] font-mono px-2 py-0.5 rounded-full border border-cyan-400/30 font-bold">
+                          Kasi Kubwa (HD)
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">Inapakia na kutayarisha mtihani uliouchagua kwa ajili ya kusoma...</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-black text-cyan-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+                      Inapakia Mtihani...
+                    </span>
+                  </div>
+                </div>
+
+                {/* Detailed animated progress bar with motion shimmer */}
+                <div className="space-y-2 bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-300 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                      Inatayarisha muundo wa kurasa za mtihani...
+                    </span>
+                    <span className="text-cyan-400 font-mono font-extrabold">92%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700/50 relative">
+                    <motion.div 
+                      initial={{ width: '0%' }}
+                      animate={{ width: '92%' }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      className="bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 h-full rounded-full relative overflow-hidden shadow-[0_0_12px_rgba(6,182,212,0.6)]"
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-white/25"
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                      />
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Simulated Paper Skeleton Canvas */}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 space-y-6 flex-1 my-4 relative overflow-hidden">
+                <div className="flex flex-col items-center justify-center space-y-3 pb-6 border-b border-slate-800/80">
+                  <motion.div 
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center shadow-lg"
+                  >
+                    <Sparkles size={24} className="text-cyan-400" />
+                  </motion.div>
+                  <div className="w-3/4 sm:w-1/2 h-5 bg-slate-800 rounded-lg animate-pulse" />
+                  <div className="w-1/2 sm:w-1/3 h-3 bg-slate-800/60 rounded-md animate-pulse" />
+                </div>
+
+                {/* Fake Exam Section Lines */}
+                <div className="space-y-4">
+                  <div className="w-1/4 h-4 bg-cyan-900/40 rounded border border-cyan-800/30 animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="w-full h-3 bg-slate-800/80 rounded animate-pulse" />
+                    <div className="w-11/12 h-3 bg-slate-800/80 rounded animate-pulse" />
+                    <div className="w-4/5 h-3 bg-slate-800/60 rounded animate-pulse" />
+                  </div>
+
+                  <div className="w-1/3 h-4 bg-indigo-900/40 rounded border border-indigo-800/30 animate-pulse pt-2" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-20 bg-slate-800/50 rounded-xl border border-slate-800 animate-pulse flex items-center justify-center text-slate-600 text-xs font-mono">
+                      [Formula / Section Box]
+                    </div>
+                    <div className="h-20 bg-slate-800/50 rounded-xl border border-slate-800 animate-pulse flex items-center justify-center text-slate-600 text-xs font-mono">
+                      [Diagram / Answer Box]
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Status Notice */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 border-t border-slate-800/80 pt-4">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <ShieldCheck size={14} className="text-emerald-400" />
+                  Lupanulla Secure Document Engine (VERIFIED)
+                </span>
+                <span className="font-mono text-[11px] text-slate-500">Auto-Detecting Page Specs...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side Panel Skeleton */}
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm">
+              <div className="w-1/2 h-4 bg-slate-200 rounded animate-pulse" />
+              <div className="h-32 bg-slate-100 rounded-2xl animate-pulse" />
+            </div>
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-sm">
+              <div className="w-2/3 h-4 bg-slate-200 rounded animate-pulse" />
+              <div className="h-24 bg-slate-100 rounded-2xl animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </motion.div>
     );
   }
 
