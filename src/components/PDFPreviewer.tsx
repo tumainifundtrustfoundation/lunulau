@@ -920,14 +920,8 @@ export default function PDFPreviewer({
     setRotation(0);
     setSearchQuery('');
     
-    const isSeed = [
-      'mock-bio-f4-2026', 'mock-geo-f4-2026', 'mock-chem-f4-2026',
-      'mock-math-f4-2026', 'mock-pe-f4-2026', 'mock-chem2-f4-2026',
-      'mock-chinese-f4-2026', 'mock-civics-f4-2026', 'mock-commerce-f4-2026',
-      'mock-phy-f4-2026', 'necta-phy-f4-2023', 'necta-math-f4-2022',
-      'mock-hist-f4-2024', 'chem-practical-handout'
-    ].includes(documentId);
-    setViewMode(isSeed ? 'interactive' : 'iframe');
+    // Always default to interactive HD reader so all exams open reliably
+    setViewMode('interactive');
   }, [documentId]);
 
   // High-fidelity page content database
@@ -3296,8 +3290,8 @@ export default function PDFPreviewer({
         {viewMode === 'iframe' ? (
           <div className="w-full h-full bg-slate-900 relative flex flex-col items-center justify-center p-0 sm:p-4">
             <iframe 
-              srcDoc={iframeSrcDoc}
-              className="w-full h-full border-0"
+              src={formattedUrl || driveUrl || 'about:blank'}
+              className="w-full h-full border-0 rounded-2xl bg-slate-900"
               title={documentTitle}
               allowFullScreen
             ></iframe>
@@ -3310,12 +3304,19 @@ export default function PDFPreviewer({
                 </div>
                 <p className="text-[10px] text-slate-300 font-semibold leading-relaxed">
                   {isMobile 
-                    ? 'Je, PDF inachelewa au inaonekana vibaya? Unaweza kuifungua moja kwa moja au kusoma kama Notisi Mahiri.'
-                    : 'Hali ya Direct Preview: Inapakia kutoka Google Drive. Ikishindwa kuonekana au unataka kuandika highlights, bofya "Interactive HD Reader" juu au "Smart Notes".'
+                    ? 'Je, PDF inachelewa au inaonekana vibaya? Unaweza kuifungua moja kwa moja au kusoma kama Interactive Reader.'
+                    : 'Hali ya Direct Preview: Inapakia PDF. Ikishindwa kuonekana, bofya "Interactive HD Reader" au "Fungua Tab Mpya".'
                   }
                 </p>
               </div>
               <div className="flex gap-2 w-full md:w-auto shrink-0 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('interactive')}
+                  className="py-1.5 px-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[10px] uppercase rounded-xl transition-all shadow-lg cursor-pointer"
+                >
+                  Interactive Reader
+                </button>
                 <a 
                   href={(() => {
                     if (driveUrl.includes('https://docs.google.com/viewer?url=')) {
@@ -3328,18 +3329,10 @@ export default function PDFPreviewer({
                   })()} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex-1 md:flex-initial text-center py-1.5 px-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[10px] uppercase rounded-xl transition-all shadow-lg cursor-pointer"
+                  className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-[10px] uppercase rounded-xl transition-all cursor-pointer"
                 >
-                  Fungua Kwenye Tab Mpya
+                  Tab Mpya
                 </a>
-                {onSwitchToNotes && (
-                  <button 
-                    onClick={onSwitchToNotes}
-                    className="flex-1 md:flex-initial py-1.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-extrabold text-[10px] uppercase rounded-xl transition-all cursor-pointer"
-                  >
-                    Notisi Mahiri
-                  </button>
-                )}
               </div>
             </div>
           </div>

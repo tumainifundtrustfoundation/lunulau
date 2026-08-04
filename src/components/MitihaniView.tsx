@@ -1856,7 +1856,7 @@ export default function MitihaniView({
                         status: 'approved'
                       } as DocumentMetadata;
                     }
-                    handleDocClick(docToPreview);
+                    onNavigate('reader', docToPreview.id);
                   }}
                   className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                 >
@@ -2950,33 +2950,83 @@ export default function MitihaniView({
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col justify-center items-center py-2">
-                    {/* Render Real PDF iframe preview */}
+                    {/* Render Real PDF iframe preview or interactive paper sheet card */}
                     {(() => {
-                      let embedUrl = '';
-                      if (quickViewDoc.driveUrl) {
-                        const parsedId = extractGoogleDriveId(quickViewDoc.driveUrl);
-                        if (parsedId) {
-                          embedUrl = `https://drive.google.com/file/d/${parsedId}/preview`;
-                        } else {
-                          embedUrl = quickViewDoc.driveUrl;
-                        }
-                      } else {
-                        const downloadInfo = getDownloadInfo(quickViewDoc);
-                        embedUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(downloadInfo.url)}&embedded=true`;
+                      let parsedDriveId = quickViewDoc.driveUrl ? extractGoogleDriveId(quickViewDoc.driveUrl) : null;
+                      if (parsedDriveId) {
+                        const embedUrl = `https://drive.google.com/file/d/${parsedDriveId}/preview`;
+                        return (
+                          <div className="w-full h-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex flex-col relative min-h-[250px] md:min-h-0">
+                            <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 rounded-lg text-[10px] text-slate-300 font-extrabold z-10 flex items-center gap-1 border border-slate-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                              Hakiki PDF ya Mtandaoni
+                            </div>
+                            <iframe 
+                              src={embedUrl} 
+                              className="w-full h-full border-0 rounded-2xl bg-slate-900" 
+                              title="PDF Preview"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        );
                       }
 
+                      // Interactive Sheet Preview Card for NECTA papers
+                      const downloadInfo = getDownloadInfo(quickViewDoc);
                       return (
-                        <div className="w-full h-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 flex flex-col relative min-h-[250px] md:min-h-0">
-                          <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 rounded-lg text-[10px] text-slate-300 font-extrabold z-10 flex items-center gap-1 border border-slate-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                            Hakiki PDF ya Mtandaoni
+                        <div className="w-full h-full rounded-2xl p-6 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-800 flex flex-col justify-between text-white relative min-h-[280px] shadow-xl">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span className="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">
+                                NECTA EXAM PAPER
+                              </span>
+                              <span className="text-slate-400 text-[11px] font-mono">
+                                {quickViewDoc.year || 2023}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2">
+                              <h4 className="font-extrabold text-base text-cyan-100 leading-snug">
+                                {quickViewDoc.title}
+                              </h4>
+                              <p className="text-xs text-slate-300 font-medium leading-relaxed line-clamp-3">
+                                {quickViewDoc.description || 'Karatasi rasmi ya mtihani wa taifa. Bonyeza kitufe hapa chini ili kusoma karatasi hii yote mtandaoni bila matatizo.'}
+                              </p>
+                            </div>
+
+                            <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1.5 text-xs text-slate-300">
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400 font-bold">Njia ya Kusoma:</span>
+                                <span className="text-cyan-400 font-extrabold">Interactive HD Reader</span>
+                              </div>
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400 font-bold">Inajumuisha:</span>
+                                <span className="text-emerald-400 font-extrabold">Maswali, Highlights & Notes</span>
+                              </div>
+                            </div>
                           </div>
-                          <iframe 
-                            src={embedUrl} 
-                            className="w-full h-full border-0 rounded-2xl bg-slate-900" 
-                            title="PDF Preview"
-                            referrerPolicy="no-referrer"
-                          />
+
+                          <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setQuickViewDoc(null);
+                                onNavigate('reader', quickViewDoc.id);
+                              }}
+                              className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Eye size={15} />
+                              Soma Mtihani Huu Sasa
+                            </button>
+                            <a
+                              href={downloadInfo.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl text-center transition-all flex items-center justify-center gap-1.5"
+                            >
+                              Fungua Direct PDF
+                            </a>
+                          </div>
                         </div>
                       );
                     })()}
