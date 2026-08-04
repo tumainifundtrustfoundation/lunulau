@@ -1005,7 +1005,7 @@ export default function MitihaniView({
       doc.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Advanced specific filters
-    const docType = doc.type || (doc.tags.some(t => t.toLowerCase() === 'necta') ? 'NECTA' : 'Majaribio');
+    const docType = doc.type || (doc.tags.some(t => t.toLowerCase() === 'necta') ? 'NECTA' : 'Mtihani');
     const matchesType = !selectedType || docType.toLowerCase() === selectedType.toLowerCase();
 
     const matchesSubject = !selectedSubject || doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase());
@@ -1333,285 +1333,26 @@ export default function MitihaniView({
               {showTimer ? 'Funga Kipima Muda' : 'Kipima Muda (Timer)'}
             </button>
 
-            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') ? (
+            <button 
+              onClick={() => onNavigate('upload')}
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wide"
+            >
+              <Plus size={16} /> Pakia Mtihani
+            </button>
+
+            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
               <button 
                 onClick={handleOpenAddModal}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
               >
-                <Plus size={16} /> Ongeza Mtihani Mpya (Admin)
+                <Plus size={16} /> Haraka (Admin)
               </button>
-            ) : (
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1.5 shadow-sm">
-                <BookOpen size={14} className="text-cyan-300 animate-pulse" />
-                <span>Njia ya Usomaji Imewashwa</span>
-              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* ── NEW: Exam Results Verification & Transcript Portal ── */}
-      <section className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h2 className="font-sans font-black text-slate-900 text-base uppercase tracking-tight">Kituo cha Hakiki na Kutazama Matokeo</h2>
-              <p className="text-xs text-slate-400">Hakiki matokeo rasmi ya NECTA Mock, Terminal, na majaribio ya shule</p>
-            </div>
-          </div>
-          <span className="self-start sm:self-auto bg-indigo-50 text-indigo-700 font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-indigo-100">
-            Mfumo wa Uhakiki Umewashwa (Active)
-          </span>
-        </div>
 
-        <form onSubmit={handleLookupResult} className="max-w-xl space-y-3">
-          <div className="space-y-1">
-            <label className="block text-slate-400 font-bold uppercase text-[9px] tracking-wider">Ingiza Namba ya Mtihani (Candidate Code)</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-3.5 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  required
-                  value={candidateCode}
-                  onChange={(e) => setCandidateCode(e.target.value)}
-                  placeholder="Mfano: S0101/0001/2026 au LUP-2026-88"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-10 pr-4 text-xs font-mono font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-800 placeholder-slate-400"
-                />
-              </div>
-              <button 
-                type="submit"
-                disabled={checkingResult}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-6 py-3 rounded-2xl transition-all shadow-md flex items-center gap-1.5 whitespace-nowrap disabled:opacity-75"
-              >
-                {checkingResult ? (
-                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <span>Tafuta Matokeo</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
-
-        <div className="flex flex-wrap gap-2 items-center text-[10px] text-slate-400 font-bold">
-          <span>Namba za majaribio ya haraka (Mifano):</span>
-          <button
-            type="button"
-            onClick={() => setCandidateCode('S0101/0001/2026')}
-            className="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 font-mono transition-colors cursor-pointer"
-          >
-            S0101/0001/2026
-          </button>
-          <button
-            type="button"
-            onClick={() => setCandidateCode('S0101/0002/2026')}
-            className="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 font-mono transition-colors cursor-pointer"
-          >
-            S0101/0002/2026
-          </button>
-        </div>
-
-        {/* Info Block */}
-        <div className="bg-indigo-50/45 border border-indigo-100 rounded-2xl p-4 max-w-xl text-xs space-y-1.5 text-indigo-950 font-medium">
-          <p className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider">Matokeo yanayopatikana sasa:</p>
-          <ul className="list-disc list-inside space-y-0.5 text-indigo-900 font-semibold">
-            <li>Form IV NECTA Mock Examinations (2026)</li>
-            <li>Form IV NECTA Terminal (2026)</li>
-          </ul>
-        </div>
-
-        {/* Orodha ya Matokeo Yaliyosajiliwa (Registered Exam Results List) */}
-        {dbResults && dbResults.length > 0 && (
-          <div className="space-y-3 max-w-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display font-extrabold text-[10px] text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                Matokeo ya Ndani (Database Results List)
-              </h3>
-              <span className="text-[9px] bg-indigo-50 text-indigo-700 font-extrabold px-2 py-0.5 rounded-full">
-                {dbResults.length} Zilizopo
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {dbResults.map((res) => (
-                <div 
-                  key={res.id} 
-                  className="bg-white border border-slate-200 hover:border-indigo-200 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-sm transition-all"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
-                        {res.candidateCode}
-                      </span>
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">{res.examType.split(' ')[0]}</span>
-                    </div>
-                    <h4 className="font-bold text-slate-900 text-xs line-clamp-1">{res.studentName}</h4>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
-                      <span>{res.level} &bull; {res.year}</span>
-                      <span>&bull;</span>
-                      <span className="text-emerald-600 font-black">{res.division}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 border-t border-slate-100 pt-3 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCandidateCode(res.candidateCode);
-                        setCheckedResult(res);
-                        setResultLookupError(null);
-                      }}
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black text-[9px] uppercase py-2 px-2.5 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1"
-                    >
-                      <Search className="w-3 h-3" /> Tazama
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedResultForModal(res);
-                        setIsValidationModalOpen(true);
-                      }}
-                      className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-[9px] uppercase py-2 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" /> Hakiki
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Error Feedback */}
-        {resultLookupError && (
-          <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex gap-3 text-xs text-rose-700">
-            <AlertCircle className="flex-shrink-0 text-rose-500" size={16} />
-            <p className="font-semibold leading-normal">{resultLookupError}</p>
-          </div>
-        )}
-
-        {/* Verified Result Transcript Card */}
-        {checkedResult && (
-          <div className="border border-indigo-200 rounded-3xl bg-slate-50 overflow-hidden shadow-md animate-fade-in max-w-2xl">
-            {/* Transcript Header */}
-            <div className="bg-gradient-to-r from-indigo-900 to-slate-900 p-5 sm:p-6 text-white relative">
-              <div className="absolute top-4 right-4 flex gap-1.5">
-                {(checkedResult as any).isExternal ? (
-                  <div className="bg-cyan-400 text-slate-950 font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow flex items-center gap-1.5">
-                    <Globe size={10} />
-                    MTANDAONI (ONLINE NECTA)
-                  </div>
-                ) : (
-                  <div className="bg-emerald-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow flex items-center gap-1">
-                    <CheckCircle2 size={10} />
-                    HAKIKIWA (VERIFIED)
-                  </div>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">Ripoti Rasmi ya Maendeleo ya Taaluma</span>
-                <h3 className="font-display font-extrabold text-base sm:text-lg leading-tight">{checkedResult.studentName}</h3>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-slate-300 pt-1">
-                  <span>Candidate No: <strong className="text-white">{checkedResult.candidateCode}</strong></span>
-                  <span>•</span>
-                  <span>Exam: <strong className="text-white">{checkedResult.examType} ({checkedResult.year})</strong></span>
-                  <span>•</span>
-                  <span>Class: <strong className="text-white">{checkedResult.level}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Transcript Details & Scores */}
-            <div className="p-5 sm:p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
-                <div>
-                  <span className="text-slate-400 block font-extrabold text-[9px] uppercase tracking-wider mb-0.5">Msimamo wa Divisheni</span>
-                  <span className="text-slate-800 font-black text-sm sm:text-base uppercase">{checkedResult.division}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-extrabold text-[9px] uppercase tracking-wider mb-0.5">Wastani wa Alama (GPA)</span>
-                  <span className="text-indigo-600 font-mono font-black text-sm sm:text-base">{checkedResult.gpa}</span>
-                </div>
-              </div>
-
-              {/* Subject Table */}
-              <div className="bg-white border border-slate-150 rounded-2xl overflow-hidden shadow-sm">
-                <div className="bg-slate-50/80 px-4 py-2.5 border-b border-slate-150 flex justify-between font-extrabold text-[10px] text-slate-500 uppercase tracking-wider">
-                  <span>Somo (Subject)</span>
-                  <div className="flex gap-8">
-                    <span>Alama</span>
-                    <span>Daraja (Grade)</span>
-                  </div>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {checkedResult.subjects.map((sub, idx) => {
-                    const g = sub.grade.trim().toUpperCase();
-                    const badgeClass = g === 'A' ? 'bg-green-100 text-green-800 border-green-200' :
-                                       g === 'B' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
-                                       g === 'C' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                       g === 'D' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                                       'bg-rose-100 text-rose-800 border-rose-200';
-                    return (
-                      <div key={idx} className="px-4 py-3 flex justify-between items-center hover:bg-slate-50/50">
-                        <span className="font-bold text-slate-700">{sub.subject}</span>
-                        <div className="flex gap-12 font-mono items-center">
-                          <span className="text-slate-500 w-8 text-right font-bold">{sub.score}%</span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border text-center w-24 ${badgeClass}`}>
-                            Grade {sub.grade}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Verification Footer Disclaimer */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 text-[10px] text-slate-400 leading-normal">
-                <p className="flex-1">
-                  * Ripoti hii imetolewa na kuhakikiwa kielektroniki kutoka kwenye Hifadhi ya Takwimu ya Lupanulla Elimu Hub. 
-                  Hakuna saini ya mkono inayohitajika.
-                </p>
-                <div className="flex gap-2 self-end shrink-0">
-                  <button 
-                    onClick={() => {
-                      setSelectedResultForModal(checkedResult);
-                      setIsValidationModalOpen(true);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                  >
-                    <ShieldCheck size={12} />
-                    Hakiki (Validate)
-                  </button>
-                  <button 
-                    onClick={() => window.print()}
-                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Printer size={12} />
-                    Chapa (Print)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Dynamic AdSense Integration Area inside Verification section */}
-        {adsenseActive && (
-          <div className="pt-2">
-            <GoogleAdSenseUnit 
-              slot="mitihani-results-banner" 
-              adFormat="horizontal" 
-              className="shadow-sm border-indigo-200 bg-indigo-50/5" 
-            />
-          </div>
-        )}
-      </section>
 
       {/* ── NEW: Maktaba Kuu ya Past Papers za NECTA (Verified & Database Driven) ── */}
       <section id="necta-past-papers-center" className="bg-gradient-to-br from-indigo-950 via-slate-900 to-cyan-950 border border-cyan-500/20 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-6">
@@ -1977,8 +1718,8 @@ export default function MitihaniView({
               <option value="">Aina Zote</option>
               <option value="NECTA">NECTA National</option>
               <option value="Mock">Mock za Mikoa</option>
-              <option value="Terminal">Terminal &amp; Exams</option>
-              <option value="Majaribio">Majaribio ya Mada</option>
+              <option value="Terminal">Terminal &amp; Midterm</option>
+              <option value="Mazoezi">Mazoezi ya Mada (Topic Tests)</option>
             </select>
           </div>
 
@@ -2051,7 +1792,7 @@ export default function MitihaniView({
             <Calendar size={12} className="text-cyan-600" />
             Vinjari Mwaka:
           </span>
-          {['', '2025', '2024', '2023', '2022', '2020', '2018', '2015', '2010', '2005', '2000', '1995', '1994'].map(yr => (
+          {['', '2026', '2025', '2024', '2023', '2022', '2020', '2018', '2015', '2010', '2005', '2000', '1995', '1994'].map(yr => (
             <button
               key={yr || 'all'}
               onClick={() => setSelectedYear(yr)}
@@ -2061,7 +1802,7 @@ export default function MitihaniView({
                   : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
               }`}
             >
-              {yr === '' ? 'Miaka Yote (1994-2025)' : yr}
+              {yr === '' ? 'Miaka Yote (1994-2026)' : yr}
             </button>
           ))}
         </div>
@@ -2070,8 +1811,15 @@ export default function MitihaniView({
 
       {/* ── Main Catalog Document Grid ── */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center text-xs text-slate-400 font-bold">
-          <p>Kupata mitihani {sortedDocs.length} kulingana na vichujio vyako</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 font-bold bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 bg-cyan-500/10 text-cyan-800 border border-cyan-400/20 text-[10px] font-extrabold uppercase rounded-lg">
+              Mpangilio: {sortBy === 'subjectYear' ? 'Somo & Mwaka (A-Z, 2026-1994)' : sortBy === 'newest' ? 'Mpya Zaidi Kwanza' : sortBy === 'views' ? 'Wasomaji Wengi Zaidi' : 'Herufi A-Z'}
+            </span>
+            <span className="text-slate-600 text-xs font-semibold">
+              Mitihani {sortedDocs.length} inapatikana
+            </span>
+          </div>
           <button 
             onClick={() => {
               setSelectedType('');
@@ -2080,7 +1828,7 @@ export default function MitihaniView({
               setSelectedYear('');
               onSearchChange('');
             }}
-            className="text-cyan-600 hover:underline"
+            className="text-cyan-600 hover:text-cyan-700 hover:underline text-xs font-bold self-end sm:self-auto"
           >
             Futa Vichujio Vyote
           </button>

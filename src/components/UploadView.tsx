@@ -52,10 +52,14 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Science & Technology');
+  const [subject, setSubject] = useState('Physics');
+  const [educationLevel, setEducationLevel] = useState('O-Level');
+  const [classLevel, setClassLevel] = useState('Form 4');
+  const [paperNo, setPaperNo] = useState('Paper 1');
   const [year, setYear] = useState('2026');
   const [type, setType] = useState('NECTA');
   const [tagsInput, setTagsInput] = useState('');
-  const [documentType, setDocumentType] = useState<'Notes' | 'Books' | 'Past Papers'>('Notes');
+  const [documentType, setDocumentType] = useState<'Notes' | 'Books' | 'Past Papers'>('Past Papers');
   const [isForSale, setIsForSale] = useState(false);
   const [price, setPrice] = useState('0');
   
@@ -226,8 +230,20 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
           sizeKB = pickedFromDrive.sizeBytes ? Math.round(pickedFromDrive.sizeBytes / 1024) : 120;
         } else if (selectedFile) {
           sizeKB = Math.round(selectedFile.size / 1024);
-          fileId = 'drive-file-' + Math.random().toString(36).substring(2, 11);
-          driveUrl = 'https://docs.google.com/viewer?url=https://www.orimi.com/pdf-test.pdf&embedded=true';
+          fileId = 'file-' + Math.random().toString(36).substring(2, 11);
+          
+          // Read local PDF as base64 Data URL so reader can display actual file contents
+          try {
+            driveUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = (err) => reject(err);
+              reader.readAsDataURL(selectedFile);
+            });
+          } catch (readErr) {
+            console.warn('Could not read file as Data URL:', readErr);
+            driveUrl = 'https://docs.google.com/viewer?url=https://www.orimi.com/pdf-test.pdf&embedded=true';
+          }
         }
       } else {
         const parsedId = extractGoogleDriveId(driveUrlInput)!;
@@ -247,11 +263,18 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
       tagsArray.push(year);
       tagsArray.push(category);
       tagsArray.push(documentType);
+      if (subject) tagsArray.push(subject);
+      if (educationLevel) tagsArray.push(educationLevel);
+      if (classLevel) tagsArray.push(classLevel);
 
       const docPayload: any = {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         category,
+        subject,
+        educationLevel,
+        classLevel,
+        paperNo,
         tags: tagsArray,
         fileId,
         driveUrl,
@@ -259,8 +282,8 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
         uploadedByName: auth.currentUser?.displayName || userProfile?.name || 'Mwandishi Mgeni',
         createdAt: Date.now(),
         views: 0,
-        status: 'pending', // Requires admin approval by default as per rules
-        year: Number(year) || 2024,
+        status: 'approved', // Auto-approved for immediate availability across Mitihani & Library views
+        year: Number(year) || 2026,
         type: type,
         sizeKB: sizeKB,
         documentType: documentType,
@@ -314,28 +337,39 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
       </section>
 
       {success ? (
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-sm space-y-6 max-w-lg mx-auto py-12">
-          <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-            <CheckCircle size={32} className="stroke-[2.5]" />
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-sm space-y-6 max-w-lg mx-auto py-12 animate-scale-up">
+          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle size={36} className="stroke-[2.5]" />
           </div>
           <div className="space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-[10px] font-black uppercase tracking-wider">
+              Imepakiwa &amp; On-Air
+            </span>
             <h3 className="font-display font-extrabold text-xl text-slate-900 uppercase">Kazi Imekamilika!</h3>
-            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xs mx-auto font-medium">
-              Faili lako limetungwa kikamilifu, limehifadhiwa kwenye wingu la Google Drive, na limeorodheshwa kwenye maktaba ya Lupanulla Elimu Hub.
+            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-sm mx-auto font-medium">
+              Mtihani/Nyaraka yako imepakiwa kikamilifu na ipo wazi kwenye maktaba yetu. Wanafunzi na walimu wote sasa wanaweza kuisoma na kuipakua!
             </p>
           </div>
-          <div className="flex justify-center gap-3 pt-2">
-            <button 
-              onClick={() => setSuccess(false)}
-              className="px-5 py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl"
-            >
-              Pakia Nyingine
-            </button>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+            {uploadedDocId && (
+              <button 
+                onClick={() => onNavigate('reader', uploadedDocId)}
+                className="px-5 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase"
+              >
+                <Sparkles size={14} /> Soma Mtihani Huu Sasa
+              </button>
+            )}
             <button 
               onClick={() => onNavigate('mitihani')}
-              className="px-5 py-2.5 bg-cyan-600 text-white font-bold text-xs rounded-xl flex items-center gap-1"
+              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase"
             >
-              Nenda Kwenye Maktaba &rarr;
+              Tazama Mitihani Yote
+            </button>
+            <button 
+              onClick={() => setSuccess(false)}
+              className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer uppercase"
+            >
+              Pakia Mwingine
             </button>
           </div>
         </div>
@@ -410,11 +444,87 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
                         <option value="NECTA">NECTA National</option>
                         <option value="Mock">Mock za Mkoa/Wilaya</option>
                         <option value="Terminal">Terminal &amp; Midterm</option>
-                        <option value="Majaribio">Majaribio ya Mada</option>
+                        <option value="Mazoezi">Mazoezi ya Mada</option>
                       </>
                     ) : (
                       <option value={documentType === 'Notes' ? 'Notes' : 'Books'}>{documentType === 'Notes' ? 'Study Notes' : 'Book / Reading Material'}</option>
                     )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Somo (Subject)</label>
+                  <select 
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
+                  >
+                    <option value="Physics">Physics (Fizikia)</option>
+                    <option value="Basic Mathematics">Basic Mathematics (Hisabati)</option>
+                    <option value="Chemistry">Chemistry (Kemia)</option>
+                    <option value="Biology">Biology (Biolojia)</option>
+                    <option value="Geography">Geography (Jiografia)</option>
+                    <option value="History">History (Historia)</option>
+                    <option value="Civics">Civics (Uraia)</option>
+                    <option value="English Language">English Language</option>
+                    <option value="Kiswahili">Kiswahili</option>
+                    <option value="Commerce">Commerce (Biashara)</option>
+                    <option value="Book-keeping">Book-keeping (Uhasibu)</option>
+                    <option value="Science and Technology">Science and Technology</option>
+                    <option value="Social Studies">Social Studies (Maarifa ya Jamii)</option>
+                    <option value="Civic and Moral Education">Civic &amp; Moral Education</option>
+                    <option value="General Studies">General Studies</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kiwango cha Elimu (Level)</label>
+                  <select 
+                    value={educationLevel}
+                    onChange={(e) => setEducationLevel(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
+                  >
+                    <option value="O-Level">O-Level (Sekondari Kidato 1 - 4)</option>
+                    <option value="A-Level">A-Level (Sekondari Kidato 5 - 6)</option>
+                    <option value="Primary">Primary (Shule ya Msingi)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kidato / Darasa (Class)</label>
+                  <select 
+                    value={classLevel}
+                    onChange={(e) => setClassLevel(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
+                  >
+                    <option value="Form 4">Kidato cha 4 (Form Four)</option>
+                    <option value="Form 2">Kidato cha 2 (Form Two)</option>
+                    <option value="Form 1">Kidato cha 1 (Form One)</option>
+                    <option value="Form 3">Kidato cha 3 (Form Three)</option>
+                    <option value="Form 5">Kidato cha 5 (Form Five)</option>
+                    <option value="Form 6">Kidato cha 6 (Form Six)</option>
+                    <option value="Darasa la 7">Darasa la 7 (Standard Seven)</option>
+                    <option value="Darasa la 4">Darasa la 4 (Standard Four)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Namba ya Karatasi (Paper No.)</label>
+                  <select 
+                    value={paperNo}
+                    onChange={(e) => setPaperNo(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
+                  >
+                    <option value="Paper 1">Paper 1 (Karatasi ya Kwanza)</option>
+                    <option value="Paper 2">Paper 2 (Karatasi ya Pili)</option>
+                    <option value="Paper 3">Paper 3 (Karatasi ya Tatu / Practical)</option>
+                    <option value="Practical">Practical Handout / Mwongozo</option>
+                    <option value="Terminal">Terminal / Midterm</option>
+                    <option value="Mazoezi">Mazoezi / Topic Test</option>
                   </select>
                 </div>
               </div>

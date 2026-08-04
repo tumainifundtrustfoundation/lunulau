@@ -801,20 +801,29 @@ export default function PDFPreviewer({
     handleResize(); // trigger initial check
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>(() => {
-    return [
-      'mock-bio-f4-2026', 'mock-geo-f4-2026', 'mock-chem-f4-2026',
-      'mock-math-f4-2026', 'mock-pe-f4-2026', 'mock-chem2-f4-2026',
-      'mock-chinese-f4-2026', 'mock-civics-f4-2026', 'mock-commerce-f4-2026',
-      'mock-phy-f4-2026', 'necta-phy-f4-2023', 'necta-math-f4-2022',
-      'mock-hist-f4-2024', 'chem-practical-handout'
-    ].includes(documentId) ? 'interactive' : 'iframe';
-  });
+  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>('iframe');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
+  const formattedUrl = useMemo(() => {
+    if (!driveUrl) return '';
+    let url = driveUrl.trim();
+    if (url.includes('drive.google.com/file/d/')) {
+      return url.replace(/\/view(\?.*)?$/, '/preview');
+    } else if (url.includes('drive.google.com/open?id=')) {
+      const id = url.split('id=')[1]?.split('&')[0];
+      if (id) return `https://drive.google.com/file/d/${id}/preview`;
+    }
+    return url;
+  }, [driveUrl]);
+
   const iframeSrcDoc = useMemo(() => {
+    const isDataUrl = formattedUrl.startsWith('data:');
+    const pdfEmbed = isDataUrl
+      ? `<object data="${formattedUrl}" type="application/pdf" width="100%" height="100%"><embed src="${formattedUrl}" type="application/pdf" width="100%" height="100%" /></object>`
+      : `<iframe src="${formattedUrl || 'about:blank'}" allowfullscreen></iframe>`;
+
     return `
       <!DOCTYPE html>
       <html lang="sw" style="width: 100%; height: 100%; margin: 0; padding: 0;">
@@ -838,7 +847,7 @@ export default function PDFPreviewer({
             -webkit-overflow-scrolling: touch;
             overflow: auto;
           }
-          iframe {
+          iframe, object, embed {
             width: 100%;
             height: 100%;
             border: 0;
@@ -848,12 +857,12 @@ export default function PDFPreviewer({
       </head>
       <body>
         <div class="pdf-wrapper">
-          <iframe src="${driveUrl}" allowfullscreen></iframe>
+          ${pdfEmbed}
         </div>
       </body>
       </html>
     `;
-  }, [driveUrl, documentTitle]);
+  }, [formattedUrl, documentTitle]);
 
   // Toggle fullscreen state
   const toggleFullscreen = () => {
