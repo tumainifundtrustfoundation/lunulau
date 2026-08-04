@@ -33,6 +33,7 @@ import FocusTimer from './FocusTimer';
 import NectaCountdownWidget from './NectaCountdownWidget';
 import AchievementsModule from './AchievementsModule';
 import CalendarBanner from './CalendarBanner';
+import DailyStudyGoalWidget from './DailyStudyGoalWidget';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -265,6 +266,28 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
   const activeDaysCount = chartData.filter(d => d.minutes > 0).length;
   const averageMinutes = activeDaysCount > 0 ? Math.round(totalMinutes / activeDaysCount) : 0;
 
+  // Extract today's progress for Daily Study Goal
+  const todayData = chartData.length > 0 ? chartData[chartData.length - 1] : { minutes: 0, xp: 0 };
+  const todayMinutes = todayData.minutes || 0;
+  const todayXp = todayData.xp || 0;
+
+  const handleAwardPointsInternal = (points: number, minutes: number) => {
+    if (onAwardPoints) {
+      onAwardPoints(points, minutes);
+    }
+    setChartData(prev => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      const lastIdx = updated.length - 1;
+      updated[lastIdx] = {
+        ...updated[lastIdx],
+        minutes: (updated[lastIdx].minutes || 0) + minutes,
+        xp: (updated[lastIdx].xp || 0) + points
+      };
+      return updated;
+    });
+  };
+
   return (
     <div id="dashboard-view" className="space-y-8 animate-fade-in text-slate-800 bg-slate-50">
       
@@ -413,6 +436,16 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
 
       {/* ── Interactive Date & Calendar Planner Banner ── */}
       <CalendarBanner userProfile={userProfile} onNavigate={onNavigate} />
+
+      {/* ── Daily Study Goal Widget (Lengo la Masomo la Siku) ── */}
+      <DailyStudyGoalWidget
+        userProfile={userProfile}
+        todayMinutes={todayMinutes}
+        todayXp={todayXp}
+        onAwardPoints={handleAwardPointsInternal}
+        onNavigate={onNavigate}
+        language={language}
+      />
 
       {/* ── Bookmarks Section (Hifadhi Zangu) ── */}
       <section className="space-y-4">
@@ -809,7 +842,7 @@ Hali ya Uhakiki: Imethibitishwa mtandaoni kwa ufanisi! 🌐`);
           <FocusTimer 
             language={language}
             userProfile={userProfile}
-            onAwardPoints={onAwardPoints}
+            onAwardPoints={handleAwardPointsInternal}
           />
           
           {/* Profile Achievements & Study Badges Module */}

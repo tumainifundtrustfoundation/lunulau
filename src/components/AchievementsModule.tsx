@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { evaluateAchievements, unlockBadge, AchievementBadge } from '../utils/achievements';
+import { triggerBadgeUnlockConfetti } from '../utils/confetti';
 import { UserProfile } from '../types';
 
 interface AchievementsModuleProps {
@@ -46,6 +47,7 @@ export default function AchievementsModule({
 
     const handleUnlocked = () => {
       refreshBadges();
+      triggerBadgeUnlockConfetti();
     };
 
     window.addEventListener('achievement-unlocked', handleUnlocked);

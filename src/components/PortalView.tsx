@@ -24,7 +24,14 @@ import {
   MessageCircle,
   Phone,
   X,
-  Sparkles
+  Sparkles,
+  Briefcase,
+  Calculator,
+  Store,
+  CheckCircle2,
+  Book,
+  Compass,
+  GraduationCap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fetchAnnouncements, fetchVideos } from '../firebase';
@@ -111,6 +118,131 @@ export default function PortalView({ onNavigate, userProfile }: PortalViewProps)
 
       {/* ── Motivational Quote of the Day ── */}
       <QuoteWidget />
+
+      {/* ── Njia za Mkato / Quick Feature Grid ── */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-cyan-600" />
+            <h3 className="font-display font-extrabold text-sm sm:text-base text-slate-900 uppercase tracking-wide">
+              Njia za Mkato &bull; Nyanja za Elimu
+            </h3>
+          </div>
+          <span className="text-[11px] font-bold text-slate-400">Chagua Mahali Unapotaka Kwenda</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <button
+            onClick={() => onNavigate('masomo')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-cyan-50/50 hover:border-cyan-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <BookOpen size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">Notisi za Masomo</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">O-Level &amp; A-Level</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('mitihani')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-amber-50/50 hover:border-amber-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <FileText size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Past Papers</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">NECTA &amp; Mock</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('fisimaji')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-indigo-50/50 hover:border-indigo-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Bot size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Lupanulla AI</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Msaidizi wa Masomo</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('duka')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-emerald-50/50 hover:border-emerald-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Store size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Duka la Vitabu</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Vitabu na Nyaraka</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('mwalimu-hub')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-purple-50/50 hover:border-purple-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <GraduationCap size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-purple-600 transition-colors">Mwalimu Hub</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Mchakataji wa Matokeo</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('necta-progress')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-teal-50/50 hover:border-teal-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <CheckCircle2 size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-teal-600 transition-colors">NECTA Tracker</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Fuatilia Alama Zako</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('combinations')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-sky-50/50 hover:border-sky-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Award size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-sky-600 transition-colors">Kombination</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Mwongozo wa Form 5</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('ajira')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-rose-50/50 hover:border-rose-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Briefcase size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition-colors">Portal za Ajira</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Utumishi &amp; Tamisemi</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('calculator')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-cyan-50/50 hover:border-cyan-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Calculator size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">Kikokotoo (GPA)</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Kokotoa Wastani</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('kamusi')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-orange-50/50 hover:border-orange-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Book size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-orange-600 transition-colors">Kamusi ya Lupa</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Swahili-English</span>
+          </button>
+        </div>
+      </div>
 
       {/* ── Google AdSense Responsive Ad Unit (Hero-top) ── */}
       <AdSenseWidget slotId="1000100101" className="my-4" />

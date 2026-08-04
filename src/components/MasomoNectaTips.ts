@@ -113,6 +113,41 @@ export const nectaTips: Record<string, { tips: string; weight: string; tricks: s
     tips: "General Studies compulsory paper tests core principles of democracy, civic responsibilities, and how elections are conducted in Tanzania.",
     weight: "Marks 15 (Compulsory section of GS)",
     tricks: "Provide clear, structured arguments with an introduction, well-defined points, examples from Tanzanian current events, and a logical conclusion."
+  },
+  'Chapter 3: Asilimia, Uwiano na Aljebra': {
+    tips: "Mada hii hujaribiwa sana kwenye sehemu A ya mtihani wa kumaliza elimu ya msingi. Riba rahisi na faida/hasara ni maswali ya kujiandikisha alama.",
+    weight: "Alama 10 (Sehemu A & B ya Hisabati)",
+    tricks: "Njia rahisi ya kukokotoa faida ni: Faida = Bei ya Kuuzia - Bei ya Kununulia. Asilimia ya Faida = (Faida / Bei ya Kununulia) × 100."
+  },
+  'Chapter 4: Takwimu na Chati (Statistics)': {
+    tips: "Maswali ya kutafuta wastani na kusoma chati za nguzo/duara ni ya picha. Mwanafunzi hupata alama za bure kwa kusoma namba sahihi.",
+    weight: "Alama 8 (Hisabati Darasa la 7)",
+    tricks: "Hakikisha unajumlisha takwimu zote kwanza kabla ya kugawanya kwa idadi yao ili kupata wastani (Mean)."
+  },
+  'Form 3: Government of Tanzania & Local Authorities': {
+    tips: "Focuses on Executive, Legislature, and Judiciary powers, as well as TAMISEMI local councils in Tanzania.",
+    weight: "Marks 12 (Section B Civics CSEE)",
+    tricks: "Differentiate between central government duties and local government authority (LGA) duties in service delivery."
+  },
+  'Form 1 & 2: Sarufi na Matumizi ya Lugha': {
+    tips: "Ngeli za Kiswahili na Mnyambuliko wa Vitenzi (Li, Na, Ta, Me) huchukua sehemu kubwa ya mtihani wa FTNA.",
+    weight: "Alama 15 (Karatasi ya Kiswahili)",
+    tricks: "Mnyambuliko wa kitenzi kama 'Soma' unakuwa 'Somewa' (Kutendewa), 'Someshwa' (Kutendesha), 'Somana' (Kutendana)."
+  },
+  'Form 3 & 4: Fasihi simulizi na Uhakiki wa Fasihi Andishi': {
+    tips: "Uhakiki wa tamthilia na riwaya za Kiswahili unahitaji kutaja mwandishi, jina la kitabu, dhamira kuu na migogoro.",
+    weight: "Alama 20 (Sehemu C ya Kiswahili NECTA)",
+    tricks: "Orodhesha wahusika wakuu na sifa zao kwa ufupi kabla ya kujibu swali la insha la fasihi."
+  },
+  'Language 1 & Literature 2 (A-Level English)': {
+    tips: "Advanced English linguistic analysis tests word formation techniques, phonetics, and critical literary appreciation.",
+    weight: "Marks 20 (A-Level Paper 1 & 2)",
+    tricks: "Use proper literary terminology like irony, foreshadowing, symbolism, and pathetic fallacy."
+  },
+  'Macroeconomics: National Income & Inflation': {
+    tips: "A-Level Economics Paper 2 tests GDP calculations (Output, Income, Expenditure) and central bank monetary policies.",
+    weight: "Marks 20 (Paper 2 Macroeconomics)",
+    tricks: "Master the expenditure formula: GDP = C + I + G + (X - M). Always show step-by-step substitutions."
   }
 };
 

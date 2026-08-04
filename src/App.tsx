@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -960,176 +961,187 @@ export default function App() {
         ) : (
           <SwipeNavigationWrapper activeView={activeView} onNavigate={navigateTo}>
             <Suspense fallback={<ViewLoadingSkeleton />}>
-              {user && !userProfile?.isSuspended && ['portal', 'dashboard', 'masomo', 'mitihani', 'fisimaji', 'duka', 'library', 'forum'].includes(activeView) && (
-                <RotatingBanner onNavigate={navigateTo} />
-              )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeView + (activeView === 'reader' && activeDocumentId ? `_${activeDocumentId}` : '')}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1.0] }}
+                  className="w-full space-y-6"
+                >
+                  {user && !userProfile?.isSuspended && ['portal', 'dashboard', 'masomo', 'mitihani', 'fisimaji', 'duka', 'library', 'forum'].includes(activeView) && (
+                    <RotatingBanner onNavigate={navigateTo} />
+                  )}
 
-              {activeView === 'portal' && (
-                <PortalView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'portal' && (
+                    <PortalView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'dashboard' && (
-                <DashboardView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                  language={language}
-                  onAwardPoints={handleAwardPoints}
-                />
-              )}
+                  {activeView === 'dashboard' && (
+                    <DashboardView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                      language={language}
+                      onAwardPoints={handleAwardPoints}
+                    />
+                  )}
 
-              {activeView === 'masomo' && (
-                <MasomoView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'masomo' && (
+                    <MasomoView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'mitihani' && (
-                <MitihaniView 
-                  onNavigate={navigateTo} 
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'mitihani' && (
+                    <MitihaniView 
+                      onNavigate={navigateTo} 
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'duka' && (
-                <DukaView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'duka' && (
+                    <DukaView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'library' && (
-                <LibraryView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'library' && (
+                    <LibraryView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'fisimaji' && (
-                <FisiMajiView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'fisimaji' && (
+                    <FisiMajiView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'videos' && (
-                <VideosView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'videos' && (
+                    <VideosView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'calculator' && (
-                <CalculatorView />
-              )}
+                  {activeView === 'calculator' && (
+                    <CalculatorView />
+                  )}
 
-              {activeView === 'combinations' && (
-                <CombinationsView />
-              )}
+                  {activeView === 'combinations' && (
+                    <CombinationsView />
+                  )}
 
-              {activeView === 'kamusi' && (
-                <KamusiView />
-              )}
+                  {activeView === 'kamusi' && (
+                    <KamusiView />
+                  )}
 
-              {activeView === 'mikoa' && (
-                <MikoaView />
-              )}
+                  {activeView === 'mikoa' && (
+                    <MikoaView />
+                  )}
 
-              {activeView === 'ajira' && (
-                <AjiraView />
-              )}
+                  {activeView === 'ajira' && (
+                    <AjiraView />
+                  )}
 
-              {activeView === 'mwalimu-hub' && (
-                <MwalimuHubView />
-              )}
+                  {activeView === 'mwalimu-hub' && (
+                    <MwalimuHubView />
+                  )}
 
-              {activeView === 'matangazo' && (
-                <MatangazoView 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'matangazo' && (
+                    <MatangazoView 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'workspace' && (
-                <WorkspaceView theme={theme} onChangeTheme={setTheme} />
-              )}
+                  {activeView === 'workspace' && (
+                    <WorkspaceView theme={theme} onChangeTheme={setTheme} />
+                  )}
 
-              {activeView === 'upload' && (
-                <UploadView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'upload' && (
+                    <UploadView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'reader' && activeDocumentId && (
-                <ReaderView 
-                  documentId={activeDocumentId} 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'reader' && activeDocumentId && (
+                    <ReaderView 
+                      documentId={activeDocumentId} 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'premium' && (
-                <PremiumView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                  onProfileUpdate={() => refreshProfile(user?.uid || '')}
-                />
-              )}
+                  {activeView === 'premium' && (
+                    <PremiumView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                      onProfileUpdate={() => refreshProfile(user?.uid || '')}
+                    />
+                  )}
 
-              {activeView === 'resources' && (
-                <ResourcesView 
-                  language={language}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'resources' && (
+                    <ResourcesView 
+                      language={language}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'necta-progress' && (
-                <NectaProgressView 
-                  userProfile={userProfile}
-                  onNavigate={navigateTo}
-                />
-              )}
+                  {activeView === 'necta-progress' && (
+                    <NectaProgressView 
+                      userProfile={userProfile}
+                      onNavigate={navigateTo}
+                    />
+                  )}
 
-              {activeView === 'forum' && (
-                <ForumView 
-                  language={language}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'forum' && (
+                    <ForumView 
+                      language={language}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'live' && (
-                <LiveClassesView 
-                  language={language}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'live' && (
+                    <LiveClassesView 
+                      language={language}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'certificates' && (
-                <CertificatesView 
-                  language={language}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'certificates' && (
+                    <CertificatesView 
+                      language={language}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'leaderboard' && (
-                <LeaderboardView 
-                  language={language}
-                  userProfile={userProfile} 
-                />
-              )}
+                  {activeView === 'leaderboard' && (
+                    <LeaderboardView 
+                      language={language}
+                      userProfile={userProfile} 
+                    />
+                  )}
 
-              {activeView === 'admin' && (
-                <AdminView 
-                  onNavigate={navigateTo} 
-                  userProfile={userProfile} 
-                  initialTab={activeAdminTab || 'approvals'}
-                />
-              )}
+                  {activeView === 'admin' && (
+                    <AdminView 
+                      onNavigate={navigateTo} 
+                      userProfile={userProfile} 
+                      initialTab={activeAdminTab || 'approvals'}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </Suspense>
           </SwipeNavigationWrapper>
         )}

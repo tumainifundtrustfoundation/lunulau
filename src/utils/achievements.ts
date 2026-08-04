@@ -1,4 +1,5 @@
 import { UserProfile } from '../types';
+import { triggerBadgeUnlockConfetti } from './confetti';
 
 export interface AchievementBadge {
   id: string;
@@ -168,6 +169,8 @@ export function unlockBadge(badgeId: string): void {
         navigator.vibrate([40, 60, 40]);
       } catch {}
     }
+
+    triggerBadgeUnlockConfetti();
 
     window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { badgeId } }));
   } catch (e) {

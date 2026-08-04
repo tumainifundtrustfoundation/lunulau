@@ -1142,9 +1142,31 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
         }
       }
 
+      // Append Private Notes if available
+      const activePrivateNote = savedPrivateNote || privateNoteText;
+      if (activePrivateNote && activePrivateNote.trim()) {
+        if (y + 35 > pageHeight - 20) {
+          pdf.addPage();
+          addHeaderFooter(pdf.getNumberOfPages(), '');
+          y = 20;
+        } else {
+          y += 5;
+          pdf.line(margin, y, pageWidth - margin, y);
+          y += 10;
+        }
+
+        printParagraph('DOKEZO LANGU BINAFSI (MY PRIVATE NOTE)', 12, 'bold', [217, 119, 6], 4, 6);
+        
+        const noteParas = activePrivateNote.split('\n\n');
+        for (const p of noteParas) {
+          if (!p.trim()) continue;
+          printParagraph(p, 10, 'normal', [30, 41, 59], 2, 4);
+        }
+      }
+
       // Append Highlight Annotations if they exist
       if (highlights.length > 0) {
-        if (y + 30 > pageHeight - 20) {
+        if (y + 35 > pageHeight - 20) {
           pdf.addPage();
           addHeaderFooter(pdf.getNumberOfPages(), '');
           y = 20;
@@ -1495,18 +1517,32 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
                     <Pencil size={11} className="text-amber-600" />
                     Dokezo Lililohifadhiwa
                   </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditingPrivateNote(true);
-                      setTimeout(() => privateNoteInputRef.current?.focus(), 80);
-                    }}
-                    className="text-[9px] bg-amber-200/80 text-amber-950 font-black px-2.5 py-1 rounded-lg group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors flex items-center gap-1 shadow-2xs"
-                  >
-                    <Edit3 size={10} />
-                    Hariri / Edit
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        generateOfflinePDF();
+                      }}
+                      className="text-[9px] bg-slate-900 text-white font-black px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1 shadow-2xs"
+                      title="Pakua notisi, dokezo na highlights kama PDF"
+                    >
+                      <Download size={10} />
+                      PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditingPrivateNote(true);
+                        setTimeout(() => privateNoteInputRef.current?.focus(), 80);
+                      }}
+                      className="text-[9px] bg-amber-200/80 text-amber-950 font-black px-2.5 py-1 rounded-lg group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors flex items-center gap-1 shadow-2xs"
+                    >
+                      <Edit3 size={10} />
+                      Hariri
+                    </button>
+                  </div>
                 </div>
 
                 <div className="text-xs text-amber-950 font-medium leading-relaxed">
@@ -2079,6 +2115,18 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
             </p>
           ))}
         </div>
+
+        {/* Student Private Note (If available) */}
+        {(savedPrivateNote || privateNoteText) && (
+          <div className="mb-8 page-break-inside-avoid bg-amber-50/80 border-l-4 border-amber-500 p-4 rounded-r-lg">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-950 border-b border-amber-200 pb-1 mb-2">
+              Dokezo Langu Binafsi (My Private Note)
+            </h2>
+            <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-line">
+              {savedPrivateNote || privateNoteText}
+            </div>
+          </div>
+        )}
 
         {/* Student Highlights & Annotations (If available) */}
         {highlights.length > 0 && (

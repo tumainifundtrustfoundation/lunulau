@@ -2,6 +2,26 @@ export type UserRole = 'student' | 'author' | 'admin' | 'super_admin';
 export type SubscriptionTier = 'free' | 'premium';
 export type DocumentStatus = 'pending' | 'approved' | 'rejected';
 
+export interface CustomPersonalNote {
+  id: string;
+  title: string;
+  subject: string;
+  level: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CustomFlashcardDeck {
+  id: string;
+  title: string;
+  subject: string;
+  level: string;
+  cards: { term: string; definition: string }[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface UserProfile {
   uid: string;
   name: string;
@@ -17,9 +37,12 @@ export interface UserProfile {
   verificationCode?: string;
   xp?: number;
   studyTime?: number;
+  dailyGoalMinutes?: number;
   favorites?: string[]; // Array of topic titles or compound IDs for favorite notes
   completedSubtopics?: Record<string, string[]>;
   personalNotes?: Record<string, string>;
+  customNotes?: CustomPersonalNote[];
+  customFlashcards?: CustomFlashcardDeck[];
 }
 
 export interface AuditLog {
@@ -387,7 +410,7 @@ export interface PaymentTransaction {
   rejectionReason?: string;
 }
 
-export type NectaProgressStatus = 'not_started' | 'in_progress' | 'completed';
+export type NectaProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'needs_review';
 
 export interface NectaProgress {
   id: string; // e.g. `${userId}_${level}_${subject}_${year}`

@@ -32,7 +32,7 @@ export const academicData: ClassLevel[] = [
               'Kujumlisha na kutoa sehemu zenye asili tofauti',
               'Kuzidisha na kugawanya sehemu za hisabati'
             ],
-            content: 'Namba nzima na sehemu ni msingi wa hisabati zote. Katika mada hii utajifunza jinsi ya kubadili sehemu kuwa desimali, kujumlisha na kutoa sehemu zenye asili tofauti.',
+            content: 'Namba nzima na sehemu ni msingi wa hisabati zote. Katika mada hii utajifunza jinsi ya kubadili sehemu kuwa desimali, kujumlisha na kutoa sehemu zenye asili tofauti na kutumia kanuni ya BODMAS.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Hisabati\nKiwango: Darasa la 5 - 7\nMada: Namba Nzima na Sehemu\n\n1. SEHEMU ZINAZOFANANA NA ZISIZOFANANA\n- Sehemu yenye asili moja (e.g. 1/5 na 3/5) ni rahisi kujumlisha: 1/5 + 3/5 = 4/5.\n- Sehemu zenye asili tofauti (e.g. 1/2 na 1/3) lazima utafute BKM (LCM) ya asili kabla ya kujumlisha: BKM ya 2 na 3 ni 6. Hivyo, 3/6 + 2/6 = 5/6.\n\n2. KUBADILISHA SEHEMU KUWA DESIMALI\nIli kubadili 3/4 kuwa desimali, gawanya 3 kwa 4 kupata 0.75.'
           },
           {
@@ -45,6 +45,28 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Jiometri inahusika na maumbo, ukubwa, na nafasi. Katika mada hii utajifunza jinsi ya kukokotoa eneo na mzingo wa maumbo mbalimbali.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Hisabati\nKiwango: Darasa la 5 - 7\nMada: Jiometri na Vipimo\n\n1. KUTAFUTA ENEO LA DUARA\nFormula: Eneo = π × r² (ambapo π = 22/7 au 3.14).\n\n2. MZINGO WA MSTATILI\nFormula: Mzingo = 2 × (Urefu + Upana).'
+          },
+          {
+            title: 'Chapter 3: Asilimia, Uwiano na Aljebra',
+            isDownloadable: true,
+            subtopics: [
+              'Kutafuta asilimia ya namba na faida/hasara',
+              'Uwiano na uwiano sawia katika maisha ya kila siku',
+              'Kutatua mlinganyo wa shahada ya kwanza wa aljebra (x + 5 = 12)'
+            ],
+            content: 'Asilimia inawakilisha sehemu katika mia moja. Katika mada hii utajifunza jinsi ya kukokotoa faida, hasara, riba rahisi na kutatua misemo ya aljebra.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Hisabati\nKiwango: Darasa la 5 - 7\nMada: Asilimia na Uwiano\n\n1. KUTAFUTA ASILIMIA YA NAMBA\nMfano: Tafuta 20% ya 500.\nNjia: (20 / 100) × 500 = 100.\n\n2. RIBA RAHISI (SIMPLE INTEREST)\nFormula: Riba (I) = (Mtaji (P) × Kiwango (R) × Muda (T)) / 100.'
+          },
+          {
+            title: 'Chapter 4: Takwimu na Chati (Statistics)',
+            isDownloadable: true,
+            subtopics: [
+              'Kusoma na kutafsiri chati za nguzo na duara (Pie Charts)',
+              'Kutafuta wastani (Mean), Namba ya Kati (Median) na Mstari (Mode)',
+              'Ukusanyaji na uwekaji wa takwimu kwa takwimu za shule'
+            ],
+            content: 'Takwimu ni maelezo ya namba yanayokusanywa na kupangwa ili kutoa ujumbe rasmi. Utajifunza chati za nguzo na kukokotoa wastani wa alama.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Hisabati\nKiwango: Darasa la 5 - 7\nMada: Takwimu\n\n1. WASTANI (MEAN)\nWastani = Jumla ya namba zote ÷ Idadi ya namba hizo.\nMfano: Wastani wa 10, 12, na 14 ni (10 + 12 + 14) / 3 = 36 / 3 = 12.'
           }
         ]
       },
@@ -72,6 +94,28 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Nishati ni uwezo wa kufanya kazi. Nishati haitengenezwi wala kuharibiwa bali inabadilishwa kutoka aina moja kwenda nyingine.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Sayansi na Teknolojia\nKiwango: Darasa la 5 - 7\nMada: Nishati na Mabadiliko Yake\n\n1. SHERIA YA HIFADHI YA NISHATI\nNishati haiwezi kuundwa au kuharibiwa, bali inabadilika kutoka mfumo mmoja hadi mwingine. Kwa mfano: Tochi inabadilisha nishati ya kemikali (betri) kuwa umeme na kisha kuwa nuru na joto.'
+          },
+          {
+            title: 'Chapter 3: Viumbe Hai, Seli na Mazingira',
+            isDownloadable: true,
+            subtopics: [
+              'Tabia za viumbe hai (Kukua, Kuhema, Kujilisha, Kuzaliana)',
+              'Muundo wa seli ya mmea na seli ya mnyama',
+              'Mfumo wa ikolojia (Ecosystem) na utunzaji wa mazingira'
+            ],
+            content: 'Seli ni kitengo cha msingi cha uhai cha kila kiumbe hai. Mada hii inalinganisha seli za mimea na wanyama na inaeleza mzunguko wa virutubisho.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Sayansi na Teknolojia\nKiwango: Darasa la 5 - 7\nMada: Seli na Mazingira\n\n1. SELI YA MMEA VS SELI YA MNYAMA\n- Seli ya mmea ina ukuta wa seli (cell wall) na kiloroplasti (chloroplast) inayosaidia sanisi-nuru (photosynthesis).\n- Seli ya mnyama haina ukuta wa seli wala kiloroplasti.'
+          },
+          {
+            title: 'Chapter 4: Mfumo wa Mzunguko wa Damu na Upumuaji',
+            isDownloadable: true,
+            subtopics: [
+              'Moyo na mishipa ya damu (Arteries, Veins, Capillaries)',
+              'Seli za damu: Nyekundu, Nyeupe, na Bamba la Damu (Platelets)',
+              'Mapafu na mchakato wa ubadilishanaji wa gesi'
+            ],
+            content: 'Damu inasafirisha oksijeni na virutubisho mwilini kote kwa usaidizi wa moyo na mapafu.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Sayansi na Teknolojia\nKiwango: Darasa la 5 - 7\nMada: Mzunguko wa Damu\n\n1. SELI ZA DAMU NA KAZI ZAKE\n- Seli Nyekundu (RBC): Zina hemoglobin inayosafirisha oksijeni.\n- Seli Nyeupe (WBC): Zinapambana na magonjwa na kuilinda mwili.'
           }
         ]
       },
@@ -88,6 +132,28 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Mapambano dhidi ya ukoloni yaliongozwa na mashujaa mbalimbali wa Afrika waliokataa utawala wa mabavu wa kijerumani na kiingereza.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Maarifa ya Jamii\nKiwango: Darasa la 5 - 7\nMada: Mashujaa wa Afrika na Mapambano dhidi ya Ukoloni\n\n1. VITA YA MAJIMAJI (1905 - 1907)\n- Iliongozwa na Kinjeketile Ngwale kusini mwa Tanganyika.\n- Sababu kuu: Mateso ya Wajerumani, kodi kubwa, na kulazimishwa kulima pamba.\n- Kinjeketile alitumia maji ya miujiza akiamini yangebadilisha risasi za Wajerumani kuwa maji.'
+          },
+          {
+            title: 'Chapter 2: Jiografia ya Tanzania na Ramani',
+            isDownloadable: true,
+            subtopics: [
+              'Maziwa makubwa, milima na mito ya Tanzania',
+              'Kusoma ramani: Dira, Mizani na Alama za Ramani',
+              'Hali ya hewa na kanda za kilimo nchini Tanzania'
+            ],
+            content: 'Tanzania imebarikiwa na maziwa makubwa kama Victoria, Tanganyika na Nyasa, pamoja na Mlima Kilimanjaro ambao ni mrefu kuliko yote Afrika.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Maarifa ya Jamii\nKiwango: Darasa la 5 - 7\nMada: Jiografia ya Tanzania\n\n1. MILIMA NA MAZIWA\n- Mlima Kilimanjaro (mita 5,895) ndio mlima mrefu zaidi Afrika.\n- Ziwa Victoria ndilo ziwa kubwa zaidi la maji baridi Afrika.'
+          },
+          {
+            title: 'Chapter 3: Historia ya Tanganyika na Muungano wa 1964',
+            isDownloadable: true,
+            subtopics: [
+              'Uhuru wa Tanganyika tarehe 9 Disemba 1961',
+              'Mapinduzi Matukufu ya Zanzibar tarehe 12 Jan 1964',
+              'Muungano wa Tanganyika na Zanzibar tarehe 26 Aprili 1964'
+            ],
+            content: 'Mwalimu Julius Kambarage Nyerere na Sheikh Abeid Amani Karume waliunganisha Tanganyika na Zanzibar kuunda Jamhuri ya Muungano wa Tanzania.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Maarifa ya Jamii\nKiwango: Darasa la 5 - 7\nMada: Muungano wa Tanzania\n\n1. TAREHE MUHIMU ZA KITAIFA\n- 9 Disemba 1961: Uhuru wa Tanganyika.\n- 12 Januari 1964: Mapinduzi ya Zanzibar.\n- 26 Aprili 1964: Muungano wa Tanganyika na Zanzibar kuunda TANZANIA.'
           }
         ]
       },
@@ -98,12 +164,34 @@ export const academicData: ClassLevel[] = [
             title: 'Aina za Maneno na Matumizi Yake katika Sentensi',
             isDownloadable: true,
             subtopics: [
-              'Nomi (N), Viwakilishi (W), Vivumishi (V)',
+              'Nomino (N), Viwakilishi (W), Vivumishi (V)',
               'Vitenzi (T) na Viunganishi (U)',
               'Mnyambuliko wa vitenzi (Nyakati na Hali)'
             ],
             content: 'Kiswahili kina aina nane kuu za maneno. Katika mada hii utajifunza jinsi ya kutambua na kutumia aina hizi katika ujenzi wa sentensi sahihi.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili\nKiwango: Darasa la 5 - 7\nMada: Aina za Maneno\n\n1. NOMINO (N)\nManeno yanayotaja maji, watu, mahali au vitu. Mfano: Juma, Morogoro, Kitabu, Amani.\n\n2. VITENZI (T)\nManeno yanayoeleza tendo linalofanyika. Mfano: Anasoma, Wanakimbia, Amekula.'
+          },
+          {
+            title: 'Ufahamu, Ufupisho na Insha za Swahili',
+            isDownloadable: true,
+            subtopics: [
+              'Kusoma kifungu cha habari na kujibu maswali kwa ufasaha',
+              'Mbinu za kufupisha habari bila kupoteza maana kuu',
+              'Uandishi wa insha za maelezo, hoja na barua rasmi'
+            ],
+            content: 'Ufahamu unamwezesha mwanafunzi kuelewa ujumbe wa maandishi na kujibu maswali sahihi.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili\nKiwango: Darasa la 5 - 7\nMada: Uandishi wa Insha na Ufahamu\n\n1. KANUNI ZA UFUPISHO\n- Soma kifungu kwa umakini mara mbili.\n- Ondoa mifano, maneno ya ziada na maelezo marefu.\n- Andika mawazo makuu pekee kwa kutumia maneno yako mwenyewe.'
+          },
+          {
+            title: 'Fasihi Simulizi, Methali, Misemo na Nahau',
+            isDownloadable: true,
+            subtopics: [
+              'Maana na matumizi ya methali za Kiswahili',
+              'Nahau na Misemo inayotumika katika mawasiliano',
+              'Aina za Fasihi Simulizi: Hadithi, Tarihi, na Vitendawili'
+            ],
+            content: 'Methali ni semi za hekima zenye maana ya ndani na mafunzo kwa jamii.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili\nKiwango: Darasa la 5 - 7\nMada: Methali na Nahau\n\n1. METHALI ZA KISWAHILI NA MAANA ZAKE\n- "Usipoziba ufa utajenga ukuta": Sahihisha kosa dogo haraka kabla halijawa tatizo kubwa.\n- "Haraka haraka haina baraka": Kufanya mambo kwa kukurupuka huleta hasara.'
           }
         ]
       },
@@ -120,6 +208,33 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Mastering tenses is essential for clear communication in English speaking and writing.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: English Language\nLevel: Primary School (Std 5-7)\nTopic: Tenses & Grammar\n\n1. PRESENT CONTINUOUS TENSE\nUsed for actions happening right now. Formula: Subject + am/is/are + Verb(-ing).\nExample: "The student is reading a science book."'
+          },
+          {
+            title: 'Comprehension, Vocabulary & Composition',
+            isDownloadable: true,
+            subtopics: [
+              'Reading comprehension passage strategies',
+              'Synonyms, Antonyms, and Homophones',
+              'Friendly and Official Letter Writing Formats'
+            ],
+            content: 'Learn vocabulary skills, letter formats, and techniques for answering passage comprehension questions accurately.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: English Language\nLevel: Primary School (Std 5-7)\nTopic: Composition & Letter Writing\n\n1. OFFICIAL LETTER FORMAT\n- Sender Address\n- Date\n- Receiver Address\n- Salutation ("Dear Sir/Madam")\n- Subject Line (RE: APPLICATION FOR...)\n- Body Paragraphs\n- Conclusion ("Yours faithfully")'
+          }
+        ]
+      },
+      {
+        name: 'Uraia na Maadili (Civics & Ethics)',
+        topics: [
+          {
+            title: 'Alama za Taifa na Uraia Mwema',
+            isDownloadable: true,
+            subtopics: [
+              'Bendera ya Taifa, Wimbo wa Taifa na Mwenge wa Uhuru',
+              'Haki na Wajibu wa Raia nchini Tanzania',
+              'Maadili ya Mtanzania: Uaminifu, Heshima, na Uzalendo'
+            ],
+            content: 'Uraia na maadili unalenga kujenga raia mwema, mwaminifu na mwenye uzalendo kwa nchi yake.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Uraia na Maadili\nKiwango: Darasa la 5 - 7\nMada: Alama za Taifa na Uraia\n\n1. WIMBO WA TAIFA WA TANZANIA\n- "Mungu ibariki Afrika... Wabariki viongozi wake..."\n- Kuimba wimbo wa taifa kunahitaji kusimama wima kwa heshima kama ishara ya uzalendo.'
           }
         ]
       }
@@ -473,6 +588,125 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Commission for Human Rights and Good Governance (CHRAGG), constitutional rights, democratic election process.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Civics\nLevel: Form II\nTopic: Human Rights & Democracy\n\n1. THREE GENERATIONS OF HUMAN RIGHTS\n- Civil & Political Rights (Freedom of speech, voting).\n- Economic, Social & Cultural Rights (Education, healthcare).\n- Environmental & Collective Rights.'
+          },
+          {
+            title: 'Form 3: Government of Tanzania & Local Authorities',
+            isDownloadable: true,
+            subtopics: [
+              'Three pillars of government: Executive, Judiciary, and Legislature',
+              'Local government authorities (TAMISEMI, Councils, Ward Offices)',
+              'The Constitution making process and amendments in Tanzania'
+            ],
+            content: 'Powers of the President, Cabinet, National Assembly (Bunge), High Court, and Ward Executive Officers (WEO).',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Civics\nLevel: Form III\nTopic: Pillars of Government\n\n1. EXECUTIVE (SERIKALI)\nLed by the President. Enforces laws and directs national development.\n2. LEGISLATURE (BUNGE)\nMakes laws and approves national budgets.\n3. JUDICIARY (MAHAKAMA)\nInterprets laws and dispenses justice.'
+          },
+          {
+            title: 'Form 4: Globalization, Culture & Economic Development',
+            isDownloadable: true,
+            subtopics: [
+              'Concept of Globalization and its impacts on developing countries',
+              'Promotion and preservation of Tanzanian culture and Kiswahili',
+              'Economic development, poverty eradication strategies (MKUKUTA), and Vision 2025'
+            ],
+            content: 'Cultural identity preservation, Kiswahili as an international language, economic integration in East Africa (EAC).',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Civics\nLevel: Form IV\nTopic: Globalization & Tanzanian Culture\n\n1. GLOBALIZATION\nThe integration of national economies, cultures, and technology into a global network. Requires preserving Kiswahili and local ethics.'
+          }
+        ]
+      },
+      {
+        name: 'Kiswahili (O-Level)',
+        topics: [
+          {
+            title: 'Form 1 & 2: Sarufi na Matumizi ya Lugha',
+            isDownloadable: true,
+            subtopics: [
+              'Mnyambuliko wa Vitenzi na Nyakati (Li, Na, Ta, Me, Ku, Ja)',
+              'Uainishaji wa Maneno na Ngeli za Kiswahili (A-WA, KI-VI, I-ZI)',
+              'Misingi ya Rejesta na Mawasiliano katika Jamii'
+            ],
+            content: 'Sarufi ya Kiswahili inahusu miundo ya maneno, ngeli, na matumizi sahihi ya nyakati na viambishi.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili (O-Level)\nLevel: Form I & II\nMada: Sarufi na Ngeli za Kiswahili\n\n1. NGELI ZA KISWAHILI\n- Ngeli ya A - WA: Watu na Wanyama (Mfano: Mtu anasoma / Watu wanasoma).\n- Ngeli ya KI - VI: Vitu vya kawaida (Mfano: Kitabu kinaanguka / Vitabu vinaanguka).'
+          },
+          {
+            title: 'Form 3 & 4: Fasihi simulizi na Uhakiki wa Fasihi Andishi',
+            isDownloadable: true,
+            subtopics: [
+              'Uhakiki wa Tamthilia, Riwaya na Ushairi wa Kiswahili',
+              'Uchambuzi wa Maudhui, Dhamira, Migogoro na Wahusika',
+              'Fasihi Simulizi: Misingi ya Hadithi, Tarihi na Magano'
+            ],
+            content: 'Fasihi ya Kiswahili inatathmini sanaa ya lugha na ujumbe wa kijamii kupitia vitabu vilivyoteuliwa na NECTA.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili\nLevel: Form III & IV\nMada: Uhakiki wa Fasihi Andishi\n\n1. VIPENGELE VYA UHAKIKI\n- Dhamira Kuu: Wazo kuu analolijenga mwandishi.\n- Migogoro: Tofauti za kiitikadi au kimitazamo kati ya wahusika.'
+          }
+        ]
+      },
+      {
+        name: 'English Language (O-Level)',
+        topics: [
+          {
+            title: 'Form 1 & 2: Grammar, Parts of Speech & Direct/Indirect Speech',
+            isDownloadable: true,
+            subtopics: [
+              'Active and Passive Voice Conversions',
+              'Direct and Indirect (Reported) Speech Rules',
+              'Conditional Sentences (Type 1, Type 2, Type 3)'
+            ],
+            content: 'Master active to passive transformations, reported speech tense shifts, and conditional IF clauses.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: English Language\nLevel: Form I & II\nTopic: Active and Passive Voice\n\n1. ACTIVE TO PASSIVE RULE\nActive: "John wrote the letter."\nPassive: "The letter was written by John."'
+          },
+          {
+            title: 'Form 3 & 4: Novel & Play Analysis (Literary Analysis)',
+            isDownloadable: true,
+            subtopics: [
+              'Analysis of Set Books (Passed Like a Shadow, Unanswered Cries, The Black Hermit)',
+              'Themes: Betrayal, Corruption, Traditions vs Modernity, Gender Issues',
+              'Characterization, Setting, and Message to the Society'
+            ],
+            content: 'Detailed analysis of CSEE English literature set readings, character roles, conflicts, and central themes.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: English Literature\nLevel: Form III & IV\nTopic: Literary Set Books Analysis\n\n1. PASSED LIKE A SHADOW (Bernard Mapalala)\nCentral Theme: HIV/AIDS epidemic, stigma, and family collapse in modern society.'
+          }
+        ]
+      },
+      {
+        name: 'Commerce & Bookkeeping',
+        topics: [
+          {
+            title: 'Form 1 & 2: Commerce Principles & Double Entry System',
+            isDownloadable: true,
+            subtopics: [
+              'Introduction to Commerce, Home Trade vs Foreign Trade',
+              'Double Entry Bookkeeping rules (Debit the receiver, Credit the giver)',
+              'Cash Book, Sales Day Book, and Ledger posting'
+            ],
+            content: 'Commerce studies trade and aids to trade. Bookkeeping records financial transactions systematically in ledgers.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Bookkeeping & Commerce\nLevel: Form I & II\nTopic: Double Entry Rule\n\n1. THE GOLDEN RULE OF BOOKKEEPING\nFor every debit entry, there must be a corresponding credit entry.'
+          },
+          {
+            title: 'Form 3 & 4: Financial Statements & Warehousing',
+            isDownloadable: true,
+            subtopics: [
+              'Preparation of Trading, Profit & Loss Account and Balance Sheet',
+              'Warehousing types, Functions of Wholesalers and Retailers',
+              'Transport, Insurance, and Advertising in Commerce'
+            ],
+            content: 'Learn financial accounting statements, calculation of gross profit, net profit, and working capital balance.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Bookkeeping\nLevel: Form III & IV\nTopic: Financial Statements\n\n1. GROSS PROFIT FORMULA\nGross Profit = Net Sales - Cost of Goods Sold (COGS).'
+          }
+        ]
+      },
+      {
+        name: 'Computer Studies / ICT',
+        topics: [
+          {
+            title: 'Form 1 - 4: Misingi ya Kompyuta na Mtandao (Computer Basics)',
+            isDownloadable: true,
+            subtopics: [
+              'Sehemu za Kompyuta: Hardware (CPU, RAM, HDD) na Software (OS, Apps)',
+              'Mfumo wa Endeshi (Operating System) na Hifadhi ya Kumbukumbu',
+              'Misingi ya Mtandao wa Intaneti, Barua Pepe, na Usalama wa Mtandao'
+            ],
+            content: 'Elimu ya teknolojia ya habari na mawasiliano (TEHAMA) inayofundisha matumizi bora ya kompyuta na usalama wa data.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Computer Studies / TEHAMA\nLevel: Form I - IV\nMada: Misingi ya Hardware & Software\n\n1. CENTRAL PROCESSING UNIT (CPU)\nInajulikana kama "Ubongo wa Kompyuta". Inafanya kazi zote za usindikaji wa data na hesabu (ALU & CU).'
           }
         ]
       }
@@ -487,6 +721,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Set Theory & Complex Numbers',
+            isDownloadable: true,
             subtopics: [
               'Operations on sets, Venn diagrams with 3 sets, De Morgan Laws',
               'Complex numbers algebra, Argand diagram representation',
@@ -497,6 +732,7 @@ export const academicData: ClassLevel[] = [
           },
           {
             title: 'Calculus: Differentiation & Integration',
+            isDownloadable: true,
             subtopics: [
               'First principles differentiation and chain/product/quotient rules',
               'Applications of derivatives: Tangents, normals, stationary points, rates of change',
@@ -505,6 +741,33 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Limits, continuity, implicit differentiation, logarithmic differentiation, reduction formulas, Riemann sums.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Mathematics\nLevel: Form V & VI\nTopic: Integration Techniques\n\n1. INTEGRATION BY PARTS\nFormula: ∫ u dv = u v - ∫ v du.'
+          },
+          {
+            title: 'Linear Programming, Vectors & Probability',
+            isDownloadable: true,
+            subtopics: [
+              'Linear programming inequalities graph and objective function optimization',
+              'Vector operations in 3D, scalar dot product and vector cross product',
+              'Permutations, combinations, Binomial distribution and Normal distribution'
+            ],
+            content: '3D vectors algebra, angle between two vectors, probability distributions, expectations and standard deviation.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Mathematics\nLevel: Form V & VI\nTopic: Vector Algebra\n\n1. SCALAR (DOT) PRODUCT\na · b = |a| |b| cos θ.\nIf a · b = 0, vectors a and b are perpendicular.'
+          }
+        ]
+      },
+      {
+        name: 'BAM (Basic Applied Mathematics)',
+        topics: [
+          {
+            title: 'Functions, Exponential Equations & Statistics',
+            isDownloadable: true,
+            subtopics: [
+              'Domain and range of functions, composite functions f(g(x))',
+              'Solving exponential and logarithmic equations in BAM',
+              'Measures of dispersion: Standard Deviation, Variance, and Quartiles'
+            ],
+            content: 'BAM is a core subsidiary subject for Arts and Social Science combinations. Master functions, statistics, differentiation, and matrices.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Basic Applied Mathematics (BAM)\nLevel: Form V & VI\nTopic: Statistics & Variance\n\n1. VARIANCE FORMULA\nVariance (σ²) = ∑ f(x - x̄)² / ∑ f.'
           }
         ]
       },
@@ -513,6 +776,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Mechanics & Simple Harmonic Motion (SHM)',
+            isDownloadable: true,
             subtopics: [
               'Projectiles motion equations and trajectory',
               'Newton`s laws of motion and momentum conservation',
@@ -521,6 +785,18 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Vector calculus applications, projectile range R = (u² sin 2θ)/g, moment of inertia tensor, damped and forced oscillations.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Physics\nLevel: Form V & VI\nTopic: Mechanics & SHM\n\n1. SIMPLE HARMONIC MOTION DIFFERENTIAL EQUATION\nd²x/dt² + ω² x = 0\nSolution: x(t) = A cos(ωt + φ).'
+          },
+          {
+            title: 'Waves, Optics & Modern Physics',
+            isDownloadable: true,
+            subtopics: [
+              'Wave motion, Doppler effect, Young`s double slit interference',
+              'Diffraction grating and polarization of light waves',
+              'Photoelectric effect, Einstein`s photoelectric equation (E = hf = Φ + KE)',
+              'Atomic physics, Bohr model, X-rays production and Bragg`s Law'
+            ],
+            content: 'Wave theory, interference patterns, work function Φ, de Broglie wavelength λ = h/p, energy level transitions in hydrogen.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Physics\nLevel: Form V & VI\nTopic: Modern Physics & Quantum Theory\n\n1. EINSTEIN`S PHOTOELECTRIC EQUATION\nh f = Φ + K.E.(max).\nWhere h = Planck`s constant, f = frequency of incident radiation, Φ = work function.'
           }
         ]
       },
@@ -529,6 +805,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Physical Chemistry: Thermodynamics & Chemical Equilibrium',
+            isDownloadable: true,
             subtopics: [
               'First and Second Laws of Thermodynamics, Enthalpy (ΔH) and Entropy (ΔS)',
               'Gibbs Free Energy (ΔG = ΔH - TΔS) and spontaneity',
@@ -537,6 +814,18 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Hess`s Law, Born-Haber cycle, rate laws, order of reaction, Arrhenius equation k = A e^(-Ea/RT).',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Chemistry\nLevel: Form V & VI\nTopic: Chemical Thermodynamics\n\n1. GIBBS FREE ENERGY\nΔG = ΔH - TΔS.\nA reaction is thermodynamically spontaneous when ΔG < 0.'
+          },
+          {
+            title: 'Organic Chemistry: Hydrocarbons & Carbonyl Compounds',
+            isDownloadable: true,
+            subtopics: [
+              'Electrophilic addition to alkenes and Markovnikov`s rule',
+              'Aromatic chemistry: Benzene ring structure, electrophilic substitution (Nitration, Halogenation)',
+              'Aldehydes and Ketones: Nucleophilic addition and Tollens`/Fehling`s test',
+              'Reaction mechanisms: SN1 vs SN2 nucleophilic substitution'
+            ],
+            content: 'In-depth study of aliphatic and aromatic organic compounds, reaction mechanisms, synthesis pathways, and analytical identification tests.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Chemistry\nLevel: Form V & VI\nTopic: Organic Chemistry Mechanisms\n\n1. MARKOVNIKOV`S RULE\nWhen adding HX to an unsymmetrical alkene, the hydrogen atom attaches to the carbon with more hydrogen atoms.'
           }
         ]
       },
@@ -545,6 +834,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Biochemistry & Molecular Genetics',
+            isDownloadable: true,
             subtopics: [
               'Carbohydrates, lipids, proteins, and nucleic acids biochemistry',
               'Enzyme kinetics and Michaelis-Menten equation',
@@ -553,6 +843,17 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Structure of monomeric and polymeric biomolecules, competitive vs non-competitive enzyme inhibition, lac operon model.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Biology\nLevel: Form V & VI\nTopic: Biochemistry & Protein Synthesis\n\n1. CENTRAL DOGMA OF MOLECULAR BIOLOGY\nDNA → (Transcription) → mRNA → (Translation) → Polypeptide / Protein.'
+          },
+          {
+            title: 'Comparative Physiology: Respiration & Homeostasis',
+            isDownloadable: true,
+            subtopics: [
+              'Glycolysis, Link reaction, Krebs cycle, and Oxidative phosphorylation',
+              'Human nephron structure, ultrafiltration, and counter-current multiplier',
+              'Thermoregulation, osmoregulation, and blood glucose control'
+            ],
+            content: 'Cellular respiration pathways producing 36-38 ATP molecules, kidney physiology, endocrine regulation of homeostatic balance.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Biology\nLevel: Form V & VI\nTopic: Cellular Respiration\n\n1. KREBS CYCLE (CITRIC ACID CYCLE)\nTakes place in the mitochondrial matrix. Converts Acetyl-CoA into CO2, NADH, FADH2, and ATP.'
           }
         ]
       },
@@ -561,6 +862,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Microeconomics: Demand, Supply & Market Structures',
+            isDownloadable: true,
             subtopics: [
               'Price elasticity of demand (PED) and supply (PES) calculations',
               'Consumer behaviour theories (Utility theory & Indifference curves)',
@@ -569,6 +871,18 @@ export const academicData: ClassLevel[] = [
             ],
             content: 'Income and substitution effects, deadweight loss, price discrimination, game theory basics in oligopoly.',
             notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Economics\nLevel: Form V & VI\nTopic: Microeconomics & Elasticity\n\n1. PRICE ELASTICITY OF DEMAND (PED)\nPED = (% Change in Quantity Demanded) / (% Change in Price).'
+          },
+          {
+            title: 'Macroeconomics: National Income & Inflation',
+            isDownloadable: true,
+            subtopics: [
+              'National Income accounting methods (Income, Expenditure, Output)',
+              'Circular flow of income in a 4-sector open economy',
+              'Inflation types (Demand-pull vs Cost-push) and control policies',
+              'Fiscal policy vs Monetary policy instruments (Central Bank reserve ratio)'
+            ],
+            content: 'GDP, GNP, NNP calculations, Keynesian multiplier, Phillips curve relationship between inflation and unemployment.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Economics\nLevel: Form V & VI\nTopic: Macroeconomics & GDP\n\n1. EXPENDITURE METHOD OF GDP\nGDP = C + I + G + (X - M).\nWhere C = Consumption, I = Investment, G = Government Spending, X = Exports, M = Imports.'
           }
         ]
       },
@@ -577,14 +891,99 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Geomorphology & Plate Tectonics',
+            isDownloadable: true,
             subtopics: [
               'Continental drift hypothesis and paleomagnetism evidence',
               'Plate boundary processes (Divergent, Convergent, Transform)',
               'Vulcanicity and landforms (Volcanoes, Calderas, Intrusive bodies)',
               'Weathering, mass wasting, and fluvial landforms'
             ],
-            content: 'Geomorphology studies the origin and evolution of topographic and bathymetric features created by physical or chemical processes on Earth`s surface.',
-            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Geography\nLevel: Form V & VI\nTopic: Plate Tectonics\n\n1. THE THEORY OF PLATE TECTONICS\nEarth`s outer shell is divided into several plates that glide over the asthenosphere.\n\n2. TYPES OF PLATE BOUNDARIES\na) Divergent (e.g. East African Rift Valley where plates move apart).\nb) Convergent (e.g. Himalayas where plates crash together).\nc) Transform (e.g. San Andreas Fault where plates slide past each other).'
+            content: 'Geomorphology studies the origin and evolution of topographic features created by physical processes on Earth`s surface.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Geography\nLevel: Form V & VI\nTopic: Plate Tectonics\n\n1. THE THEORY OF PLATE TECTONICS\nEarth`s outer shell is divided into several plates that glide over the asthenosphere.'
+          },
+          {
+            title: 'Climatology, Population & Development',
+            isDownloadable: true,
+            subtopics: [
+              'Atmospheric circulation cells (Hadley, Ferrel, Polar cells)',
+              'Global climate change, El Nino Southern Oscillation (ENSO)',
+              'Demographic transition model stages and population dynamics',
+              'Sustainable development, energy resources and mining in Africa'
+            ],
+            content: 'Global heat budget, air masses, weather forecasting, population distribution factors in Tanzania, renewable energy sources.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: Advanced Geography\nLevel: Form V & VI\nTopic: Climatology\n\n1. EL NINO SOUTHERN OSCILLATION (ENSO)\nIrregular periodic variation in winds and sea surface temperatures over the tropical eastern Pacific Ocean affecting global rainfall.'
+          }
+        ]
+      },
+      {
+        name: 'History (A-Level)',
+        topics: [
+          {
+            title: 'History Paper 1: African History (Pre-Colonial to Independence)',
+            isDownloadable: true,
+            subtopics: [
+              'Development of pre-colonial African feudal states',
+              'Impacts of slave trade on African socio-economic formations',
+              'Colonial administrative systems (Direct rule, Indirect rule, Assimilation)',
+              'Decolonization of Africa and challenges of post-independence nation building'
+            ],
+            content: 'Comprehensive analysis of African history, colonial exploitation strategies, Pan-African solidarity, and neo-colonialism.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: History (Paper 1)\nLevel: Form V & VI\nTopic: Colonial Administration Systems\n\n1. INDIRECT RULE (British Policy)\nIntroduced by Lord Lugard. Used local traditional chiefs as intermediaries to collect taxes and maintain order.'
+          },
+          {
+            title: 'History Paper 2: World History (Industrial Revolution to Cold War)',
+            isDownloadable: true,
+            subtopics: [
+              'Agrarian and Industrial Revolutions in Europe',
+              'Origins and consequences of World War I and World War II',
+              'The Rise of Socialism in USSR and China',
+              'The Cold War era, Non-Aligned Movement (NAM), and Globalization'
+            ],
+            content: 'World history events that shaped modern global politics, industrial growth, world wars, and ideological cold war conflicts.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: History (Paper 2)\nLevel: Form V & VI\nTopic: World War I & Versailles Treaty\n\n1. MAIN CAUSES OF WWI (M-A-I-N)\n- Militarism\n- Alliances\n- Imperialism\n- Nationalism'
+          }
+        ]
+      },
+      {
+        name: 'Kiswahili (A-Level)',
+        topics: [
+          {
+            title: 'Kiswahili 1: Sarufi na Utatuzi wa Lugha',
+            isDownloadable: true,
+            subtopics: [
+              'Misingi ya Phonolojia na Fonetiki ya Kiswahili',
+              'Mofolojia: Mnyambuliko wa maneno na miundo ya viambishi',
+              'Sintaksia: Uchanganuzi wa sentensi kwa njia ya mti (Tree diagram)'
+            ],
+            content: 'Somo la Kiswahili Karatasi ya 1 (K1) linashughulikia sarufi ya kina, uchanganuzi wa sentensi, na maendeleo ya lugha ya Kiswahili.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili (Karatasi ya 1)\nLevel: Form V & VI\nMada: Sintaksia na Uchanganuzi wa Sentensi\n\n1. SENTENSI SAHIHI YA KISWAHILI\nS → KN + KT.\nKN (Kundi Nomino) linaweza kuundwa na N + V. KT (Kundi Tenzi) linaweza kuundwa na T + E.'
+          },
+          {
+            title: 'Kiswahili 2: Uhakiki wa Fasihi na Ushairi wa Kisasa',
+            isDownloadable: true,
+            subtopics: [
+              'Uhakiki wa Fasihi Simulizi na Fasihi Andishi katika ngazi ya Juu',
+              'Ushairi wa Kiswahili: Bahari za Ushairi (Tarbia, Tathlitha, Sitaria)',
+              'Uchambuzi wa Diwani na Riwaya zilizoteuliwa na NECTA'
+            ],
+            content: 'Kiswahili Karatasi ya 2 (K2) inafundisha uhakiki wa kina wa tamthilia, riwaya, na ushairi na maadili ya jamii.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSomo: Kiswahili (Karatasi ya 2)\nLevel: Form V & VI\nMada: Bahari za Ushairi\n\n1. TARBIA\nShairi lenye mistari (mshororo) minne katika kila ubeti.'
+          }
+        ]
+      },
+      {
+        name: 'English Language (A-Level)',
+        topics: [
+          {
+            title: 'Language 1 & Literature 2 (A-Level English)',
+            isDownloadable: true,
+            subtopics: [
+              'English Phonetics, Phonology, and Word Formation Processes',
+              'Advanced Essay Writing, Rhetoric, and Style Analysis',
+              'Critical Analysis of World Literature Plays, Novels, and Poetry'
+            ],
+            content: 'Advanced English studies covering linguistics, literary criticism, stylistic devices, and set readings.',
+            notesSample: 'LUPANULLA ACADEMIC NOTISI SERIES:\n\nSubject: English Language (A-Level)\nLevel: Form V & VI\nTopic: Word Formation Processes\n\n1. WORD FORMATION TYPES\n- Compounding: Joining two words (e.g. Tooth + Brush = Toothbrush).\n- Blending: Combining parts of two words (e.g. Smoke + Fog = Smog).'
           }
         ]
       },
@@ -593,6 +992,7 @@ export const academicData: ClassLevel[] = [
         topics: [
           {
             title: 'Democratic Process & Human Rights (Demokrasia)',
+            isDownloadable: true,
             subtopics: [
               'Principles of democracy and rule of law',
               'The electoral system and voting process in Tanzania',

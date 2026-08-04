@@ -29,7 +29,8 @@ import {
   Scale,
   GraduationCap,
   Edit,
-  Trash2
+  Trash2,
+  Award
 } from 'lucide-react';
 import { 
   fetchDocuments, 
@@ -40,9 +41,11 @@ import {
   saveOrder,
   saveDocumentMetadata,
   updateDocument,
-  deleteDocumentMetadata
+  deleteDocumentMetadata,
+  fetchNectaProgress,
+  saveNectaProgress
 } from '../firebase';
-import { DocumentMetadata, ExamResult, UserBookmark } from '../types';
+import { DocumentMetadata, ExamResult, UserBookmark, NectaProgress, NectaProgressStatus } from '../types';
 import { GoogleAdSenseUnit } from './MatangazoView';
 import ExamTimer from './ExamTimer';
 import MatokeoValidationModal from './MatokeoValidationModal';
@@ -72,6 +75,15 @@ export default function MitihaniView({
   const [sortBy, setSortBy] = useState<string>('subjectYear'); // 'subjectYear', 'newest', 'views', 'alphabetical'
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [showTimer, setShowTimer] = useState(false);
+
+  // Exam Preparation Progress Visualizer State
+  const [progressList, setProgressList] = useState<NectaProgress[]>([]);
+  const [progressLoading, setProgressLoading] = useState<boolean>(false);
+  const [savingProgressKey, setSavingProgressKey] = useState<string | null>(null);
+  const [showProgressVisualizer, setShowProgressVisualizer] = useState<boolean>(true);
+  const [progressLevelFilter, setProgressLevelFilter] = useState<string>('f4'); // 'std7', 'f2', 'f4', 'f6'
+  const [progressSubjectFilter, setProgressSubjectFilter] = useState<string>('all');
+  const [progressStatusFilter, setProgressStatusFilter] = useState<'all' | 'completed' | 'needs_review' | 'not_started'>('all');
 
   // Quick View states for PDF Preview Modal
   const [quickViewDoc, setQuickViewDoc] = useState<DocumentMetadata | null>(null);
@@ -936,6 +948,69 @@ export default function MitihaniView({
     checkBookmarks();
   }, [userProfile?.uid]);
 
+  // Load NECTA Exam Preparation Progress
+  useEffect(() => {
+    if (!userProfile?.uid) {
+      const cached = localStorage.getItem('lupa_necta_progress');
+      if (cached) {
+        try { setProgressList(JSON.parse(cached)); } catch {}
+      }
+      return;
+    }
+    const loadProgress = async () => {
+      setProgressLoading(true);
+      try {
+        const data = await fetchNectaProgress(userProfile.uid);
+        setProgressList(data);
+      } catch (err) {
+        console.error('Failed to load NECTA progress:', err);
+      } finally {
+        setProgressLoading(false);
+      }
+    };
+    loadProgress();
+  }, [userProfile?.uid]);
+
+  const getPaperProgressStatus = (level: string, subject: string, year: string | number): NectaProgressStatus => {
+    const yrStr = String(year);
+    const subClean = subject.toLowerCase().trim();
+    const match = progressList.find(p => p.level === level && p.subject.toLowerCase().trim() === subClean && p.year === yrStr);
+    return match?.status || 'not_started';
+  };
+
+  const handleUpdatePaperStatus = async (level: string, subject: string, year: string | number, newStatus: NectaProgressStatus) => {
+    const yrStr = String(year);
+    const subClean = subject.toLowerCase().trim();
+    const tempKey = `${level}_${subClean}_${yrStr}`;
+    setSavingProgressKey(tempKey);
+
+    const updatedItem: NectaProgress = {
+      id: userProfile?.uid ? `${userProfile.uid}_${level}_${subClean}_${yrStr}` : tempKey,
+      userId: userProfile?.uid || 'guest',
+      level,
+      subject: subClean,
+      year: yrStr,
+      status: newStatus,
+      updatedAt: Date.now()
+    };
+
+    setProgressList(prev => {
+      const filtered = prev.filter(p => !(p.level === level && p.subject.toLowerCase().trim() === subClean && p.year === yrStr));
+      const next = [...filtered, updatedItem];
+      localStorage.setItem('lupa_necta_progress', JSON.stringify(next));
+      return next;
+    });
+
+    if (userProfile?.uid) {
+      try {
+        await saveNectaProgress(userProfile.uid, level, subClean, yrStr, newStatus);
+      } catch (err) {
+        console.error('Failed to persist progress to Firestore:', err);
+      }
+    }
+    setSavingProgressKey(null);
+  };
+
   const loadDocs = async () => {
     try {
       setLoading(true);
@@ -1023,7 +1098,21 @@ export default function MitihaniView({
 
     const matchesLevel = !selectedLevel || docLevel.toLowerCase() === selectedLevel.toLowerCase();
 
-    return matchesSearch && matchesType && matchesSubject && matchesYear && matchesLevel;
+    // Progress status filter
+    let matchesProgressStatus = true;
+    if (progressStatusFilter !== 'all') {
+      const docSub = getDocSubject(doc);
+      const docYr = doc.year || '';
+      let docLvl = 'f4';
+      if (doc.tags?.includes('f2') || doc.tags?.includes('Form 2')) docLvl = 'f2';
+      else if (doc.tags?.includes('std7') || doc.tags?.includes('Standard 7')) docLvl = 'std7';
+      else if (doc.tags?.includes('f6') || doc.tags?.includes('Form 6')) docLvl = 'f6';
+
+      const st = getPaperProgressStatus(docLvl, docSub, docYr);
+      matchesProgressStatus = (st === progressStatusFilter);
+    }
+
+    return matchesSearch && matchesType && matchesSubject && matchesYear && matchesLevel && matchesProgressStatus;
   });
 
   const getDocSubject = (doc: DocumentMetadata) => {
@@ -1352,7 +1441,230 @@ export default function MitihaniView({
         </div>
       </section>
 
+      {/* ── EXAM PREPARATION PROGRESS VISUALIZER ── */}
+      <section id="exam-progress-visualizer" className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-cyan-100 text-cyan-700 rounded-2xl flex items-center justify-center font-bold shrink-0 shadow-2xs">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-display font-black text-slate-900 text-base sm:text-lg uppercase tracking-tight">
+                  Kipimo cha Maendeleo ya Mitihani (Progress Visualizer)
+                </h2>
+                <span className="bg-cyan-100 text-cyan-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide border border-cyan-200">
+                  Interactive Tracker
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Weka alama kwenye miaka ya past papers kama <strong className="text-emerald-700">'Imekamilika' (Completed)</strong> au <strong className="text-amber-700">'Inahitaji Marudio' (Needs Review)</strong> ili kufuatilia maandalizi yako ya NECTA.
+              </p>
+            </div>
+          </div>
 
+          <button
+            onClick={() => setShowProgressVisualizer(!showProgressVisualizer)}
+            className="text-xs font-black text-cyan-700 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 px-3.5 py-2 rounded-xl border border-cyan-200/80 transition-all self-start sm:self-auto flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            {showProgressVisualizer ? 'Ficha Chati / Grid' : 'Onyesha Kipimo Kamili'}
+          </button>
+        </div>
+
+        {showProgressVisualizer && (
+          <div className="space-y-6 animate-fade-in">
+            {(() => {
+              const currentLevelProgress = progressList.filter(p => p.level === progressLevelFilter);
+              const completedCount = currentLevelProgress.filter(p => p.status === 'completed').length;
+              const needsReviewCount = currentLevelProgress.filter(p => p.status === 'needs_review').length;
+              const totalTracked = currentLevelProgress.length;
+
+              const activeSubjectsCount = (NECTA_SUBJECTS[progressLevelFilter] || []).length;
+              const totalPossiblePapers = activeSubjectsCount * 30;
+              const completedPercent = totalPossiblePapers > 0 ? Math.min(100, Math.round((completedCount / totalPossiblePapers) * 100)) : 0;
+
+              return (
+                <div className="space-y-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80">
+                    <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider px-1">Chagua Ngazi ya Mtihani:</span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {NECTA_LEVELS.map(lvl => (
+                        <button
+                          key={lvl.id}
+                          onClick={() => {
+                            setProgressLevelFilter(lvl.id);
+                            setProgressSubjectFilter('all');
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all cursor-pointer ${
+                            progressLevelFilter === lvl.id
+                              ? 'bg-slate-950 text-white shadow-sm'
+                              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                          }`}
+                        >
+                          {lvl.name.split(' (')[0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-emerald-50/80 border border-emerald-200 p-3.5 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between text-emerald-800">
+                        <span className="text-[10px] font-black uppercase tracking-wider">🟢 Imekamilika</span>
+                        <CheckCircle2 size={16} className="text-emerald-600" />
+                      </div>
+                      <div className="text-2xl font-black text-emerald-950">{completedCount}</div>
+                      <div className="text-[10px] font-bold text-emerald-700">Mitihani iliyokamilika</div>
+                    </div>
+
+                    <div className="bg-amber-50/80 border border-amber-200 p-3.5 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between text-amber-800">
+                        <span className="text-[10px] font-black uppercase tracking-wider">🟡 Marudio</span>
+                        <AlertCircle size={16} className="text-amber-600" />
+                      </div>
+                      <div className="text-2xl font-black text-amber-950">{needsReviewCount}</div>
+                      <div className="text-[10px] font-bold text-amber-700">Zinazohitaji kusoma tena</div>
+                    </div>
+
+                    <div className="bg-cyan-50/80 border border-cyan-200 p-3.5 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between text-cyan-800">
+                        <span className="text-[10px] font-black uppercase tracking-wider">Daftari Zote</span>
+                        <BookOpen size={16} className="text-cyan-600" />
+                      </div>
+                      <div className="text-2xl font-black text-cyan-950">{totalTracked}</div>
+                      <div className="text-[10px] font-bold text-cyan-700">Jumla ya papers ulizoweka status</div>
+                    </div>
+
+                    <div className="bg-indigo-50/80 border border-indigo-200 p-3.5 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between text-indigo-800">
+                        <span className="text-[10px] font-black uppercase tracking-wider">Division I Target</span>
+                        <Award size={16} className="text-indigo-600" />
+                      </div>
+                      <div className="text-2xl font-black text-indigo-950">{completedPercent}%</div>
+                      <div className="text-[10px] font-bold text-indigo-700">Kiwango cha Ufanisi</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                    <div className="flex justify-between items-center text-[11px] font-extrabold text-slate-700">
+                      <span className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 text-emerald-700">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                          Completed: {completedCount}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="inline-flex items-center gap-1 text-amber-700">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+                          Needs Review: {needsReviewCount}
+                        </span>
+                      </span>
+                      <span className="text-slate-500 font-mono text-[10px]">Miaka 1994 - 2026</span>
+                    </div>
+                    <div className="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden flex">
+                      <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${Math.max(0, (completedCount / (totalPossiblePapers || 1)) * 100)}%` }}></div>
+                      <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${(needsReviewCount / (totalPossiblePapers || 1)) * 100}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-black uppercase text-slate-700">Chagua Somo:</label>
+                        <select
+                          value={progressSubjectFilter}
+                          onChange={(e) => setProgressSubjectFilter(e.target.value)}
+                          className="px-3 py-1.5 bg-white border border-slate-200 text-slate-900 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs"
+                        >
+                          <option value="all">Masomo Yote Ya Ngazi Hii</option>
+                          {(NECTA_SUBJECTS[progressLevelFilter] || []).map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-black uppercase text-slate-400">Chuja Mtihani Catalog:</span>
+                        <button
+                          onClick={() => setProgressStatusFilter('all')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                            progressStatusFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          Zote
+                        </button>
+                        <button
+                          onClick={() => setProgressStatusFilter('completed')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                            progressStatusFilter === 'completed' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                          }`}
+                        >
+                          🟢 Imekamilika
+                        </button>
+                        <button
+                          onClick={() => setProgressStatusFilter('needs_review')}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                            progressStatusFilter === 'needs_review' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          }`}
+                        >
+                          🟡 Marudio
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950 text-white p-4 sm:p-5 rounded-2xl space-y-3 shadow-md border border-slate-800">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                        <span className="text-xs font-black uppercase tracking-wide text-cyan-400 flex items-center gap-1.5">
+                          <Calendar size={14} />
+                          <span>Heatmap za Miaka (1994 - 2026)</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Bofya mwaka wowote kubadilisha status: <span className="text-slate-200 font-bold">Sijaanza ⚪ &rarr; Completed 🟢 &rarr; Needs Review 🟡</span>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 gap-1.5 max-h-72 overflow-y-auto pr-1">
+                        {NECTA_YEARS.map(yr => {
+                          const targetSubject = progressSubjectFilter === 'all' 
+                            ? (NECTA_SUBJECTS[progressLevelFilter]?.[0]?.id || 'physics')
+                            : progressSubjectFilter;
+                          
+                          const status = getPaperProgressStatus(progressLevelFilter, targetSubject, yr);
+
+                          return (
+                            <button
+                              key={yr}
+                              type="button"
+                              onClick={() => {
+                                const nextStatus: NectaProgressStatus = 
+                                  status === 'not_started' ? 'completed' :
+                                  status === 'completed' ? 'needs_review' : 'not_started';
+                                handleUpdatePaperStatus(progressLevelFilter, targetSubject, yr, nextStatus);
+                              }}
+                              title={`Mwaka ${yr} - Bofya kubadilisha status (${status})`}
+                              className={`p-2 rounded-xl text-center text-[11px] font-mono font-bold transition-all border flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 ${
+                                status === 'completed'
+                                  ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-xs'
+                                  : status === 'needs_review'
+                                  ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-xs'
+                                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800 hover:border-slate-700'
+                              }`}
+                            >
+                              <span>{yr}</span>
+                              {status === 'completed' && <CheckCircle2 size={12} className="text-slate-950" />}
+                              {status === 'needs_review' && <AlertCircle size={12} className="text-slate-950" />}
+                              {status === 'not_started' && <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </section>
 
       {/* ── NEW: Maktaba Kuu ya Past Papers za NECTA (Verified & Database Driven) ── */}
       <section id="necta-past-papers-center" className="bg-gradient-to-br from-indigo-950 via-slate-900 to-cyan-950 border border-cyan-500/20 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-6">
@@ -1437,18 +1749,22 @@ export default function MitihaniView({
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-64 overflow-y-auto pr-1">
               {NECTA_YEARS.map((yr) => {
                 const isActive = nectaWizardYear === yr;
+                const yrStatus = getPaperProgressStatus(nectaWizardLevel, nectaWizardSubject, yr);
+
                 return (
                   <button
                     key={yr}
                     type="button"
                     onClick={() => setNectaWizardYear(yr)}
-                    className={`py-2 px-1 rounded-lg border text-[11px] font-mono font-bold transition-all text-center cursor-pointer ${
+                    className={`py-2 px-1 rounded-lg border text-[11px] font-mono font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
                       isActive 
                         ? 'bg-amber-400 border-amber-400 text-slate-950 shadow-md font-black' 
                         : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:bg-slate-800/30'
                     }`}
                   >
-                    {yr}
+                    <span>{yr}</span>
+                    {yrStatus === 'completed' && <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Imekamilika"></span>}
+                    {yrStatus === 'needs_review' && <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Inahitaji Marudio"></span>}
                   </button>
                 );
               })}
@@ -1481,6 +1797,34 @@ export default function MitihaniView({
                   <span>Matazamaji: {matchingDoc ? matchingDoc.views.toLocaleString() : '1,500+'}</span>
                   <span>•</span>
                   <span>Saizi: {matchingDoc ? `${matchingDoc.sizeKB} KB` : '1.2 MB'}</span>
+                </div>
+
+                {/* Progress Status Toggle Buttons */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+                  <span className="text-[10px] font-black uppercase text-cyan-400 tracking-wider">Hali ya Maandalizi:</span>
+                  {(['not_started', 'completed', 'needs_review'] as const).map((st) => {
+                    const currentSt = getPaperProgressStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear);
+                    const isSelected = currentSt === st;
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => handleUpdatePaperStatus(nectaWizardLevel, nectaWizardSubject, nectaWizardYear, st)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                          isSelected
+                            ? st === 'completed' ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
+                              : st === 'needs_review' ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                              : 'bg-slate-700 text-white font-bold'
+                            : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        {st === 'completed' && <CheckCircle2 size={11} />}
+                        {st === 'needs_review' && <AlertCircle size={11} />}
+                        {st === 'not_started' && <span className="w-1.5 h-1.5 rounded-full bg-slate-500 inline-block" />}
+                        <span>{st === 'completed' ? 'Imekamilika' : st === 'needs_review' ? 'Inahitaji Marudio' : 'Bado'}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1917,10 +2261,39 @@ export default function MitihaniView({
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400 font-bold mt-1.5">
-                              <span className="flex items-center gap-0.5 text-[9px]">
-                                {fileKB} KB
-                              </span>
+                            <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400 font-bold mt-1.5" onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const docSub = getDocSubject(doc);
+                                const docYr = doc.year || '';
+                                let docLvl = 'f4';
+                                if (doc.tags?.includes('f2') || doc.tags?.includes('Form 2')) docLvl = 'f2';
+                                else if (doc.tags?.includes('std7') || doc.tags?.includes('Standard 7')) docLvl = 'std7';
+                                else if (doc.tags?.includes('f6') || doc.tags?.includes('Form 6')) docLvl = 'f6';
+                                const st = getPaperProgressStatus(docLvl, docSub, docYr);
+
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const next = st === 'not_started' ? 'completed' : st === 'completed' ? 'needs_review' : 'not_started';
+                                      handleUpdatePaperStatus(docLvl, docSub, docYr, next);
+                                    }}
+                                    className={`px-2 py-0.5 rounded-lg text-[9.5px] font-black uppercase transition-all flex items-center gap-1 cursor-pointer border ${
+                                      st === 'completed'
+                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                        : st === 'needs_review'
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border-slate-200'
+                                    }`}
+                                    title="Bofya kubadilisha hali ya maandalizi"
+                                  >
+                                    {st === 'completed' && <CheckCircle2 size={10} className="text-emerald-600" />}
+                                    {st === 'needs_review' && <AlertCircle size={10} className="text-amber-600" />}
+                                    <span>{st === 'completed' ? 'Imekamilika' : st === 'needs_review' ? 'Marudio' : '+ Status'}</span>
+                                  </button>
+                                );
+                              })()}
                               <span className="text-cyan-600 font-extrabold inline-flex items-center gap-0.5 hover:underline">
                                 SOMA &rarr;
                               </span>
@@ -2012,10 +2385,39 @@ export default function MitihaniView({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400 font-bold mt-1.5">
-                        <span className="flex items-center gap-0.5 text-[9px]">
-                          {fileKB} KB
-                        </span>
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400 font-bold mt-1.5" onClick={(e) => e.stopPropagation()}>
+                        {(() => {
+                          const docSub = getDocSubject(doc);
+                          const docYr = doc.year || '';
+                          let docLvl = 'f4';
+                          if (doc.tags?.includes('f2') || doc.tags?.includes('Form 2')) docLvl = 'f2';
+                          else if (doc.tags?.includes('std7') || doc.tags?.includes('Standard 7')) docLvl = 'std7';
+                          else if (doc.tags?.includes('f6') || doc.tags?.includes('Form 6')) docLvl = 'f6';
+                          const st = getPaperProgressStatus(docLvl, docSub, docYr);
+
+                          return (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const next = st === 'not_started' ? 'completed' : st === 'completed' ? 'needs_review' : 'not_started';
+                                handleUpdatePaperStatus(docLvl, docSub, docYr, next);
+                              }}
+                              className={`px-2 py-0.5 rounded-lg text-[9.5px] font-black uppercase transition-all flex items-center gap-1 cursor-pointer border ${
+                                st === 'completed'
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                  : st === 'needs_review'
+                                  ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                  : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border-slate-200'
+                              }`}
+                              title="Bofya kubadilisha hali ya maandalizi"
+                            >
+                              {st === 'completed' && <CheckCircle2 size={10} className="text-emerald-600" />}
+                              {st === 'needs_review' && <AlertCircle size={10} className="text-amber-600" />}
+                              <span>{st === 'completed' ? 'Imekamilika' : st === 'needs_review' ? 'Marudio' : '+ Status'}</span>
+                            </button>
+                          );
+                        })()}
                         <span className="text-cyan-600 font-extrabold inline-flex items-center gap-0.5 hover:underline">
                           SOMA &rarr;
                         </span>
@@ -2638,6 +3040,56 @@ export default function MitihaniView({
                   <div className="space-y-1 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Kundi</span>
                     <span className="text-slate-900 text-xs font-extrabold">{quickViewDoc.category || 'Past Papers'}</span>
+                  </div>
+                </div>
+
+                {/* Progress Status Tracker inside Quick View Modal */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2 text-left mt-3">
+                  <div className="flex justify-between items-center text-[10.5px] font-black uppercase text-slate-500 tracking-wider">
+                    <span>Hali ya Maandalizi Yako:</span>
+                    <span className="font-extrabold text-cyan-800">
+                      {(() => {
+                        const docSub = getDocSubject(quickViewDoc);
+                        const docYr = quickViewDoc.year || '';
+                        let docLvl = 'f4';
+                        if (quickViewDoc.tags?.includes('f2') || quickViewDoc.tags?.includes('Form 2')) docLvl = 'f2';
+                        else if (quickViewDoc.tags?.includes('std7') || quickViewDoc.tags?.includes('Standard 7')) docLvl = 'std7';
+                        else if (quickViewDoc.tags?.includes('f6') || quickViewDoc.tags?.includes('Form 6')) docLvl = 'f6';
+                        const st = getPaperProgressStatus(docLvl, docSub, docYr);
+                        return st === 'completed' ? '🟢 Imekamilika' : st === 'needs_review' ? '🟡 Inahitaji Marudio' : '⚪ Sijaanza';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['not_started', 'completed', 'needs_review'] as const).map(st => {
+                      const docSub = getDocSubject(quickViewDoc);
+                      const docYr = quickViewDoc.year || '';
+                      let docLvl = 'f4';
+                      if (quickViewDoc.tags?.includes('f2') || quickViewDoc.tags?.includes('Form 2')) docLvl = 'f2';
+                      else if (quickViewDoc.tags?.includes('std7') || quickViewDoc.tags?.includes('Standard 7')) docLvl = 'std7';
+                      else if (quickViewDoc.tags?.includes('f6') || quickViewDoc.tags?.includes('Form 6')) docLvl = 'f6';
+                      const isCurrent = getPaperProgressStatus(docLvl, docSub, docYr) === st;
+
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => handleUpdatePaperStatus(docLvl, docSub, docYr, st)}
+                          className={`py-2 px-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1 cursor-pointer border ${
+                            isCurrent
+                              ? st === 'completed' ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-xs'
+                                : st === 'needs_review' ? 'bg-amber-400 text-slate-950 border-amber-300 font-extrabold shadow-xs'
+                                : 'bg-slate-800 text-white border-slate-700'
+                              : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
+                          }`}
+                        >
+                          {st === 'completed' && <CheckCircle2 size={12} />}
+                          {st === 'needs_review' && <AlertCircle size={12} />}
+                          {st === 'not_started' && <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
+                          <span>{st === 'completed' ? 'Kamilisha' : st === 'needs_review' ? 'Marudio' : 'Bado'}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

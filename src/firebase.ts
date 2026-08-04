@@ -36,7 +36,7 @@ import {
   getDocFromServer,
   serverTimestamp
 } from 'firebase/firestore';
-import { UserProfile, DocumentMetadata, Comment, UserRole, SubscriptionTier, DocumentStatus, Announcement, Product, Video, Order, AppNotification, Feedback, Certificate, ExamResult, AuditLog, SystemConfig, EducationalResource, HighlightAnnotation, UserBookmark, WebsiteNews, PaymentTransaction, QuickBuyOrder, NectaProgress, StudyEvent, UserReadingProgress, UserVideoProgress, DukaVideoAdItem } from './types';
+import { UserProfile, DocumentMetadata, Comment, UserRole, SubscriptionTier, DocumentStatus, Announcement, Product, Video, Order, AppNotification, Feedback, Certificate, ExamResult, AuditLog, SystemConfig, EducationalResource, HighlightAnnotation, UserBookmark, WebsiteNews, PaymentTransaction, QuickBuyOrder, NectaProgress, NectaProgressStatus, StudyEvent, UserReadingProgress, UserVideoProgress, DukaVideoAdItem } from './types';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -1711,7 +1711,7 @@ export const saveNectaProgress = async (
   level: string,
   subject: string,
   year: string,
-  status: 'not_started' | 'in_progress' | 'completed',
+  status: NectaProgressStatus,
   notes?: string
 ): Promise<string> => {
   const path = 'necta_progress';

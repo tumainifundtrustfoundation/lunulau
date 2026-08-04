@@ -37,12 +37,16 @@ import {
   Heart,
   X,
   Filter,
-  Layers
+  Layers,
+  Plus,
+  Edit3,
+  Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdSenseWidget from './AdSenseWidget';
 import { jsPDF } from 'jspdf';
 import { toggleTopicFavorite, awardStudyPoints, updateUserProfile, db } from '../firebase';
+import { CustomPersonalNote, CustomFlashcardDeck } from '../types';
 import { getQuizQuestions, QuizQuestion } from './MasomoQuizData';
 import { getExamTips } from './MasomoNectaTips';
 import { getFlashcardsForTopic, Flashcard as MasomoFlashcard } from './MasomoFlashcardData';
@@ -52,7 +56,8 @@ import {
   RotateCw, 
   ChevronLeft, 
   ChevronRight, 
-  CheckCircle2 
+  CheckCircle2,
+  Wand2
 } from 'lucide-react';
 import { academicData, Topic, ClassLevel } from './MasomoAcademicData';
 
@@ -75,10 +80,407 @@ export interface SavedBookmark {
 
 export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps) {
   // Navigation & Categorization states
-  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'favorites' | 'saved'>('all');
+  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'my-notes' | 'favorites' | 'saved'>('all');
   const [activeStreamTab, setActiveStreamTab] = useState<'all' | 'PCB' | 'HGE' | 'EGM'>('all');
   const [openSubject, setOpenSubject] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+
+  // Custom Personal Notes state
+  const [customNotes, setCustomNotes] = useState<CustomPersonalNote[]>(() => {
+    try {
+      if (userProfile?.customNotes && Array.isArray(userProfile.customNotes)) {
+        return userProfile.customNotes;
+      }
+      const local = localStorage.getItem('lupanulla_custom_notes');
+      return local ? JSON.parse(local) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Sync customNotes if userProfile updates
+  useEffect(() => {
+    if (userProfile?.customNotes && Array.isArray(userProfile.customNotes)) {
+      setCustomNotes(userProfile.customNotes);
+    }
+  }, [userProfile?.customNotes]);
+
+  // Persist custom notes list
+  const saveCustomNotesList = async (updated: CustomPersonalNote[]) => {
+    setCustomNotes(updated);
+    try {
+      localStorage.setItem('lupanulla_custom_notes', JSON.stringify(updated));
+      if (userProfile?.uid) {
+        await updateUserProfile(userProfile.uid, { customNotes: updated });
+        window.dispatchEvent(new CustomEvent('refresh-user-profile'));
+      }
+    } catch (e) {
+      console.error('Failed to save custom notes:', e);
+    }
+  };
+
+  // Custom Flashcard Decks state
+  const [customFlashcardDecks, setCustomFlashcardDecks] = useState<CustomFlashcardDeck[]>(() => {
+    try {
+      if (userProfile?.customFlashcards && Array.isArray(userProfile.customFlashcards)) {
+        return userProfile.customFlashcards;
+      }
+      const local = localStorage.getItem('lupanulla_custom_flashcards');
+      return local ? JSON.parse(local) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Sync customFlashcards if userProfile updates
+  useEffect(() => {
+    if (userProfile?.customFlashcards && Array.isArray(userProfile.customFlashcards)) {
+      setCustomFlashcardDecks(userProfile.customFlashcards);
+    }
+  }, [userProfile?.customFlashcards]);
+
+  // Persist custom flashcard decks
+  const saveCustomFlashcardsList = async (updated: CustomFlashcardDeck[]) => {
+    setCustomFlashcardDecks(updated);
+    try {
+      localStorage.setItem('lupanulla_custom_flashcards', JSON.stringify(updated));
+      if (userProfile?.uid) {
+        await updateUserProfile(userProfile.uid, { customFlashcards: updated });
+        window.dispatchEvent(new CustomEvent('refresh-user-profile'));
+      }
+    } catch (e) {
+      console.error('Failed to save custom flashcard decks:', e);
+    }
+  };
+
+  // Currently selected deck for studying ('default' or custom deck ID)
+  const [selectedDeckId, setSelectedDeckId] = useState<string>('default');
+
+  // Flashcard Creator Modal State
+  const [isFlashcardCreatorOpen, setIsFlashcardCreatorOpen] = useState(false);
+  const [creatorDeckTitle, setCreatorDeckTitle] = useState('');
+  const [creatorSubject, setCreatorSubject] = useState('Physics');
+  const [creatorLevel, setCreatorLevel] = useState('O-Level');
+  const [creatorSourceText, setCreatorSourceText] = useState('');
+  const [creatorCards, setCreatorCards] = useState<MasomoFlashcard[]>([]);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+
+  // Smart Parser for converting raw note text into Term & Definition cards
+  const parseTextIntoFlashcards = (textToParse: string): MasomoFlashcard[] => {
+    if (!textToParse.trim()) return [];
+
+    const lines = textToParse
+      .split(/\n+/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    const generated: MasomoFlashcard[] = [];
+
+    lines.forEach(line => {
+      // 1. Colon e.g. "Dhana: Maelezo"
+      if (line.includes(':')) {
+        const parts = line.split(':');
+        const term = parts[0].replace(/^[-*•0-9.]+\s*/, '').trim();
+        const def = parts.slice(1).join(':').trim();
+        if (term && def) {
+          generated.push({ term, definition: def });
+          return;
+        }
+      }
+
+      // 2. Dash e.g. "Term - Definition"
+      if (line.includes(' - ')) {
+        const parts = line.split(' - ');
+        const term = parts[0].replace(/^[-*•0-9.]+\s*/, '').trim();
+        const def = parts.slice(1).join(' - ').trim();
+        if (term && def) {
+          generated.push({ term, definition: def });
+          return;
+        }
+      }
+
+      // 3. Question mark e.g. "Je, Velocity ni nini? Mstari ..."
+      if (line.includes('?')) {
+        const parts = line.split('?');
+        const term = (parts[0] + '?').replace(/^[-*•0-9.]+\s*/, '').trim();
+        const def = parts.slice(1).join('?').trim() || 'Maelezo au jibu la swali hili.';
+        if (term) {
+          generated.push({ term, definition: def });
+          return;
+        }
+      }
+
+      // 4. Default sentence chunking
+      const cleanLine = line.replace(/^[-*•0-9.]+\s*/, '').trim();
+      if (cleanLine.length > 8) {
+        const words = cleanLine.split(' ');
+        if (words.length >= 4) {
+          const term = words.slice(0, 3).join(' ');
+          const definition = words.slice(3).join(' ');
+          generated.push({ term, definition });
+        } else {
+          generated.push({ term: cleanLine, definition: 'Mada au dondoo muhimu.' });
+        }
+      }
+    });
+
+    return generated;
+  };
+
+  const handleOpenFlashcardCreator = (initialText?: string, deckToEdit?: CustomFlashcardDeck) => {
+    let sourceText = initialText || '';
+
+    // Check if user currently selected text on screen
+    if (!sourceText) {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim()) {
+        sourceText = selection.toString().trim();
+      }
+    }
+
+    if (deckToEdit) {
+      setEditingDeckId(deckToEdit.id);
+      setCreatorDeckTitle(deckToEdit.title);
+      setCreatorSubject(deckToEdit.subject);
+      setCreatorLevel(deckToEdit.level);
+      setCreatorCards(deckToEdit.cards);
+      setCreatorSourceText('');
+    } else {
+      setEditingDeckId(null);
+      const defaultTitle = selectedTopic
+        ? `Deck: ${selectedTopic.title}`
+        : viewingCustomNote
+        ? `Deck: ${viewingCustomNote.title}`
+        : 'Deck Mpya ya Flashcards';
+
+      setCreatorDeckTitle(defaultTitle);
+      setCreatorSubject(viewingCustomNote?.subject || openSubject || 'Physics');
+      setCreatorLevel(viewingCustomNote?.level || 'O-Level');
+      setCreatorSourceText(sourceText);
+
+      if (sourceText) {
+        const parsed = parseTextIntoFlashcards(sourceText);
+        setCreatorCards(parsed.length > 0 ? parsed : [{ term: sourceText.slice(0, 40), definition: sourceText }]);
+      } else {
+        setCreatorCards([{ term: '', definition: '' }]);
+      }
+    }
+
+    setIsFlashcardCreatorOpen(true);
+  };
+
+  const handleRunSmartParseOnSourceText = () => {
+    if (!creatorSourceText.trim()) {
+      showToast('info', 'Tafadhali weka au chagua maandishi kwenye kisanduku kwanza.');
+      return;
+    }
+    const parsed = parseTextIntoFlashcards(creatorSourceText);
+    if (parsed.length > 0) {
+      setCreatorCards(parsed);
+      showToast('success', `⚡ Imepasua kadi ${parsed.length} kutoka kwenye maandishi!`);
+    } else {
+      showToast('info', 'Haitawezekana kupasua kadi moja kwa moja. Unaweza kuongeza kadi kwa mkono.');
+    }
+  };
+
+  const handleAddEmptyCardToCreator = () => {
+    setCreatorCards(prev => [...prev, { term: '', definition: '' }]);
+  };
+
+  const handleRemoveCardFromCreator = (index: number) => {
+    setCreatorCards(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateCreatorCard = (index: number, field: 'term' | 'definition', value: string) => {
+    setCreatorCards(prev => prev.map((card, i) => {
+      if (i === index) {
+        return { ...card, [field]: value };
+      }
+      return card;
+    }));
+  };
+
+  const handleSaveFlashcardDeck = async () => {
+    if (!creatorDeckTitle.trim()) {
+      showToast('info', 'Tafadhali weka Kichwa cha Deck cha Flashcards.');
+      return;
+    }
+
+    const validCards = creatorCards.filter(c => c.term.trim() && c.definition.trim());
+    if (validCards.length === 0) {
+      showToast('info', 'Tafadhali ongeza angalau kadi 1 yenye Dhana (Term) na Maelezo (Definition).');
+      return;
+    }
+
+    const now = Date.now();
+
+    if (editingDeckId) {
+      const updated = customFlashcardDecks.map(d => {
+        if (d.id === editingDeckId) {
+          return {
+            ...d,
+            title: creatorDeckTitle.trim(),
+            subject: creatorSubject.trim(),
+            level: creatorLevel.trim(),
+            cards: validCards,
+            updatedAt: now
+          };
+        }
+        return d;
+      });
+      await saveCustomFlashcardsList(updated);
+      showToast('success', '✏️ Imefanikiwa! Deck yako ya Flashcards imesasishwa.');
+    } else {
+      const newDeck: CustomFlashcardDeck = {
+        id: `deck_${now}_${Math.random().toString(36).substring(2, 7)}`,
+        title: creatorDeckTitle.trim(),
+        subject: creatorSubject.trim(),
+        level: creatorLevel.trim(),
+        cards: validCards,
+        createdAt: now,
+        updatedAt: now
+      };
+      const updated = [newDeck, ...customFlashcardDecks];
+      await saveCustomFlashcardsList(updated);
+
+      if (userProfile?.uid) {
+        awardStudyPoints(userProfile.uid, 5, 0).catch(console.error);
+      }
+      showToast('success', '🎉 Imefanikiwa! Deck mpya ya Flashcards imehifadhiwa (+5 XP)!');
+
+      // Switch reader view to custom deck
+      setSelectedDeckId(newDeck.id);
+      setFlashcardsList(newDeck.cards);
+      setFlashcardIndex(0);
+      setLearnedCardIndices([]);
+      setActiveReaderTab('flashcards');
+    }
+
+    setIsFlashcardCreatorOpen(false);
+  };
+
+  const handleDeleteFlashcardDeck = async (deckId: string, deckTitle: string) => {
+    if (window.confirm(`Je, una uhakika unataka kufuta Deck hii: "${deckTitle}"?`)) {
+      const updated = customFlashcardDecks.filter(d => d.id !== deckId);
+      await saveCustomFlashcardsList(updated);
+      showToast('info', `Deck "${deckTitle}" imefutwa.`);
+      if (selectedDeckId === deckId) {
+        setSelectedDeckId('default');
+        if (selectedTopic) {
+          setFlashcardsList(getFlashcardsForTopic(selectedTopic.title));
+        }
+      }
+    }
+  };
+
+  // Note Modal & Form state
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteFormTitle, setNoteFormTitle] = useState('');
+  const [noteFormSubject, setNoteFormSubject] = useState('Physics');
+  const [noteFormLevel, setNoteFormLevel] = useState('O-Level');
+  const [noteFormContent, setNoteFormContent] = useState('');
+
+  // Filters for my-notes tab
+  const [myNotesSearchQuery, setMyNotesSearchQuery] = useState('');
+  const [myNotesSubjectFilter, setMyNotesSubjectFilter] = useState('all');
+
+  // Reader Modal for viewing custom note in detail
+  const [viewingCustomNote, setViewingCustomNote] = useState<CustomPersonalNote | null>(null);
+
+  const handleOpenCreateNoteModal = (initial?: { title?: string; subject?: string; level?: string; content?: string }) => {
+    setEditingNoteId(null);
+    setNoteFormTitle(initial?.title || '');
+    setNoteFormSubject(initial?.subject || openSubject || 'Physics');
+    setNoteFormLevel(initial?.level || 'O-Level');
+    setNoteFormContent(initial?.content || '');
+    setIsNoteModalOpen(true);
+  };
+
+  const handleOpenEditNoteModal = (note: CustomPersonalNote) => {
+    setEditingNoteId(note.id);
+    setNoteFormTitle(note.title);
+    setNoteFormSubject(note.subject);
+    setNoteFormLevel(note.level);
+    setNoteFormContent(note.content);
+    setIsNoteModalOpen(true);
+  };
+
+  const handleSaveCustomNote = async () => {
+    if (!noteFormTitle.trim() || !noteFormContent.trim()) {
+      showToast('info', 'Tafadhali jaza Kichwa cha Nukuu na Yaliyomo kabla ya kuhifadhi.');
+      return;
+    }
+
+    const now = Date.now();
+
+    if (editingNoteId) {
+      const updated = customNotes.map(n => {
+        if (n.id === editingNoteId) {
+          return {
+            ...n,
+            title: noteFormTitle.trim(),
+            subject: noteFormSubject.trim(),
+            level: noteFormLevel.trim(),
+            content: noteFormContent.trim(),
+            updatedAt: now
+          };
+        }
+        return n;
+      });
+      await saveCustomNotesList(updated);
+      showToast('success', '✏️ Imefanikiwa! Nukuu yako imesasishwa salama.');
+    } else {
+      const newNote: CustomPersonalNote = {
+        id: `note_${now}_${Math.random().toString(36).substring(2, 7)}`,
+        title: noteFormTitle.trim(),
+        subject: noteFormSubject.trim(),
+        level: noteFormLevel.trim(),
+        content: noteFormContent.trim(),
+        createdAt: now,
+        updatedAt: now
+      };
+      const updated = [newNote, ...customNotes];
+      await saveCustomNotesList(updated);
+      showToast('success', '🎉 Imefanikiwa! Nukuu yako mpya imehifadhiwa salama!');
+    }
+
+    setIsNoteModalOpen(false);
+  };
+
+  const handleDeleteCustomNote = async (noteId: string, noteTitle: string) => {
+    if (window.confirm(`Je, una uhakika unataka kufuta nukuu: "${noteTitle}"?`)) {
+      const updated = customNotes.filter(n => n.id !== noteId);
+      await saveCustomNotesList(updated);
+      showToast('info', `Nukuu "${noteTitle}" imefutwa.`);
+      if (viewingCustomNote?.id === noteId) {
+        setViewingCustomNote(null);
+      }
+    }
+  };
+
+  const handleDownloadNotePDF = (note: CustomPersonalNote) => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text(`LUPANULLA ELIMU HUB - NUKUU ZANGU`, 14, 18);
+      doc.setFontSize(12);
+      doc.text(`Kichwa: ${note.title}`, 14, 28);
+      doc.setFontSize(10);
+      doc.text(`Somo: ${note.subject} | Kiwango: ${note.level}`, 14, 35);
+      doc.text(`Tarehe: ${new Date(note.updatedAt).toLocaleDateString('sw-TZ')}`, 14, 41);
+      doc.line(14, 45, 196, 45);
+
+      doc.setFontSize(10);
+      const splitText = doc.splitTextToSize(note.content, 180);
+      doc.text(splitText, 14, 53);
+
+      doc.save(`Nukuu_${note.title.replace(/\s+/g, '_')}.pdf`);
+      showToast('success', '📄 Nukuu imepakuliwa kama PDF!');
+    } catch (e) {
+      showToast('error', 'Imefeli kupakua PDF. Jaribu tena.');
+    }
+  };
   
   // Subject & Category Filter states
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -743,6 +1145,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
     setQuizCorrectCount(0);
 
     // Flashcard state resetting & data seeding
+    setSelectedDeckId('default');
     setFlashcardIndex(0);
     setIsCardFlipped(false);
     setLearnedCardIndices([]);
@@ -752,6 +1155,25 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
       setFlashcardsList([]);
     }
   }, [selectedTopic?.title]);
+
+  // Load selected deck or default topic flashcards when selectedDeckId changes
+  useEffect(() => {
+    setFlashcardIndex(0);
+    setIsCardFlipped(false);
+    setLearnedCardIndices([]);
+    if (selectedDeckId === 'default') {
+      if (selectedTopic) {
+        setFlashcardsList(getFlashcardsForTopic(selectedTopic.title));
+      } else {
+        setFlashcardsList([]);
+      }
+    } else {
+      const customDeck = customFlashcardDecks.find(d => d.id === selectedDeckId);
+      if (customDeck) {
+        setFlashcardsList(customDeck.cards);
+      }
+    }
+  }, [selectedDeckId, customFlashcardDecks]);
 
   // Cancel speech synthesis when switching tabs or topics
   useEffect(() => {
@@ -1371,6 +1793,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 { id: 'msingi', name: 'Shule ya Msingi' },
                 { id: 'olevel', name: 'Kidato 1-4' },
                 { id: 'alevel', name: 'Kidato 5-6' },
+                { id: 'my-notes', name: `Nukuu Zangu 📝 (${customNotes.length})` },
                 { id: 'favorites', name: 'Zilizopendwa ★' },
                 { id: 'saved', name: `Vitu Vilivyohifadhiwa 🔖 (${savedBookmarks.length})` }
               ].map((tab) => (
@@ -1553,10 +1976,175 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
       <AdSenseWidget slotId="3000300303" className="my-2" />
 
       {/* Accordion List + Document Preview Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Side: Levels and Subjects Accordion */}
-        <div className="lg:col-span-1 space-y-4">
+      {activeLevelTab === 'my-notes' ? (
+        <div className="space-y-6 animate-fade-in">
+          {/* My Notes Top Hero Bar */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-cyan-950 text-white rounded-3xl p-6 sm:p-8 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <PenTool size={22} />
+                </div>
+                <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wide">
+                  Nukuu Zangu za Masomo (My Custom Notes)
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl leading-relaxed">
+                Hapa unaweza kuandika, kupanga, na kuhifadhi nukuu zako binafsi kwa kila somo. Nukuu zako zimehifadhiwa salama na unaweza kuzipata au kuzipakua wakati wowote!
+              </p>
+            </div>
+
+            <button
+              onClick={() => handleOpenCreateNoteModal()}
+              className="px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 shrink-0 active:scale-95"
+            >
+              <Plus size={18} />
+              <span>Andika Nukuu Mpya</span>
+            </button>
+          </div>
+
+          {/* Search & Subject Filter controls */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative flex-1 w-full">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={myNotesSearchQuery}
+                onChange={(e) => setMyNotesSearchQuery(e.target.value)}
+                placeholder="Tafuta kwenye nukuu zako (kwa mada, somo au yaliyomo)..."
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-cyan-500 transition-all"
+              />
+              {myNotesSearchQuery && (
+                <button onClick={() => setMyNotesSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={myNotesSubjectFilter}
+                onChange={(e) => setMyNotesSubjectFilter(e.target.value)}
+                className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold py-2.5 px-3 rounded-xl outline-none focus:border-cyan-500 cursor-pointer"
+              >
+                <option value="all">📚 Masomo Yote</option>
+                {allSubjectsList.map(s => (
+                  <option key={s.name} value={s.name}>{s.icon} {s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Notes Grid / List */}
+          {customNotes.length > 0 ? (
+            (() => {
+              const filtered = customNotes.filter(n => {
+                const matchSubj = myNotesSubjectFilter === 'all' || n.subject.toLowerCase() === myNotesSubjectFilter.toLowerCase();
+                const q = myNotesSearchQuery.toLowerCase();
+                const matchQ = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q) || n.subject.toLowerCase().includes(q);
+                return matchSubj && matchQ;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-3">
+                    <p className="text-xs font-extrabold text-slate-700">Hakuna nukuu iliyopatikana kulingana na utafutaji wako.</p>
+                    <button onClick={() => { setMyNotesSearchQuery(''); setMyNotesSubjectFilter('all'); }} className="text-xs font-bold text-cyan-600 underline">
+                      Onyesha Nukuu Zote
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filtered.map((note) => (
+                    <div key={note.id} className="bg-white border border-slate-200 hover:border-cyan-400 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between transition-all group hover:shadow-md">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100 truncate">
+                            {note.subject} &bull; {note.level}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-bold shrink-0">
+                            {new Date(note.updatedAt).toLocaleDateString('sw-TZ', { day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+
+                        <h3 className="font-display font-extrabold text-slate-900 text-sm sm:text-base line-clamp-2 leading-snug group-hover:text-cyan-700 transition-colors">
+                          {note.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed font-normal whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2 text-xs">
+                        <button
+                          onClick={() => setViewingCustomNote(note)}
+                          className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
+                        >
+                          <BookOpen size={13} />
+                          <span>Soma Full</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleOpenEditNoteModal(note)}
+                            className="p-1.5 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
+                            title="Hariri Nukuu"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+
+                          <button
+                            onClick={() => handleDownloadNotePDF(note)}
+                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                            title="Pakua Kama PDF"
+                          >
+                            <Download size={15} />
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteCustomNote(note.id, note.title)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            title="Futa Nukuu"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center space-y-4 max-w-lg mx-auto my-8 shadow-sm">
+              <div className="w-16 h-16 bg-cyan-50 text-cyan-600 rounded-full flex items-center justify-center mx-auto">
+                <PenTool size={28} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-slate-900 text-base uppercase tracking-wide">Bado Hujaweka Nukuu Yoyote</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Unaweza kuandika dondoo binafsi za masomo, kanuni za hisabati, muhtasari au maelezo yako hapa ili uweze kuyasoma au kuyapakua wakati wowote!
+                </p>
+              </div>
+              <button
+                onClick={() => handleOpenCreateNoteModal()}
+                className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 mx-auto"
+              >
+                <Plus size={16} />
+                <span>Andika Nukuu Yako ya Kwanza Sasa</span>
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          
+          {/* Left Side: Levels and Subjects Accordion */}
+          <div className="lg:col-span-1 space-y-4">
           <h2 className="font-display font-black text-base text-slate-900 uppercase tracking-wide">
             {selectedSubject !== 'all' ? `Mada za ${selectedSubject}` :
              selectedCategory !== 'all' ? `Masomo ya ${selectedCategory === 'science' ? 'Sayansi & Hisabati' : selectedCategory === 'arts' ? 'Sanaa & Jamii' : selectedCategory === 'languages' ? 'Lugha' : 'Biashara & Uchumi'}` :
@@ -2087,31 +2675,57 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                           Muhtasari wa Mada (Topic Summary)
                         </h4>
 
-                        {/* Reading Theme selector */}
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                          <span className="text-[9px] font-black uppercase text-slate-400 px-1">Rangi:</span>
-                          {(['ivory', 'light', 'sepia', 'dark'] as const).map((t) => (
-                            <button
-                              key={t}
-                              onClick={() => setMasomoReadingTheme(t)}
-                              className={`px-2 py-0.5 rounded-lg text-[9.5px] font-black uppercase transition-all flex items-center gap-1 ${
-                                masomoReadingTheme === t
-                                  ? 'bg-amber-400 text-slate-950 shadow-sm'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              {t === 'ivory' && (
-                                <span className="flex items-center gap-1">
-                                  <span className="w-2.5 h-2.5 rounded-full bg-[#FFFDF5] border border-amber-300 inline-block shrink-0" />
-                                  <span>Ivory</span>
-                                </span>
-                              )}
-                              {t === 'light' && <span>Light</span>}
-                              {t === 'sepia' && <span>Sepia</span>}
-                              {t === 'dark' && <span>Dark</span>}
-                            </button>
-                          ))}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Flashcard Creator trigger button */}
+                          <button
+                            onClick={() => handleOpenFlashcardCreator()}
+                            className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-[11px] rounded-xl transition-all shadow-sm flex items-center gap-1.5 uppercase tracking-wide active:scale-95"
+                            title="Weka kivuli/highlight kwenye maandishi kisha ubofye hapa kutengeneza Flashcards"
+                          >
+                            <Wand2 size={13} className="animate-pulse" />
+                            <span>Flashcard Creator 🎴</span>
+                          </button>
+
+                          {/* Reading Theme selector */}
+                          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                            <span className="text-[9px] font-black uppercase text-slate-400 px-1">Rangi:</span>
+                            {(['ivory', 'light', 'sepia', 'dark'] as const).map((t) => (
+                              <button
+                                key={t}
+                                onClick={() => setMasomoReadingTheme(t)}
+                                className={`px-2 py-0.5 rounded-lg text-[9.5px] font-black uppercase transition-all flex items-center gap-1 ${
+                                  masomoReadingTheme === t
+                                    ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                {t === 'ivory' && (
+                                  <span className="flex items-center gap-1">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-[#FFFDF5] border border-amber-300 inline-block shrink-0" />
+                                    <span>Ivory</span>
+                                  </span>
+                                )}
+                                {t === 'light' && <span>Light</span>}
+                                {t === 'sepia' && <span>Sepia</span>}
+                                {t === 'dark' && <span>Dark</span>}
+                              </button>
+                            ))}
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Highlight & Flashcard Conversion Banner */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-bold text-slate-600 bg-cyan-50/70 border border-cyan-100 p-2.5 rounded-xl">
+                        <span className="flex items-center gap-1.5 text-cyan-900">
+                          <Sparkles size={13} className="text-cyan-600 shrink-0" />
+                          <span><strong>Msaidizi wa Masomo:</strong> Weka kivuli (highlight) kwenye kisanduku hapa chini kisha ubofye kutengeneza kadi:</span>
+                        </span>
+                        <button
+                          onClick={() => handleOpenFlashcardCreator()}
+                          className="px-2.5 py-1 bg-white border border-cyan-200 text-cyan-700 hover:bg-cyan-100 rounded-lg text-[10px] font-black transition-all flex items-center gap-1 shadow-2xs active:scale-95"
+                        >
+                          <Plus size={12} /> Tengeneza Kadi za Kumbukumbu
+                        </button>
                       </div>
 
                       <p className={`text-xs sm:text-sm leading-relaxed p-4 sm:p-5 rounded-2xl font-medium border transition-colors duration-300 ${masomoReadingThemeClasses[masomoReadingTheme]}`}>
@@ -2170,18 +2784,10 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
               {/* ── Tab: Flashcards ── */}
               {activeReaderTab === 'flashcards' && (() => {
                 const totalCards = flashcardsList.length;
-                if (totalCards === 0) {
-                  return (
-                    <div className="text-center p-8 text-slate-500 text-xs font-bold bg-slate-50 border border-slate-100 rounded-3xl animate-fade-in">
-                      <Brain className="mx-auto text-slate-300 mb-2 animate-pulse" size={32} />
-                      Hakuna kadi za kumbukumbu zilizotayarishwa kwa mada hii bado.
-                    </div>
-                  );
-                }
 
                 const currentCard = flashcardsList[flashcardIndex];
                 const isLearned = learnedCardIndices.includes(flashcardIndex);
-                const learnedPercent = Math.round((learnedCardIndices.length / totalCards) * 100);
+                const learnedPercent = totalCards > 0 ? Math.round((learnedCardIndices.length / totalCards) * 100) : 0;
 
                 const handleToggleFlashcardSpeech = (card: MasomoFlashcard, part: 'term' | 'definition') => {
                   if (isFlashcardSpeaking) {
@@ -2255,30 +2861,110 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                   setIsFlashcardSpeaking(false);
                   setFlashcardIndex(0);
                   setLearnedCardIndices([]);
-                  if (selectedTopic) {
-                    setFlashcardsList(getFlashcardsForTopic(selectedTopic.title));
+                  if (selectedDeckId === 'default') {
+                    if (selectedTopic) {
+                      setFlashcardsList(getFlashcardsForTopic(selectedTopic.title));
+                    }
+                  } else {
+                    const deck = customFlashcardDecks.find(d => d.id === selectedDeckId);
+                    if (deck) {
+                      setFlashcardsList(deck.cards);
+                    }
                   }
                   showToast('info', 'Umeanzisha upya kadi zote!');
                 };
 
                 return (
-                  <div className="space-y-6 animate-fade-in max-w-xl mx-auto pb-6">
-                    {/* Header and Progress stats */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] uppercase font-black text-cyan-600 tracking-widest block">Kadi za Kumbukumbu (Flashcards)</span>
-                        <h4 className="text-sm font-black text-slate-800">Kadi {flashcardIndex + 1} ya {totalCards}</h4>
+                  <div className="space-y-5 animate-fade-in max-w-xl mx-auto pb-6">
+                    {/* Deck Selector & Creator Control Bar */}
+                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-gradient-to-r from-slate-900 to-cyan-950 p-3.5 rounded-2xl text-white shadow-sm border border-cyan-500/20">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Layers size={16} className="text-cyan-400 shrink-0" />
+                        <select
+                          value={selectedDeckId}
+                          onChange={(e) => setSelectedDeckId(e.target.value)}
+                          className="bg-slate-800/90 text-slate-100 font-extrabold text-xs rounded-xl px-3 py-1.5 border border-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400 w-full shrink min-w-0 truncate"
+                        >
+                          <option value="default">
+                            📚 Mada ya Sasa: {selectedTopic?.title || 'Mada Rasmi'} ({getFlashcardsForTopic(selectedTopic?.title || '').length} kadi)
+                          </option>
+                          {customFlashcardDecks.length > 0 && (
+                            <optgroup label="🎴 Deck Zangu za Kumbukumbu (Custom Decks)">
+                              {customFlashcardDecks.map(deck => (
+                                <option key={deck.id} value={deck.id}>
+                                  🎴 {deck.title} ({deck.cards.length} kadi) [{deck.subject}]
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
                       </div>
-                      <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
-                        <div className="text-right">
-                          <span className="block text-emerald-600 font-extrabold">Uelewa: {learnedCardIndices.length}/{totalCards} ({learnedPercent}%)</span>
-                          <span className="text-[9.5px] text-slate-400">Pata +2 XP kwa kila kadi unayoielewa</span>
-                        </div>
-                        <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${learnedPercent}%` }} />
-                        </div>
+
+                      <div className="flex items-center gap-2 shrink-0 justify-end">
+                        {selectedDeckId !== 'default' && (() => {
+                          const activeCustomDeck = customFlashcardDecks.find(d => d.id === selectedDeckId);
+                          if (!activeCustomDeck) return null;
+                          return (
+                            <>
+                              <button
+                                onClick={() => handleOpenFlashcardCreator('', activeCustomDeck)}
+                                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-xl transition-all border border-slate-700"
+                                title="Hariri Deck Hii"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteFlashcardDeck(activeCustomDeck.id, activeCustomDeck.title)}
+                                className="p-1.5 bg-slate-800 hover:bg-rose-900/50 text-rose-300 rounded-xl transition-all border border-slate-700"
+                                title="Futa Deck Hii"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          );
+                        })()}
+
+                        <button
+                          onClick={() => handleOpenFlashcardCreator()}
+                          className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                        >
+                          <Plus size={14} />
+                          <span>Flashcard Creator</span>
+                        </button>
                       </div>
                     </div>
+
+                    {totalCards === 0 ? (
+                      <div className="text-center p-8 text-slate-500 text-xs font-bold bg-slate-50 border border-slate-100 rounded-3xl animate-fade-in space-y-3">
+                        <Brain className="mx-auto text-slate-300 animate-pulse" size={36} />
+                        <p className="text-slate-700 font-extrabold text-sm">Hakuna kadi kwenye deck hii bado.</p>
+                        <p className="text-slate-400 max-w-sm mx-auto">Tengeneza kadi zako za kumbukumbu kutokana na maandishi, au gawa dondoo za notisi kuwa kadi papo hapo!</p>
+                        <button
+                          onClick={() => handleOpenFlashcardCreator()}
+                          className="px-4 py-2 bg-cyan-600 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-sm hover:bg-cyan-500 transition-all inline-flex items-center gap-1.5"
+                        >
+                          <Plus size={14} />
+                          <span>Tengeneza Kadi za Kumbukumbu Sasa</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Header and Progress stats */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] uppercase font-black text-cyan-600 tracking-widest block">Kadi za Kumbukumbu (Flashcards)</span>
+                            <h4 className="text-sm font-black text-slate-800">Kadi {flashcardIndex + 1} ya {totalCards}</h4>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+                            <div className="text-right">
+                              <span className="block text-emerald-600 font-extrabold">Uelewa: {learnedCardIndices.length}/{totalCards} ({learnedPercent}%)</span>
+                              <span className="text-[9.5px] text-slate-400">Pata +2 XP kwa kila kadi unayoielewa</span>
+                            </div>
+                            <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${learnedPercent}%` }} />
+                            </div>
+                          </div>
+                        </div>
 
                     {/* 3D-Like Flipping Card Container */}
                     <div className="perspective-1000 h-64 cursor-pointer" onClick={() => {
@@ -2431,9 +3117,11 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                         </button>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
               {/* ── Tab 2: Revision Quizzes ── */}
                 {activeReaderTab === 'quiz' && (() => {
@@ -2626,14 +3314,28 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                         )}
                       </div>
 
-                      <button 
-                        onClick={handleSaveNotepadDraft}
-                        disabled={isSavingDraft}
-                        className="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-98 flex items-center gap-1.5 uppercase tracking-wide disabled:opacity-40"
-                      >
-                        <Save size={14} />
-                        <span>{isSavingDraft ? 'Inahifadhi...' : 'Hifadhi Dondoo'}</span>
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button 
+                          onClick={handleSaveNotepadDraft}
+                          disabled={isSavingDraft}
+                          className="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-98 flex items-center gap-1.5 uppercase tracking-wide disabled:opacity-40"
+                        >
+                          <Save size={14} />
+                          <span>{isSavingDraft ? 'Inahifadhi...' : 'Hifadhi Dondoo'}</span>
+                        </button>
+
+                        <button 
+                          onClick={() => handleOpenCreateNoteModal({
+                            title: selectedTopic.title,
+                            subject: openSubject || 'Physics',
+                            content: notesDraft || selectedTopic.content
+                          })}
+                          className="bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-98 flex items-center gap-1.5 uppercase tracking-wide"
+                        >
+                          <Plus size={14} />
+                          <span>Hifadhi kama Nukuu Mpya 📝</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -2718,6 +3420,414 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
         </div>
 
       </div>
+      )}
+
+      {/* ── Create / Edit Custom Personal Note Modal ── */}
+      <AnimatePresence>
+        {isNoteModalOpen && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto border border-slate-100"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-black">
+                    <PenTool size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-black text-slate-900 text-base uppercase tracking-wide">
+                      {editingNoteId ? 'Hariri Nukuu Yako' : 'Andika Nukuu Mpya ya Masomo'}
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-semibold">
+                      Andika maelezo au dondoo zako za kibinafsi na uzihifadhi salama.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsNoteModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Note Title */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+                    Kichwa cha Nukuu / Mada *
+                  </label>
+                  <input
+                    type="text"
+                    value={noteFormTitle}
+                    onChange={(e) => setNoteFormTitle(e.target.value)}
+                    placeholder="Mf. Kanuni za Newton za Mwendo (Newton's Laws of Motion)"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-cyan-500 transition-all"
+                  />
+                </div>
+
+                {/* Subject & Level Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+                      Somo (Subject) *
+                    </label>
+                    <input
+                      type="text"
+                      value={noteFormSubject}
+                      onChange={(e) => setNoteFormSubject(e.target.value)}
+                      placeholder="Mf. Physics, Biology, Kiswahili..."
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-cyan-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+                      Kidato / Kiwango
+                    </label>
+                    <select
+                      value={noteFormLevel}
+                      onChange={(e) => setNoteFormLevel(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold text-slate-800 outline-none focus:border-cyan-500 cursor-pointer"
+                    >
+                      <option value="Shule ya Msingi">Shule ya Msingi</option>
+                      <option value="Form 1">Form 1 (Kidato cha Kwanza)</option>
+                      <option value="Form 2">Form 2 (Kidato cha Pili)</option>
+                      <option value="Form 3">Form 3 (Kidato cha Tatu)</option>
+                      <option value="Form 4">Form 4 (Kidato cha Nne)</option>
+                      <option value="Form 5">Form 5 (Kidato cha Tano)</option>
+                      <option value="Form 6">Form 6 (Kidato cha Sesta)</option>
+                      <option value="O-Level">O-Level (Jumla)</option>
+                      <option value="A-Level">A-Level (Jumla)</option>
+                      <option value="General">Masomo ya Jumla</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Note Content */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                      Yaliyomo / Maelezo ya Nukuu *
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-bold">Inasaidia maandishi na orodha</span>
+                  </div>
+                  <textarea
+                    value={noteFormContent}
+                    onChange={(e) => setNoteFormContent(e.target.value)}
+                    rows={8}
+                    placeholder="Andika nukuu, dondoo za mtihani, au muhtasari wako hapa..."
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-sans text-slate-800 leading-relaxed outline-none focus:border-cyan-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsNoteModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-extrabold text-xs uppercase tracking-wider transition-all"
+                >
+                  Ghairi
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCustomNote}
+                  className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 active:scale-95"
+                >
+                  <Save size={15} />
+                  <span>{editingNoteId ? 'Hifadhi Mabadiliko' : 'Hifadhi Nukuu'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── View Custom Note Details Modal ── */}
+      <AnimatePresence>
+        {viewingCustomNote && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto border border-slate-100"
+            >
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100">
+                      {viewingCustomNote.subject} &bull; {viewingCustomNote.level}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      {new Date(viewingCustomNote.updatedAt).toLocaleDateString('sw-TZ', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <h2 className="font-display font-black text-slate-900 text-lg sm:text-2xl uppercase leading-snug">
+                    {viewingCustomNote.title}
+                  </h2>
+                </div>
+
+                <button
+                  onClick={() => setViewingCustomNote(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Content Body */}
+              <div className="bg-slate-50/70 border border-slate-100 p-6 rounded-2xl text-slate-800 text-xs sm:text-sm font-sans leading-relaxed whitespace-pre-wrap">
+                {viewingCustomNote.content}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <button
+                  onClick={() => handleDeleteCustomNote(viewingCustomNote.id, viewingCustomNote.title)}
+                  className="px-4 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-extrabold text-xs flex items-center gap-1.5 transition-all"
+                >
+                  <Trash2 size={15} />
+                  <span>Futa Nukuu</span>
+                </button>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const noteContent = viewingCustomNote.content;
+                      const selection = window.getSelection()?.toString().trim();
+                      handleOpenFlashcardCreator(selection || noteContent);
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                  >
+                    <Wand2 size={15} className="text-cyan-400 animate-pulse" />
+                    <span>Tengeneza Flashcards 🎴</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const n = viewingCustomNote;
+                      setViewingCustomNote(null);
+                      handleOpenEditNoteModal(n);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center gap-1.5 transition-all"
+                  >
+                    <Edit3 size={15} />
+                    <span>Hariri</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadNotePDF(viewingCustomNote)}
+                    className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                  >
+                    <Download size={15} />
+                    <span>Pakua PDF</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Flashcard Creator Modal ── */}
+      <AnimatePresence>
+        {isFlashcardCreatorOpen && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto border border-slate-100"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100 flex items-center gap-1">
+                      <Brain size={12} /> Lupanulla Study Tool
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">
+                      +5 XP Bonus
+                    </span>
+                  </div>
+                  <h2 className="font-display font-black text-slate-900 text-lg sm:text-xl uppercase leading-snug flex items-center gap-2">
+                    <Wand2 className="text-cyan-600" size={20} />
+                    <span>{editingDeckId ? 'Hariri Deck ya Flashcards' : 'Flashcard Creator (Kigeuzi cha Maandishi)'}</span>
+                  </h2>
+                </div>
+
+                <button
+                  onClick={() => setIsFlashcardCreatorOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Instructions Tip */}
+              <div className="bg-gradient-to-r from-cyan-950 to-slate-900 text-cyan-100 p-4 rounded-2xl text-xs space-y-1.5 shadow-sm border border-cyan-500/20">
+                <p className="font-extrabold flex items-center gap-1.5 text-white">
+                  <Sparkles size={14} className="text-cyan-400 shrink-0" />
+                  <span>Jinsi ya Kuunda Flashcards kutoka Maandishi:</span>
+                </p>
+                <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                  Badilisha dondoo au maelezo yako ya masomo kuwa kadi za kumbukumbu. Weka maandishi yako au kivuli (highlight) hapa chini, kisha ubofye <strong>"⚡ Gawa kuwa Flashcards"</strong> ili mfumo upangilie Dhana (Term) na Maelezo (Definition) kiotomatiki!
+                </p>
+              </div>
+
+              {/* Deck Info Controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1 space-y-1">
+                  <label className="text-[10.5px] font-black uppercase text-slate-500 tracking-wider">Kichwa cha Deck (Title)</label>
+                  <input
+                    type="text"
+                    value={creatorDeckTitle}
+                    onChange={(e) => setCreatorDeckTitle(e.target.value)}
+                    placeholder="Mfano: Physics - Form 4 Magnetism"
+                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10.5px] font-black uppercase text-slate-500 tracking-wider">Somo (Subject)</label>
+                  <select
+                    value={creatorSubject}
+                    onChange={(e) => setCreatorSubject(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-900"
+                  >
+                    {['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Geography', 'History', 'Kiswahili', 'English', 'Civics', 'General'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10.5px] font-black uppercase text-slate-500 tracking-wider">Ngazi (Level)</label>
+                  <select
+                    value={creatorLevel}
+                    onChange={(e) => setCreatorLevel(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-900"
+                  >
+                    {['O-Level', 'A-Level', 'Shule ya Msingi', 'Chuo'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Source Text input with Smart Parse action */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex justify-between items-center">
+                  <label className="text-[11px] font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <FileText size={14} className="text-cyan-600" />
+                    <span>Maandishi Uliyoyachagua / Dondoo za Notisi:</span>
+                  </label>
+                  <button
+                    onClick={handleRunSmartParseOnSourceText}
+                    className="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-[11px] rounded-lg transition-all shadow-2xs flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Wand2 size={13} />
+                    <span>⚡ Gawa kuwa Flashcards</span>
+                  </button>
+                </div>
+                <textarea
+                  rows={3}
+                  value={creatorSourceText}
+                  onChange={(e) => setCreatorSourceText(e.target.value)}
+                  placeholder="Bandika au andika dondoo za notisi hapa... (Mfano: Magnet: Umbo linalovuta vyuma. Pole: Ncha ya sumaku zenye nguvu zaidi.)"
+                  className="w-full p-3 text-xs font-medium bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800"
+                />
+              </div>
+
+              {/* Cards Editor List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers size={15} className="text-cyan-600" />
+                    <span>Kadi Kwenye Deck Hii ({creatorCards.length})</span>
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleAddEmptyCardToCreator}
+                      className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-extrabold text-xs rounded-xl transition-all flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Ongeza Kadi
+                    </button>
+                  </div>
+                </div>
+
+                {creatorCards.length === 0 ? (
+                  <div className="text-center p-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 text-slate-400 text-xs font-bold">
+                    Hakuna kadi yoyote bado. Bofya "⚡ Gawa kuwa Flashcards" au "+ Ongeza Kadi".
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                    {creatorCards.map((card, idx) => (
+                      <div key={idx} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2 relative group hover:border-cyan-200 transition-all">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 bg-cyan-100/60 px-2 py-0.5 rounded-md">
+                            Kadi #{idx + 1}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveCardFromCreator(idx)}
+                            className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all"
+                            title="Ondoa Kadi Hii"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9.5px] font-black uppercase text-slate-400 block mb-0.5">Dhana / Swali / Mbele (Term)</label>
+                            <input
+                              type="text"
+                              value={card.term}
+                              onChange={(e) => handleUpdateCreatorCard(idx, 'term', e.target.value)}
+                              placeholder="Mfano: Newton's First Law"
+                              className="w-full px-2.5 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9.5px] font-black uppercase text-slate-400 block mb-0.5">Maelezo / Jibu / Nyuma (Definition)</label>
+                            <input
+                              type="text"
+                              value={card.definition}
+                              onChange={(e) => handleUpdateCreatorCard(idx, 'definition', e.target.value)}
+                              placeholder="Mfano: An object at rest remains at rest unless acted upon by a net force."
+                              className="w-full px-2.5 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-900"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                <button
+                  onClick={() => setIsFlashcardCreatorOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-black text-xs uppercase tracking-wider"
+                >
+                  Ghairi
+                </button>
+                <button
+                  onClick={handleSaveFlashcardDeck}
+                  className="px-6 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                >
+                  <Save size={15} />
+                  <span>Hifadhi Deck ya Flashcards (+5 XP)</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── Footer Copyright ── */}
       <footer className="pt-10 pb-6 border-t border-slate-200 text-center space-y-2 mt-6">
