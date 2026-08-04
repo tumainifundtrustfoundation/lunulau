@@ -62,7 +62,7 @@ export default function BrowseView({
     const matchesSearch = !searchQuery || 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))) ||
       doc.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });

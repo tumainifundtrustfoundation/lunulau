@@ -57,15 +57,23 @@ function isStudyNoteRequest(urlStr, request) {
 // Helper: Determine if URL is a past paper resource
 function isPastPaperRequest(urlStr, request) {
   const url = new URL(urlStr);
+  const lowerUrl = urlStr.toLowerCase();
   return (
     url.pathname.includes('/api/pastpapers') ||
     url.pathname.includes('/api/mitihani') ||
     url.pathname.includes('/necta') ||
     url.pathname.includes('/mock') ||
     url.search.includes('view=mitihani') ||
-    urlStr.toLowerCase().includes('necta') ||
-    urlStr.toLowerCase().includes('past-paper') ||
-    (url.pathname.endsWith('.pdf') && (urlStr.includes('exam') || urlStr.includes('paper') || urlStr.includes('necta')))
+    lowerUrl.includes('necta') ||
+    lowerUrl.includes('past-papers') ||
+    lowerUrl.includes('pastpaper') ||
+    lowerUrl.includes('maktaba.tetea.org') ||
+    lowerUrl.includes('csee') ||
+    lowerUrl.includes('acsee') ||
+    lowerUrl.includes('psle') ||
+    lowerUrl.includes('ftsee') ||
+    lowerUrl.includes('sfna') ||
+    (url.pathname.endsWith('.pdf') && (lowerUrl.includes('exam') || lowerUrl.includes('paper') || lowerUrl.includes('necta')))
   );
 }
 
@@ -339,7 +347,74 @@ self.addEventListener('message', async (event) => {
     return;
   }
 
-  // D. Query Offline Status & Cache Counts
+  // D. Proactively Fetch & Cache NECTA Past Papers for Current Academic Level
+  if (type === 'PREFETCH_ACADEMIC_LEVEL_PAPERS' || type === 'PREFETCH_NECTA_LEVEL_PAPERS') {
+    const level = event.data.level || payload || 'f4';
+    const paperUrls = event.data.urls || event.data.paperUrls || [];
+    console.log(`[Lupanulla SW] Proactively caching NECTA past papers for academic level: ${level} (${paperUrls.length} explicit URLs)`);
+
+    try {
+      const papersCache = await caches.open(CACHE_NAMES.PAST_PAPERS);
+      let successCount = 0;
+
+      // Construct default level routes & view URLs
+      const targetUrls = new Set(paperUrls);
+      targetUrls.add(`/?view=mitihani&level=${encodeURIComponent(level)}`);
+      targetUrls.add(`/?view=mitihani&nectaLevel=${encodeURIComponent(level)}`);
+      targetUrls.add(`/api/mitihani?level=${encodeURIComponent(level)}`);
+
+      // Default subjects for level
+      const defaultSubjects = level === 'std7' || level === 'psle' 
+        ? ['kiswahili', 'english', 'mathematics', 'science', 'social-studies']
+        : level === 'f6' || level === 'acsee'
+        ? ['general-studies', 'basic-applied-mathematics', 'advanced-mathematics', 'physics', 'chemistry', 'biology', 'geography', 'history']
+        : ['kiswahili', 'english', 'mathematics', 'biology', 'chemistry', 'physics', 'geography', 'history', 'civics'];
+
+      const levelCode = level === 'std7' ? 'psle' : level === 'f6' ? 'acsee' : level === 'f2' ? 'ftsee' : level === 'std4' ? 'sfna' : 'csee';
+
+      // Pre-add canonical past paper URLs for recent years (2023, 2022, 2021)
+      [2023, 2022, 2021].forEach(year => {
+        defaultSubjects.forEach(sub => {
+          targetUrls.add(`https://maktaba.tetea.org/past-papers/${levelCode}/${sub}/${sub}-${year}.pdf`);
+        });
+      });
+
+      const urlList = Array.from(targetUrls);
+
+      // Fetch in concurrency-controlled batches of 4
+      const BATCH_SIZE = 4;
+      for (let i = 0; i < urlList.length; i += BATCH_SIZE) {
+        const batch = urlList.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (urlStr) => {
+            try {
+              const res = await fetch(urlStr, { mode: 'no-cors' });
+              if (res) {
+                await papersCache.put(urlStr, res);
+                successCount++;
+              }
+            } catch (err) {
+              console.warn('[Lupanulla SW] NECTA paper prefetch warning for:', urlStr, err);
+            }
+          })
+        );
+      }
+
+      await notifyClients({
+        type: 'NECTA_LEVEL_PAPERS_CACHED',
+        level,
+        successCount,
+        totalRequested: urlList.length,
+        timestamp: Date.now(),
+        message: `Mitihani yote ya NECTA ya ngazi ya ${level} imehifadhiwa offline kikamilifu!`
+      });
+    } catch (err) {
+      console.error('[Lupanulla SW] Prefetch NECTA level papers error:', err);
+    }
+    return;
+  }
+
+  // E. Query Offline Status & Cache Counts
   if (type === 'CHECK_OFFLINE_STATUS') {
     try {
       const notesCache = await caches.open(CACHE_NAMES.STUDY_NOTES);

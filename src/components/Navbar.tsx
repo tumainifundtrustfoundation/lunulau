@@ -40,6 +40,8 @@ import { subscribeNotifications, markNotificationAsRead, markAllNotificationsAsR
 import Logo from './Logo';
 import ProfileModal from './ProfileModal';
 import { openPWAInstallModal } from './PWAInstallPrompt';
+import { openGlobalFlashcardsModal } from './FlashcardsModal';
+import { Brain } from 'lucide-react';
 
 interface NavbarProps {
   activeView: string;
@@ -124,7 +126,11 @@ export default function Navbar({
   };
 
   const handleNavClick = (view: string) => {
-    onNavigate(view);
+    if (view === 'flashcards-global') {
+      openGlobalFlashcardsModal();
+    } else {
+      onNavigate(view);
+    }
     setMobileMenuOpen(false);
     setDropdownOpen(false);
     setExtraToolsOpen(false);
@@ -144,6 +150,7 @@ export default function Navbar({
   ];
 
   const toolsMenuItems = [
+    { id: 'flashcards-global', label: '🎴 Flashcards (Kadi za Masomo)', icon: Brain },
     { id: 'necta-progress', label: 'Maendeleo ya NECTA', icon: CheckCircle2 },
     { id: 'combinations', label: 'Kombination 2025/2026', icon: Award },
     { id: 'resources', label: 'Hub ya Vyanzo vya Elimu', icon: Globe },
@@ -246,7 +253,17 @@ export default function Navbar({
           </div>
 
           {/* User profile action buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2.5">
+            {/* Global Flashcards Quick Launcher */}
+            <button
+              onClick={() => openGlobalFlashcardsModal()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-cyan-400 hover:text-white rounded-xl text-xs font-black uppercase tracking-wide shadow-sm transition-all active:scale-95 cursor-pointer"
+              title="Kadi za Masomo & Mazoezi (Flashcards)"
+            >
+              <Brain size={14} className="text-cyan-400" />
+              <span className="hidden xl:inline">🎴 Flashcards</span>
+            </button>
+
             {/* Install WebApp Button */}
             <button
               onClick={openPWAInstallModal}
@@ -514,8 +531,26 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Mobile Menu Icon */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* Mobile Actions & Menu Icon */}
+          <div className="flex items-center gap-1.5 lg:hidden">
+            {/* Quick Mobile PWA Install CTA */}
+            <button
+              onClick={openPWAInstallModal}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 rounded-xl text-[10px] font-black uppercase tracking-tight shadow-md active:scale-95 cursor-pointer shrink-0"
+              title="Sakinisha WebApp"
+            >
+              <Download size={12} className="stroke-[2.5]" />
+              <span>App</span>
+            </button>
+
+            {/* Quick Mobile Flashcards Tester */}
+            <button
+              onClick={() => openGlobalFlashcardsModal()}
+              className="p-1.5 bg-slate-900 border border-slate-800 text-cyan-400 rounded-xl text-[10px] font-black uppercase shadow-sm active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
+              title="🎴 Flashcards (Kadi za Masomo)"
+            >
+              <Brain size={15} className="text-cyan-400" />
+            </button>
             {userProfile && (
               <div className="relative">
                 <button

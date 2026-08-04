@@ -32,7 +32,8 @@ import {
   Zap,
   GraduationCap,
   ArrowRight,
-  Globe
+  Globe,
+  Download
 } from 'lucide-react';
 
 import { UserProfile, AppTheme } from './types';
@@ -85,7 +86,8 @@ import RotatingBanner from './components/RotatingBanner';
 import WelcomeNotification from './components/WelcomeNotification';
 import DownloadProgressToast from './components/DownloadProgressToast';
 import SwipeNavigationWrapper from './components/SwipeNavigationWrapper';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
+import PWAInstallPrompt, { openPWAInstallModal } from './components/PWAInstallPrompt';
+import FlashcardsModal, { openGlobalFlashcardsModal } from './components/FlashcardsModal';
 
 // Shimmer Loading Skeleton Fallback for Smooth Cumulative Layout Shift (CLS) Mitigation
 const ViewLoadingSkeleton = () => (
@@ -247,6 +249,10 @@ export default function App() {
   userRef.current = user;
   const refreshProfileRef = React.useRef<any>(null);
 
+  // Global Flashcards state
+  const [globalFlashcardDoc, setGlobalFlashcardDoc] = useState<any>(null);
+  const [isGlobalFlashcardsOpen, setIsGlobalFlashcardsOpen] = useState<boolean>(false);
+
   // Global event listeners to open Login and Signup Modals
   useEffect(() => {
     const handleOpenLogin = () => {
@@ -257,8 +263,26 @@ export default function App() {
       setShowSignInModal(true);
       setAuthTab('signup');
     };
+    const handleOpenGlobalFlashcards = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const docData = customEvent.detail || {
+        id: 'general-necta-hub',
+        title: 'Masomo Yote ya NECTA & Sekondari',
+        subject: 'Mchanganyiko wa Masomo',
+        category: 'General',
+        type: 'note',
+        tags: ['NECTA', 'Sekondari', 'Mitihani'],
+        url: '',
+        size: '1MB',
+        dateAdded: new Date().toISOString()
+      };
+      setGlobalFlashcardDoc(docData);
+      setIsGlobalFlashcardsOpen(true);
+    };
+
     window.addEventListener('open-login-modal', handleOpenLogin);
     window.addEventListener('open-signup-modal', handleOpenSignup);
+    window.addEventListener('open-flashcards-modal', handleOpenGlobalFlashcards);
     
     const handleRefreshProfile = () => {
       if (userRef.current) {
@@ -270,6 +294,7 @@ export default function App() {
     return () => {
       window.removeEventListener('open-login-modal', handleOpenLogin);
       window.removeEventListener('open-signup-modal', handleOpenSignup);
+      window.removeEventListener('open-flashcards-modal', handleOpenGlobalFlashcards);
       window.removeEventListener('refresh-user-profile', handleRefreshProfile);
     };
   }, []);
@@ -2329,6 +2354,51 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Global Flashcards Modal Overlay (Accessible on Every Page) */}
+      {isGlobalFlashcardsOpen && (
+        <FlashcardsModal
+          doc={globalFlashcardDoc || {
+            id: 'general-necta-hub',
+            title: 'Masomo Yote ya NECTA & Sekondari',
+            subject: 'Mchanganyiko wa Masomo',
+            category: 'General',
+            type: 'note',
+            tags: ['NECTA', 'Sekondari', 'Mitihani'],
+            url: '',
+            size: '1MB',
+            dateAdded: new Date().toISOString()
+          }}
+          isOpen={isGlobalFlashcardsOpen}
+          onClose={() => setIsGlobalFlashcardsOpen(false)}
+        />
+      )}
+
+      {/* Floating Global Quick Action Dock (Present on Every Page) */}
+      <div 
+        id="global-page-celebration-dock"
+        className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 p-1.5 bg-slate-950/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl animate-fade-in text-white transition-all duration-300 hover:border-cyan-400/60"
+      >
+        {/* Sakinisha App Button */}
+        <button
+          onClick={openPWAInstallModal}
+          className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
+          title="Sakinisha App ya Lupanulla kwenye Browser Yoyote"
+        >
+          <Download size={14} className="stroke-[2.5]" />
+          <span className="hidden sm:inline">Sakinisha App</span>
+        </button>
+
+        {/* Flashcards Tester Button */}
+        <button
+          onClick={() => openGlobalFlashcardsModal()}
+          className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-cyan-400 font-black text-xs uppercase rounded-xl transition-all active:scale-95 cursor-pointer hover:text-cyan-300"
+          title="Fanya Mazoezi ya Kadi za Masomo (Flashcards Tester)"
+        >
+          <Sparkles size={14} className="text-amber-400 animate-pulse" />
+          <span className="hidden sm:inline">🎴 Flashcards</span>
+        </button>
+      </div>
 
       {/* Progressive Web App (PWA) Install Banner & iOS Guidance */}
       <PWAInstallPrompt />

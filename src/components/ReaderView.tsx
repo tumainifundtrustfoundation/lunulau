@@ -2044,7 +2044,7 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3">
             <h4 className="font-bold text-slate-900 text-xs uppercase">Lebo za Somo (Tags)</h4>
             <div className="flex flex-wrap gap-1.5">
-              {doc.tags.map(t => (
+              {(doc.tags || []).map(t => (
                 <span key={t} className="text-[10px] bg-slate-50 border border-slate-150 text-slate-500 font-bold px-2 py-0.5 rounded">#{t}</span>
               ))}
             </div>

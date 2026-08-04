@@ -26,6 +26,12 @@ interface FlashcardsModalProps {
   onClose: () => void;
 }
 
+export const openGlobalFlashcardsModal = (doc?: DocumentMetadata | null) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('open-flashcards-modal', { detail: doc }));
+  }
+};
+
 export default function FlashcardsModal({ doc, isOpen, onClose }: FlashcardsModalProps) {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,9 +42,10 @@ export default function FlashcardsModal({ doc, isOpen, onClose }: FlashcardsModa
 
   // Fallback static seed cards depending on the category or document title
   const getFallbackCards = (document: DocumentMetadata): Flashcard[] => {
-    const titleLower = document.title.toLowerCase();
+    const titleLower = (document?.title || '').toLowerCase();
+    const subjectLower = (document?.subject || document?.category || '').toLowerCase();
     
-    if (titleLower.includes('physics') || titleLower.includes('fizikia')) {
+    if (titleLower.includes('physics') || titleLower.includes('fizikia') || subjectLower.includes('physics')) {
       return [
         { term: 'Velocity (Kasi mwelekeo)', definition: 'Kasi ya mwendo wa kitu katika mwelekeo maalum. Ni kipimo cha vector kinachojumuisha mwendokasi na uelekeo.' },
         { term: 'Newton\'s First Law of Motion', definition: 'Kitu kitaendelea kubaki katika hali yake ya utulivu au mwendo wa mstari mnyooka usiobadilika usipolazimishwa na nguvu ya nje (inertia).' },
@@ -47,7 +54,7 @@ export default function FlashcardsModal({ doc, isOpen, onClose }: FlashcardsModa
         { term: 'Inertia (Uzembe)', definition: 'Hali ya kitu kupinga mabadiliko yoyote katika hali yake ya utulivu au mwendo wa mstari mnyooka.' },
         { term: 'Momentum (Kani mwendo)', definition: 'Zao la masi ya kitu na kasi yake (p = mv). Ni kipimo cha jinsi ilivyo vigumu kusimamisha kitu kinachotembea.' }
       ];
-    } else if (titleLower.includes('math') || titleLower.includes('hesabu') || titleLower.includes('basic mathematics')) {
+    } else if (titleLower.includes('math') || titleLower.includes('hesabu') || titleLower.includes('basic mathematics') || subjectLower.includes('math')) {
       return [
         { term: 'Quadratic Equation (Mlinganyo wa Kipeo)', definition: 'Mlinganyo wa kihisabati wenye umbo la ax² + bx + c = 0 ambapo "x" ni kigeuzi kisichojulikana, na "a" si sifuri.' },
         { term: 'Trigonometry (Triki)', definition: 'Tawi la hisabati linaloshughulika na uhusiano kati ya pande na pembe za pembetatu, hasa pembetatu mraba.' },
@@ -56,7 +63,7 @@ export default function FlashcardsModal({ doc, isOpen, onClose }: FlashcardsModa
         { term: 'Pythagoras Theorem', definition: 'Katika pembetatu mraba, mraba wa upande mrefu (hypotenuse) ni sawa na jumla ya miraba ya pande mbili fupi: a² + b² = c².' },
         { term: 'Linear Equation', definition: 'Mlinganyo ambao grafu yake ni mstari mnyooka. Kipeo cha juu cha vigeuzi vilivyomo ni kimoja pekee.' }
       ];
-    } else if (titleLower.includes('history') || titleLower.includes('historia')) {
+    } else if (titleLower.includes('history') || titleLower.includes('historia') || subjectLower.includes('history')) {
       return [
         { term: 'Sovereignty (Mamlaka Kamili)', definition: 'Mamlaka makuu na ya mwisho ya nchi kujitawala yenyewe bila kuingiliwa na nguvu za nje.' },
         { term: 'Colonialism (Ukoloni)', definition: 'Mfumo ambapo nchi moja yenye nguvu inatawala na kunyonya nchi nyingine kiuchumi, kisiasa, na kijamii.' },
@@ -97,11 +104,18 @@ export default function FlashcardsModal({ doc, isOpen, onClose }: FlashcardsModa
     setIsLoading(true);
     setError(null);
     try {
+      const docTitle = document?.title || 'Masomo ya NECTA';
+      const docDesc = document?.description || 'Nyaraka za Masomo';
+      const docCategory = document?.category || document?.subject || 'Jenerali';
+      const docTags = Array.isArray(document?.tags)
+        ? document.tags.join(', ')
+        : (typeof document?.tags === 'string' ? document.tags : 'NECTA, Sekondari');
+
       const promptText = `Tafadhali tengeneza flashcards 6 za kimasomo zenye dhana muhimu sana (key terms/vocabulary) na maelezo yake (definitions/explanations katika muktadha wa mtaala wa NECTA au shule za Tanzania) kulingana na maelezo ya karatasi ya mtihani/notisi hii:
-Kichwa cha habari: ${document.title}
-Maelezo: ${document.description}
-Somo: ${document.category}
-Lebo za Somo: ${document.tags.join(', ')}
+Kichwa cha habari: ${docTitle}
+Maelezo: ${docDesc}
+Somo: ${docCategory}
+Lebo za Somo: ${docTags}
 
 Majibu yako yawe katika muundo wa JSON Array pekee, bila maneno mengine ya ziada (no introductions, no markdown comments). Kila kipengele cha orodha kiwe kitu chenye funguo "term" na "definition". Toa maelezo kwa lugha ya Kiswahili fasaha (au Kiingereza kwa dhana za kiufundi za kisayansi).
 

@@ -30,7 +30,10 @@ import {
   GraduationCap,
   Edit,
   Trash2,
-  Award
+  Award,
+  DownloadCloud,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react';
 import { 
   fetchDocuments, 
@@ -393,6 +396,94 @@ export default function MitihaniView({
   const [nectaWizardYear, setNectaWizardYear] = useState<string>('2023');
   const [requestedPapers, setRequestedPapers] = useState<string[]>([]);
   const [isRequesting, setIsRequesting] = useState<boolean>(false);
+
+  // --- Proactive Service Worker Caching States & Helpers ---
+  const [isPrefetchingLevel, setIsPrefetchingLevel] = useState<boolean>(false);
+  const [cachedLevelsMap, setCachedLevelsMap] = useState<Record<string, { count: number; timestamp: number }>>(() => {
+    try {
+      const saved = localStorage.getItem('lup_necta_cached_levels');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [prefetchStatusMsg, setPrefetchStatusMsg] = useState<string | null>(null);
+
+  const levelLabelsMap: Record<string, string> = {
+    std4: 'Darasa la 4 (SFNA)',
+    std7: 'Darasa la 7 (PSLE)',
+    f2: 'Kidato cha 2 (FTSEE)',
+    f4: 'Kidato cha 4 (CSEE)',
+    f6: 'Kidato cha 6 (ACSEE)',
+  };
+
+  // Function to proactively fetch & store all NECTA past papers for selected academic level in SW Cache
+  const triggerProactiveLevelPrefetch = (levelId: string, isManualClick = false) => {
+    if (typeof window === 'undefined') return;
+
+    const subs = NECTA_SUBJECTS[levelId] || [];
+    const maktabaLevel = levelId === 'std7' ? 'psle' : levelId === 'f6' ? 'acsee' : levelId === 'f2' ? 'ftsee' : levelId === 'std4' ? 'sfna' : 'csee';
+    const recentYears = ['2023', '2022', '2021', '2020', '2019', '2018'];
+    
+    const paperUrls: string[] = [];
+    subs.forEach(sub => {
+      recentYears.forEach(yr => {
+        paperUrls.push(`https://maktaba.tetea.org/past-papers/${maktabaLevel}/${sub.id}/${sub.id}-${yr}.pdf`);
+      });
+    });
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      if (isManualClick) setIsPrefetchingLevel(true);
+      setPrefetchStatusMsg(`Inahifadhi mitihani yote ya ${levelLabelsMap[levelId] || levelId} offline kwenye Service Worker...`);
+
+      navigator.serviceWorker.controller.postMessage({
+        type: 'PREFETCH_ACADEMIC_LEVEL_PAPERS',
+        level: levelId,
+        urls: paperUrls
+      });
+    } else if (isManualClick) {
+      setIsPrefetchingLevel(true);
+      setPrefetchStatusMsg(`Inahifadhi mitihani ya ${levelLabelsMap[levelId] || levelId} kwenye cache ya browser...`);
+      setTimeout(() => {
+        setIsPrefetchingLevel(false);
+        const updated = { ...cachedLevelsMap, [levelId]: { count: paperUrls.length, timestamp: Date.now() } };
+        setCachedLevelsMap(updated);
+        try { localStorage.setItem('lup_necta_cached_levels', JSON.stringify(updated)); } catch {}
+        setPrefetchStatusMsg(`Mitihani yote ya ${levelLabelsMap[levelId] || levelId} imehifadhiwa tayari kwa kusoma offline!`);
+      }, 1500);
+    }
+  };
+
+  // Listen for Service Worker caching messages
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    const handleSwMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'NECTA_LEVEL_PAPERS_CACHED') {
+        const { level, successCount, message } = e.data;
+        setIsPrefetchingLevel(false);
+        const updated = {
+          ...cachedLevelsMap,
+          [level]: { count: successCount || 12, timestamp: Date.now() }
+        };
+        setCachedLevelsMap(updated);
+        try { localStorage.setItem('lup_necta_cached_levels', JSON.stringify(updated)); } catch {}
+        setPrefetchStatusMsg(message || `Mitihani ya ngazi ya ${levelLabelsMap[level] || level} imehifadhiwa offline!`);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+    };
+  }, [cachedLevelsMap]);
+
+  // Proactively trigger SW caching on academic level change
+  useEffect(() => {
+    if (nectaWizardLevel) {
+      triggerProactiveLevelPrefetch(nectaWizardLevel, false);
+    }
+  }, [nectaWizardLevel]);
 
   const NECTA_LEVELS = [
     { id: 'std7', name: 'Darasa la 7 (PSLE)', description: 'Mitihani ya Kuhitimu Elimu ya Msingi' },
@@ -1078,19 +1169,19 @@ export default function MitihaniView({
     const matchesSearch = !searchQuery || 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())));
 
     // Advanced specific filters
-    const docType = doc.type || (doc.tags.some(t => t.toLowerCase() === 'necta') ? 'NECTA' : 'Mtihani');
+    const docType = doc.type || ((doc.tags && doc.tags.some(t => t.toLowerCase() === 'necta')) ? 'NECTA' : 'Mtihani');
     const matchesType = !selectedType || docType.toLowerCase() === selectedType.toLowerCase();
 
-    const matchesSubject = !selectedSubject || doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase());
+    const matchesSubject = !selectedSubject || (doc.tags && doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase()));
 
-    const docYear = doc.year || (doc.tags.includes('2023') ? 2023 : doc.tags.includes('2022') ? 2022 : 2024);
+    const docYear = doc.year || ((doc.tags && doc.tags.includes('2023')) ? 2023 : (doc.tags && doc.tags.includes('2022')) ? 2022 : 2024);
     const matchesYear = !selectedYear || String(docYear) === selectedYear;
 
-    const isPrimary = doc.tags.some(t => ['primary', 'msingi', 'darasa'].includes(t.toLowerCase()));
-    const isAlevel = doc.tags.some(t => ['advanced', 'a-level', 'form v', 'form vi', 'kidato cha tano', 'kidato cha sita'].includes(t.toLowerCase()));
+    const isPrimary = doc.tags && doc.tags.some(t => ['primary', 'msingi', 'darasa'].includes(t.toLowerCase()));
+    const isAlevel = doc.tags && doc.tags.some(t => ['advanced', 'a-level', 'form v', 'form vi', 'kidato cha tano', 'kidato cha sita'].includes(t.toLowerCase()));
     const isOlevel = !isPrimary && !isAlevel;
 
     let docLevel = 'O-Level';
@@ -1245,7 +1336,7 @@ export default function MitihaniView({
     const IconComponent = theme.icon;
     
     const year = doc.year || 2024;
-    const typeLabel = doc.type || (doc.tags.includes('NECTA') ? 'NECTA' : 'Mock');
+    const typeLabel = doc.type || ((doc.tags && doc.tags.includes('NECTA')) ? 'NECTA' : 'Mtihani');
 
     return (
       <div className={`relative w-[95px] h-[135px] sm:w-[105px] sm:h-[145px] rounded-2xl overflow-hidden shadow-lg flex-shrink-0 bg-gradient-to-br ${theme.gradient} flex flex-col justify-between p-3 text-white select-none group-hover:scale-[1.03] transition-transform duration-300 border border-white/10`}>
@@ -1295,8 +1386,8 @@ export default function MitihaniView({
       const subCompare = subA.localeCompare(subB);
       if (subCompare !== 0) return subCompare;
       
-      const yrA = a.year || (a.tags.includes('2023') ? 2023 : a.tags.includes('2022') ? 2022 : a.tags.includes('2024') ? 2024 : 2026);
-      const yrB = b.year || (b.tags.includes('2023') ? 2023 : b.tags.includes('2022') ? 2022 : b.tags.includes('2024') ? 2024 : 2026);
+      const yrA = a.year || (a.tags?.includes('2023') ? 2023 : a.tags?.includes('2022') ? 2022 : a.tags?.includes('2024') ? 2024 : 2026);
+      const yrB = b.year || (b.tags?.includes('2023') ? 2023 : b.tags?.includes('2022') ? 2022 : b.tags?.includes('2024') ? 2024 : 2026);
       return yrB - yrA; // Newer year first
     } else if (sortBy === 'newest') {
       return b.createdAt - a.createdAt;
@@ -1683,6 +1774,53 @@ export default function MitihaniView({
             <ShieldCheck size={12} className="text-emerald-400 animate-pulse" />
             Maktaba Iliyohakikiwa Active
           </span>
+        </div>
+
+        {/* Proactive Service Worker Offline Past Paper Caching Control Banner */}
+        <div className="bg-slate-900/80 border border-cyan-500/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-inner">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20 shrink-0">
+              <DownloadCloud size={20} className={isPrefetchingLevel ? 'animate-bounce text-amber-400' : 'text-cyan-400'} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xs font-black uppercase text-white tracking-wide">
+                  Hifadhi Mitihani ya {levelLabelsMap[nectaWizardLevel] || nectaWizardLevel} Offline
+                </h3>
+                {cachedLevelsMap[nectaWizardLevel] ? (
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-black uppercase rounded-full flex items-center gap-1">
+                    <CheckCircle2 size={10} /> {cachedLevelsMap[nectaWizardLevel].count} Mitihani Ipo Offline
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black uppercase rounded-full flex items-center gap-1">
+                    <WifiOff size={10} /> Tayari kwa Offline Pre-fetch
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-300 mt-1">
+                {prefetchStatusMsg || `Service Worker inapanga na kuhifadhi kiotomatiki mitihani yote ya masomo ya ${levelLabelsMap[nectaWizardLevel] || nectaWizardLevel} ili kukuwezesha kuisoma instantly bila bando au intaneti.`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={isPrefetchingLevel}
+            onClick={() => triggerProactiveLevelPrefetch(nectaWizardLevel, true)}
+            className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isPrefetchingLevel ? (
+              <>
+                <RefreshCw size={14} className="animate-spin text-slate-950" />
+                <span>Inahifadhi Offline...</span>
+              </>
+            ) : (
+              <>
+                <DownloadCloud size={14} className="stroke-[2.5]" />
+                <span>{cachedLevelsMap[nectaWizardLevel] ? 'Sawazisha Upya Offline' : 'Hifadhi Yote Offline'}</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Wizard step selectors */}
@@ -2221,8 +2359,8 @@ export default function MitihaniView({
                       const isBookmarked = bookmarkedIds.includes(doc.id);
                       const docAccent = doc.accent || 'border-cyan-200';
                       const fileKB = doc.sizeKB || 150;
-                      const typeLabel = doc.type || (doc.tags.includes('NECTA') ? 'NECTA' : 'Mock');
-                      const isPremium = doc.tags.includes('premium') || doc.tags.includes('PRO');
+                      const typeLabel = doc.type || ((doc.tags && doc.tags.includes('NECTA')) ? 'NECTA' : 'Mtihani');
+                      const isPremium = doc.tags && (doc.tags.includes('premium') || doc.tags.includes('PRO'));
 
                       return (
                         <div 
@@ -2345,8 +2483,8 @@ export default function MitihaniView({
                 const isBookmarked = bookmarkedIds.includes(doc.id);
                 const docAccent = doc.accent || 'border-cyan-200';
                 const fileKB = doc.sizeKB || 150;
-                const typeLabel = doc.type || (doc.tags.includes('NECTA') ? 'NECTA' : 'Mock');
-                const isPremium = doc.tags.includes('premium') || doc.tags.includes('PRO');
+                const typeLabel = doc.type || ((doc.tags && doc.tags.includes('NECTA')) ? 'NECTA' : 'Mtihani');
+                const isPremium = doc.tags && (doc.tags.includes('premium') || doc.tags.includes('PRO'));
 
                 return (
                   <div 

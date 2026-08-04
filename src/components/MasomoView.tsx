@@ -50,6 +50,7 @@ import { CustomPersonalNote, CustomFlashcardDeck } from '../types';
 import { getQuizQuestions, QuizQuestion } from './MasomoQuizData';
 import { getExamTips } from './MasomoNectaTips';
 import { getFlashcardsForTopic, Flashcard as MasomoFlashcard } from './MasomoFlashcardData';
+import InteractiveFlashcards from './InteractiveFlashcards';
 import { 
   Brain, 
   Shuffle, 
@@ -80,7 +81,7 @@ export interface SavedBookmark {
 
 export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps) {
   // Navigation & Categorization states
-  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'my-notes' | 'favorites' | 'saved'>('all');
+  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'my-notes' | 'favorites' | 'saved' | 'flashcards-suite'>('all');
   const [activeStreamTab, setActiveStreamTab] = useState<'all' | 'PCB' | 'HGE' | 'EGM'>('all');
   const [openSubject, setOpenSubject] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
@@ -1218,7 +1219,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
       if (!selectedTopic) return;
       window.speechSynthesis.cancel(); // Stop anything else first
       
-      const textToRead = `${selectedTopic.title}. ${selectedTopic.content}. Mada ndogo ni pamoja na: ${selectedTopic.subtopics.join(', ')}.`;
+      const textToRead = `${selectedTopic.title}. ${selectedTopic.content}. Mada ndogo ni pamoja na: ${(selectedTopic.subtopics || []).join(', ')}.`;
       const utterance = new SpeechSynthesisUtterance(textToRead);
       
       // Attempt Swahili speech if Kiswahili keywords detected, else English
@@ -1793,6 +1794,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 { id: 'msingi', name: 'Shule ya Msingi' },
                 { id: 'olevel', name: 'Kidato 1-4' },
                 { id: 'alevel', name: 'Kidato 5-6' },
+                { id: 'flashcards-suite', name: '🎴 Flashcards (Tester)' },
                 { id: 'my-notes', name: `Nukuu Zangu 📝 (${customNotes.length})` },
                 { id: 'favorites', name: 'Zilizopendwa ★' },
                 { id: 'saved', name: `Vitu Vilivyohifadhiwa 🔖 (${savedBookmarks.length})` }
@@ -1976,7 +1978,14 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
       <AdSenseWidget slotId="3000300303" className="my-2" />
 
       {/* Accordion List + Document Preview Grid */}
-      {activeLevelTab === 'my-notes' ? (
+      {activeLevelTab === 'flashcards-suite' ? (
+        <div className="animate-fade-in space-y-4">
+          <InteractiveFlashcards 
+            userProfile={userProfile} 
+            showToast={showToast} 
+          />
+        </div>
+      ) : activeLevelTab === 'my-notes' ? (
         <div className="space-y-6 animate-fade-in">
           {/* My Notes Top Hero Bar */}
           <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-cyan-950 text-white rounded-3xl p-6 sm:p-8 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
