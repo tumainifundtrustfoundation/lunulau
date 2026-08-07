@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { nectaMathDocs } from './data/seedDocs';
 import {
   getAuth,
   signInWithPopup,
@@ -551,23 +552,7 @@ export const fetchDocuments = async (filters?: {
           rating: 5,
           type: "books"
         },
-        {
-          title: "NECTA Form 4 Basic Math - 2025",
-          description: "Mtihani wa Taifa wa Kidato cha Nne (CSEE) - Hisabati ya Kawaida. Maswali na Majibu yaliyohakikiwa.",
-          category: "Mathematics",
-          subject: "Mathematics",
-          tags: ["NECTA", "CSEE", "Past Papers"],
-          fileId: "seed-necta-math",
-          driveUrl: "https://necta.go.tz",
-          uploadedBy: "system",
-          uploadedByName: "Lupanulla Admin",
-          createdAt: Date.now() - 86400000,
-          views: 3500,
-          status: "approved",
-          downloadsCount: 890,
-          rating: 4.8,
-          type: "past_papers"
-        }
+        ...nectaMathDocs
       ];
 
       for (const docData of INITIAL_DOCS) {

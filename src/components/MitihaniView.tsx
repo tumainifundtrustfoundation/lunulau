@@ -49,6 +49,7 @@ import {
   saveNectaProgress
 } from '../firebase';
 import { DocumentMetadata, ExamResult, UserBookmark, NectaProgress, NectaProgressStatus } from '../types';
+import { localSeedDocs } from '../data/seedDocs';
 import { GoogleAdSenseUnit } from './MatangazoView';
 import ExamTimer from './ExamTimer';
 import MatokeoValidationModal from './MatokeoValidationModal';
@@ -745,10 +746,15 @@ export default function MitihaniView({
         !d.id?.startsWith('necta-phy-f4-2023')
       );
 
-      setDocuments(realDocs);
+      // Merge local seed docs (such as NECTA Math papers) if not already present in Firestore fetched list
+      const mergedMap = new Map<string, DocumentMetadata>();
+      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
+      realDocs.forEach(d => mergedMap.set(d.id, d));
+
+      setDocuments(Array.from(mergedMap.values()));
     } catch (e) {
       console.error(e);
-      setDocuments([]);
+      setDocuments(localSeedDocs);
     } finally {
       setLoading(false);
     }
@@ -1038,9 +1044,12 @@ export default function MitihaniView({
       (nectaWizardLevel === 'f4' && (tagsStr.includes('csee') || tagsStr.includes('f4') || tagsStr.includes('kidato cha nne'))) ||
       (nectaWizardLevel === 'f6' && (tagsStr.includes('acsee') || tagsStr.includes('f6') || tagsStr.includes('kidato cha sita')));
 
-    // Simple subject match
-    const subjectMatch = tagsStr.includes(nectaWizardSubject.toLowerCase()) || 
-                         d.title?.toLowerCase().includes(nectaWizardSubject.toLowerCase());
+    // Subject match logic
+    const subClean = nectaWizardSubject.toLowerCase();
+    const subjectMatch = tagsStr.includes(subClean) || 
+                         d.title?.toLowerCase().includes(subClean) ||
+                         (d.subject?.toLowerCase().includes('math') && subClean.includes('math')) ||
+                         ((subClean === 'basic-math' || subClean === 'mathematics') && (tagsStr.includes('math') || tagsStr.includes('hisabati')));
 
     return matchesYear && matchesType && levelMatch && subjectMatch;
   });

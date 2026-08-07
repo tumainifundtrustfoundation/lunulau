@@ -540,7 +540,30 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
       setLoading(true);
       setError(null);
 
-      // Check if it's a dynamic NECTA past paper ID
+      // 1. Check local seed docs first for exact match (e.g., verified NECTA Math past papers)
+      const seedMatch = localSeedDocs.find(d => d.id === documentId);
+      if (seedMatch) {
+        setDoc(seedMatch);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Fetch from Firestore
+      let fetched: DocumentMetadata[] = [];
+      try {
+        fetched = await fetchDocuments();
+      } catch (err) {
+        console.warn('Firestore fetch failed in ReaderView, falling back:', err);
+      }
+
+      const found = fetched.find(d => d.id === documentId);
+      if (found) {
+        setDoc(found);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Fallback: Check if it's a dynamic NECTA past paper ID
       if (documentId && documentId.startsWith('necta-')) {
         // Format: necta-[level]-[subject]-[year]
         const parts = documentId.split('-');
@@ -646,23 +669,8 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
         return;
       }
 
-      let fetched: DocumentMetadata[] = [];
-      try {
-        fetched = await fetchDocuments();
-      } catch (err) {
-        console.warn('Firestore fetch failed in ReaderView, falling back to local seed docs:', err);
-      }
-
-      let found = fetched.find(d => d.id === documentId);
-      if (!found) {
-        found = localSeedDocs.find(d => d.id === documentId);
-      }
-      
-      if (found) {
-        setDoc(found);
-      } else {
-        // Construct fallback document metadata dynamically so notes/documents never fail with error
-        const cleanName = documentId ? documentId.replace(/[-_]/g, ' ') : 'Nyaraka za Mafunzo';
+      // Fallback if not found anywhere else
+      const cleanName = documentId ? documentId.replace(/[-_]/g, ' ') : 'Nyaraka za Mafunzo';
         const formattedTitle = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
         const fallbackDoc: DocumentMetadata = {
           id: documentId || 'doc-default',
@@ -683,7 +691,6 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
           sizeKB: 210
         };
         setDoc(fallbackDoc);
-      }
     } catch (e) {
       console.error('Error loading document:', e);
       const cleanName = documentId ? documentId.replace(/[-_]/g, ' ') : 'Nyaraka za Mafunzo';
