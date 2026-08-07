@@ -567,9 +567,8 @@ export default function MitihaniView({
     }
   };
 
-  // Seed documents array (Empty - test documents removed)
-  const localSeedDocs: DocumentMetadata[] = [];
-  /* Removed dummy test documents */
+  // Seed documents array loaded from seedDocs
+  /* Using imported localSeedDocs */
 
   const loadResults = async () => {
     try {

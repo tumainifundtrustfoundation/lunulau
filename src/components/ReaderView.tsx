@@ -407,9 +407,7 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
     );
   };
 
-  // Seed documents array (Empty - test documents removed)
-  const localSeedDocs: DocumentMetadata[] = [];
-  /* Removed dummy test documents */
+  // Seed documents loaded from seedDocs
 
   useEffect(() => {
     loadDocument();

@@ -38,7 +38,7 @@ export const nectaMathDocs: DocumentMetadata[] = NECTA_FORM4_MATH_PAPERS_DATA.ma
   subject: 'Basic Mathematics',
   tags: ['NECTA', 'CSEE', 'Basic Mathematics', 'basic-math', 'mathematics', 'Hisabati', 'Past Papers', 'Kidato cha Nne', 'Form 4', 'f4', String(paper.year)],
   fileId: paper.fileId,
-  driveUrl: `https://drive.google.com/file/d/${paper.fileId}/view?usp=drive_link`,
+  driveUrl: `https://drive.google.com/file/d/${paper.fileId}/preview`,
   uploadedBy: 'system',
   uploadedByName: 'Baraza la Mitihani la Tanzania (NECTA)',
   createdAt: Date.now() - (2026 - paper.year) * 86400000 * 30,

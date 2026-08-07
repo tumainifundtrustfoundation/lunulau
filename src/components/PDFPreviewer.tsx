@@ -854,21 +854,33 @@ export default function PDFPreviewer({
   
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
+  const driveId = useMemo(() => {
+    if (!driveUrl) return null;
+    const url = driveUrl.trim();
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/) || url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (match && match[1]) return match[1];
+    if (/^[a-zA-Z0-9-_]{20,100}$/.test(url)) return url;
+    return null;
+  }, [driveUrl]);
+
   const formattedUrl = useMemo(() => {
     if (!driveUrl) return '';
-    let url = driveUrl.trim();
-    if (url.includes('drive.google.com/file/d/')) {
-      return url.replace(/\/view(\?.*)?$/, '/preview').replace(/\/edit(\?.*)?$/, '/preview');
-    } else if (url.includes('drive.google.com/open?id=')) {
-      const id = url.split('id=')[1]?.split('&')[0];
-      if (id) return `https://drive.google.com/file/d/${id}/preview`;
-    } else if (/^[a-zA-Z0-9-_]{20,100}$/.test(url)) {
-      return `https://drive.google.com/file/d/${url}/preview`;
-    } else if (!url.includes('docs.google.com/viewer') && !url.includes('drive.google.com') && (url.startsWith('http://') || url.startsWith('https://'))) {
+    if (driveId) {
+      return `https://drive.google.com/file/d/${driveId}/preview`;
+    }
+    const url = driveUrl.trim();
+    if (!url.includes('docs.google.com/viewer') && !url.includes('drive.google.com') && (url.startsWith('http://') || url.startsWith('https://'))) {
       return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
     }
     return url;
-  }, [driveUrl]);
+  }, [driveUrl, driveId]);
+
+  const directDriveViewUrl = useMemo(() => {
+    if (driveId) {
+      return `https://drive.google.com/file/d/${driveId}/view?usp=sharing`;
+    }
+    return driveUrl;
+  }, [driveId, driveUrl]);
 
   const iframeSrcDoc = useMemo(() => {
     const isDataUrl = formattedUrl.startsWith('data:');
@@ -3309,7 +3321,7 @@ export default function PDFPreviewer({
           <div className="flex items-center gap-1.5 ml-1 border-l border-slate-800 pl-2">
             {/* Open in New Tab Button */}
             <a 
-              href={driveUrl} 
+              href={directDriveViewUrl} 
               target="_blank" 
               rel="noopener noreferrer"
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-lg transition-all flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider"
@@ -3489,7 +3501,7 @@ export default function PDFPreviewer({
                       <motion.a
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        href={formattedUrl || driveUrl}
+                        href={directDriveViewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-extrabold uppercase rounded-xl border border-slate-700 transition-all cursor-pointer"
@@ -3524,20 +3536,12 @@ export default function PDFPreviewer({
                   Interactive Reader
                 </button>
                 <a 
-                  href={(() => {
-                    if (driveUrl.includes('https://docs.google.com/viewer?url=')) {
-                      const extracted = driveUrl.split('https://docs.google.com/viewer?url=')[1]?.split('&embedded=true')[0];
-                      if (extracted) {
-                        return decodeURIComponent(extracted);
-                      }
-                    }
-                    return driveUrl;
-                  })()} 
+                  href={directDriveViewUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-[10px] uppercase rounded-xl transition-all cursor-pointer"
+                  className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-[10px] uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1"
                 >
-                  Tab Mpya
+                  Fungua PDF ↗
                 </a>
               </div>
             </div>

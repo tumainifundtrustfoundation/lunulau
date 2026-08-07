@@ -90,11 +90,16 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
         !d.driveUrl?.includes('orimi.com') &&
         !d.id?.startsWith('necta-phy-f4-2023')
       );
-      setDocuments(realDocs);
+      const mergedMap = new Map<string, DocumentMetadata>();
+      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
+      realDocs.forEach(d => mergedMap.set(d.id, d));
+      const allDocs = Array.from(mergedMap.values());
+
+      setDocuments(allDocs);
 
       // Extract unique years and regions dynamically from existing records
-      const years = Array.from(new Set(realDocs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
-      const regions = Array.from(new Set(realDocs.map(d => String((d as any).region || d.accent || '')).filter(Boolean))).sort();
+      const years = Array.from(new Set(allDocs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+      const regions = Array.from(new Set(allDocs.map(d => String((d as any).region || d.accent || '')).filter(Boolean))).sort();
       
       setDynamicYears(years);
       setDynamicRegions(regions);
