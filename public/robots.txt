@@ -1,7 +1,23 @@
 User-agent: *
 Allow: /
+Allow: /sitemap.xml
+Allow: /robots.txt
+Allow: /google9672e38aa649a8ad.html
+Allow: /public/
+Allow: /assets/
 Disallow: /api/
-Disallow: /admin/
-Disallow: /dashboard/
+Disallow: /admin
+Disallow: /dashboard
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: DuckDuckBot
+Allow: /
 
 Sitemap: https://lupanulla.co.tz/sitemap.xml

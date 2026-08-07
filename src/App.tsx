@@ -89,6 +89,7 @@ import DownloadProgressToast from './components/DownloadProgressToast';
 import SwipeNavigationWrapper from './components/SwipeNavigationWrapper';
 import PWAInstallPrompt, { openPWAInstallModal } from './components/PWAInstallPrompt';
 import FlashcardsModal, { openGlobalFlashcardsModal } from './components/FlashcardsModal';
+import SEOHead from './components/SEOHead';
 
 // Shimmer Loading Skeleton Fallback for Smooth Cumulative Layout Shift (CLS) Mitigation
 const ViewLoadingSkeleton = () => (
@@ -985,7 +986,9 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <SwipeNavigationWrapper activeView={activeView} onNavigate={navigateTo}>
+          <>
+            <SEOHead activeView={activeView} />
+            <SwipeNavigationWrapper activeView={activeView} onNavigate={navigateTo}>
             <Suspense fallback={<ViewLoadingSkeleton />}>
               <AnimatePresence mode="wait">
                 <motion.div
@@ -1178,6 +1181,7 @@ export default function App() {
               </AnimatePresence>
             </Suspense>
           </SwipeNavigationWrapper>
+        </>
         )}
 
       </main>

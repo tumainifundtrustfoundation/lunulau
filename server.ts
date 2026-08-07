@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { google } from 'googleapis';
@@ -2004,6 +2005,34 @@ app.post('/api/sms/send-bulk', async (req, res) => {
       message: error.message || 'Mawasiliano na seva ya SMS yamefeli.'
     });
   }
+});
+
+// Dedicated SEO Routes for Search Engines Crawling
+app.get('/sitemap.xml', (req, res) => {
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  const publicPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  const distPath = path.join(process.cwd(), 'dist', 'sitemap.xml');
+  if (fs.existsSync(publicPath)) {
+    return res.sendFile(publicPath);
+  }
+  return res.sendFile(distPath);
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  const publicPath = path.join(process.cwd(), 'public', 'robots.txt');
+  const distPath = path.join(process.cwd(), 'dist', 'robots.txt');
+  if (fs.existsSync(publicPath)) {
+    return res.sendFile(publicPath);
+  }
+  return res.sendFile(distPath);
+});
+
+app.get('/google9672e38aa649a8ad.html', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send('google-site-verification: google9672e38aa649a8ad.html');
 });
 
 // Setup Vite or static serving based on environment
