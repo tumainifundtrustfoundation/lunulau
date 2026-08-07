@@ -107,12 +107,381 @@ export default function PortalView({ onNavigate, userProfile }: PortalViewProps)
             onMouseLeave={() => setTickerPaused(false)}
           >
             <div className={`flex gap-8 whitespace-nowrap text-xs font-semibold text-slate-800 ${tickerPaused ? '' : 'animate-marquee'}`} style={{ animation: tickerPaused ? 'none' : 'marquee 25s linear infinite' }}>
-              <span className="flex items-center gap-2"><Megaphone size={14} className="text-amber-500" /> Matokeo ya NECTA Kidato cha Nne 2025 yametoka &mdash; Angalia sasa!</span>
-              <span className="flex items-center gap-2"><Calendar size={14} className="text-cyan-500" /> Mtihani wa CSEE (Kidato cha Nne) utaanza Novemba 4 - 22, 2026</span>
-              <span className="flex items-center gap-2"><Award size={14} className="text-amber-500" /> Lupa+ Video mpya zimeongezwa &mdash; anza kujifunza kwa vitendo</span>
-              <span className="flex items-center gap-2"><Activity size={14} className="text-purple-500" /> Mashindano ya Kiongozi wa Wiki yanaendelea &mdash; fungua Dashibodi kuona rank</span>
+              <span className="flex items-center gap-2 cursor-pointer hover:text-cyan-600" onClick={() => onNavigate('timetable')}><Calendar size={14} className="text-cyan-500" /> Ratiba ya NECTA 2025/2026 ya CSEE (Kidato cha 4) na FTNA (Kidato cha 2) ipo tayari!</span>
+              <span className="flex items-center gap-2 cursor-pointer hover:text-cyan-600" onClick={() => onNavigate('fisimaji')}><Bot size={14} className="text-purple-500" /> Uliza Lupanulla AI maswali yote ya masomo kwa lugha ya Swahili na English</span>
+              <span className="flex items-center gap-2 cursor-pointer hover:text-cyan-600" onClick={() => onNavigate('mitihani')}><Megaphone size={14} className="text-amber-500" /> Past Papers za NECTA na Mock za Mikoa zimesasishwa kwa mtaala wa TIE</span>
+              <span className="flex items-center gap-2 cursor-pointer hover:text-cyan-600" onClick={() => onNavigate('necta-progress')}><Award size={14} className="text-emerald-500" /> Fuatilia alama zako na ukokotoe GPA/Division ya NECTA kwa usahihi</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── GRAND HERO WELCOME BANNER (Executive Captivating Visual) ── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white shadow-2xl border border-slate-800/80 p-6 sm:p-10 lg:p-12">
+        {/* Glow & Ambient Particle Effects */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+
+        <div className="relative z-10 max-w-5xl space-y-6">
+          
+          {/* Top Badges */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-xs font-black uppercase tracking-wider">
+              <Sparkles size={14} className="text-cyan-400 animate-spin" />
+              LUPANULLA ELIMU HUB TANZANIA 🇹🇿
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-bold">
+              <CheckCircle2 size={14} /> 100% Bure kwa Wanafunzi Na Walimu
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-400/30 text-purple-300 text-xs font-bold">
+              <Bot size={14} /> Swahili AI Tutor Integrated
+            </span>
+          </div>
+
+          {/* Main Headline */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-black text-white tracking-tight leading-[1.1]">
+            Kila Kitu Unachohitaji Ili <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">Kufaulu Vizuri NECTA</span> Na Masomo Yako
+          </h1>
+
+          {/* Description */}
+          <p className="text-slate-300 text-sm sm:text-base lg:text-lg leading-relaxed max-w-3xl font-normal">
+            Karibu kwenye mfumo namba moja wa elimu kidijitali nchini Tanzania! Lupanulla Elimu Hub inakupa Notisi za Masomo (Form 1–6), Mitihani na Past Papers za NECTA, Ratiba ya NECTA, Lupanulla AI Tutor, Tracker ya GPA, Miongozo ya Form 5, na Duka la Elimu sehemu moja.
+          </p>
+
+          {/* Call to Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3.5 pt-2">
+            <button
+              onClick={() => onNavigate('masomo')}
+              className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 hover:scale-[1.02]"
+            >
+              <BookOpen size={18} />
+              <span>Anza Kusoma Notisi Bure</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('timetable')}
+              className="bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/40 font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.02]"
+            >
+              <Calendar size={18} className="text-cyan-400" />
+              <span>Ratiba ya NECTA 2025/2026</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('fisimaji')}
+              className="bg-purple-900/60 hover:bg-purple-800/80 text-purple-200 border border-purple-500/40 font-extrabold text-xs sm:text-sm px-6 py-3.5 rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.02]"
+            >
+              <Bot size={18} className="text-purple-400" />
+              <span>Ongea na AI Assistant</span>
+            </button>
+          </div>
+
+          {/* Visual Platform Metrics Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-800/80">
+            <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <span className="font-mono font-black text-xl sm:text-2xl text-cyan-400 block">10,000+</span>
+              <span className="text-[11px] font-bold text-slate-400 block mt-0.5">Notisi &amp; Mada (TIE)</span>
+            </div>
+
+            <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <span className="font-mono font-black text-xl sm:text-2xl text-emerald-400 block">1,500+</span>
+              <span className="text-[11px] font-bold text-slate-400 block mt-0.5">Past Papers &amp; Mock</span>
+            </div>
+
+            <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <span className="font-mono font-black text-xl sm:text-2xl text-amber-400 block">2025/26</span>
+              <span className="text-[11px] font-bold text-slate-400 block mt-0.5">Ratiba Rasmi za NECTA</span>
+            </div>
+
+            <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <span className="font-mono font-black text-xl sm:text-2xl text-purple-400 block">24/7 AI</span>
+              <span className="text-[11px] font-bold text-slate-400 block mt-0.5">Msaidizi wa Swahili</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── OVERVIEW OF ALL PLATFORM FEATURES ("Kila Kitu Kilichopo Hapa") ── */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-md space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-cyan-600 uppercase tracking-widest">
+              <Compass size={14} /> MWONGOZO WA TOVUTI
+            </div>
+            <h2 className="font-display font-extrabold text-xl sm:text-3xl text-slate-900 uppercase">
+              Kila Kitu Kilichopo Kwenye Lupanulla Elimu Hub
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 max-w-xs font-semibold">
+            Bonyeza kadi yoyote kuingia moja kwa moja kwenye sehemu unayotaka kujifunza.
+          </p>
+        </div>
+
+        {/* Grid Showcase of Platform Capabilities */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          {/* Card 1: Masomo & Notisi */}
+          <div
+            onClick={() => onNavigate('masomo')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-cyan-50/40 border border-slate-200/80 hover:border-cyan-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                  <BookOpen size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+                  Form 1 &ndash; Form 6
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-cyan-600 transition-colors">
+                  1. Notisi za Masomo (Study Notes)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Pata notisi kamili za Physics, Chemistry, Biology, Mathematics, Geography, History, Kiswahili na Civics zilizoratibiwa kwa mtaala wa TIE.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-cyan-600">
+              <span>Soma Notisi Bure</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 2: NECTA Past Papers */}
+          <div
+            onClick={() => onNavigate('mitihani')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-amber-50/40 border border-slate-200/80 hover:border-amber-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                  <FileText size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                  CSEE / FTNA / ACSEE
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-amber-600 transition-colors">
+                  2. Mitihani ya Zamani (Past Papers)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Pakua mitihani ya NECTA, Pre-NECTA na Mock za Mikoa mbalimbali nchini Tanzania pamoja na Marking Schemes zake za usahihi.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-amber-600">
+              <span>Tafuta Past Papers</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 3: Ratiba ya NECTA */}
+          <div
+            onClick={() => onNavigate('timetable')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-emerald-50/40 border border-slate-200/80 hover:border-emerald-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                  <Calendar size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                  2025/2026 Timetable
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-emerald-600 transition-colors">
+                  3. Ratiba Rasmi ya NECTA
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Ratiba kamili ya mitihani ya Kidato cha Nne (CSEE) na Kidato cha Pili (FTNA) ikiwa na vipindi vya asubuhi, mchana, na vihesabio vya siku.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-emerald-600">
+              <span>Fungua Ratiba Ya NECTA</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 4: Lupanulla AI Tutor */}
+          <div
+            onClick={() => onNavigate('fisimaji')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-purple-50/40 border border-slate-200/80 hover:border-purple-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold">
+                  <Bot size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-purple-100 text-purple-800">
+                  Smart AI Tutor
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-purple-600 transition-colors">
+                  4. Lupanulla AI Assistant
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Msaidizi wa akili ya bandia anayejibu maswali yako yote ya masomo kwa Kiswahili au Kiingereza, na kutoa ufafanuzi wa mada ngumu.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-purple-600">
+              <span>Ongea na AI Sasa</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 5: NECTA Tracker & GPA */}
+          <div
+            onClick={() => onNavigate('necta-progress')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-teal-50/40 border border-slate-200/80 hover:border-teal-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-600 flex items-center justify-center font-bold">
+                  <CheckCircle2 size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800">
+                  GPA &amp; Division
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-teal-600 transition-colors">
+                  5. NECTA Progress &amp; Calculator
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Weka alama zako na ukokotoe Division I, II, III au IV na GPA ya NECTA pamoja na kufuatilia maendeleo ya ufaulu wako kabla ya mtihani.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-teal-600">
+              <span>Kokotoa Division Yako</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 6: Video Darasani */}
+          <div
+            onClick={() => onNavigate('videos')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-red-50/40 border border-slate-200/80 hover:border-red-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-600 flex items-center justify-center font-bold">
+                  <Play size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-800">
+                  Lupa+ Video
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-red-600 transition-colors">
+                  6. Darasani (Video Tutorials)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Tazama video za mafunzo ya vitendo na majaribio ya maabara (Biology/Chemistry/Physics Practicals) kutoka kwa walimu mashuhuri.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-red-600">
+              <span>Tazama Video Lessons</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 7: Kombination Form 5 */}
+          <div
+            onClick={() => onNavigate('combinations')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-sky-50/40 border border-slate-200/80 hover:border-sky-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-600 flex items-center justify-center font-bold">
+                  <Award size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">
+                  A-Level Guide
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-sky-600 transition-colors">
+                  7. Mwongozo wa Kombi za Form 5
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Jifunze kuhusu tahasusi (PCM, PCB, PGM, CBG, HGL, HGK, EGM, HKL) na vigezo vyake vya uchaguzi kwa ushauri wa kitaaluma.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-sky-600">
+              <span>Angalia Kombi Zote</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 8: Portal za Ajira na Mikopo */}
+          <div
+            onClick={() => onNavigate('ajira')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-rose-50/40 border border-slate-200/80 hover:border-rose-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-bold">
+                  <Briefcase size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800">
+                  HESLB &amp; Utumishi
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-rose-600 transition-colors">
+                  8. Portal za Ajira &amp; Mikopo ya HESLB
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Miongozo ya kuomba mikopo ya elimu ya juu (HESLB), ajira za Utumishi, na Tamisemi kwa wahitimu na walimu.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-rose-600">
+              <span>Soma Miongozo ya Mikopo</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
+          {/* Card 9: Duka la Elimu */}
+          <div
+            onClick={() => onNavigate('duka')}
+            className="p-5 rounded-2xl bg-slate-50 hover:bg-indigo-50/40 border border-slate-200/80 hover:border-indigo-400 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold">
+                  <Store size={24} />
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800">
+                  Vitabu &amp; WhatsApp
+                </span>
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-base text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  9. Duka la Elimu (Books)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Nunua vitabu vya miongozo, riwaya za NECTA, na PDF kwa mchakato rahisi wa WhatsApp checkout ya moja kwa moja.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 flex items-center justify-between text-xs font-extrabold text-indigo-600">
+              <span>Tembelea Duka</span>
+              <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -185,6 +554,17 @@ export default function PortalView({ onNavigate, userProfile }: PortalViewProps)
             </div>
             <span className="text-xs font-bold text-slate-900 group-hover:text-purple-600 transition-colors">Mwalimu Hub</span>
             <span className="text-[10px] text-slate-400 mt-0.5">Mchakataji wa Matokeo</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('timetable')}
+            className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 border border-slate-200/60 hover:bg-cyan-50/50 hover:border-cyan-300 hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Calendar size={20} />
+            </div>
+            <span className="text-xs font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">Ratiba ya NECTA</span>
+            <span className="text-[10px] text-slate-400 mt-0.5">Form 4 &amp; Form 2</span>
           </button>
 
           <button

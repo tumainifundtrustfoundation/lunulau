@@ -822,14 +822,14 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
         const levelName = levelNames[levelCode] || levelCode.toUpperCase();
         const categoryName = levelCategory[levelCode] || 'Past Papers';
         
-        // Generate proper maktaba.tetea.org PDF URL
-        // Example: https://maktaba.tetea.org/past-papers/csee/biology/Biology-1-2023.pdf
+        // Generate proper drive.google.com PDF URL
+        // Example: https://drive.google.com/past-papers/csee/biology/Biology-1-2023.pdf
         const maktabaLevel = levelCode === 'std7' ? 'psle' :
                              levelCode === 'std4' ? 'sf' :
                              levelCode === 'f2' ? 'ftsee' :
                              levelCode === 'f4' ? 'csee' : 'acsee';
                              
-        // Standardize subject folder on maktaba.tetea.org
+        // Standardize subject folder on drive.google.com
         const maktabaSubject = subjectCode === 'basic-math' ? 'basic-math' :
                                subjectCode === 'adv-math' ? 'adv-math' :
                                subjectCode === 'kiswahili' ? 'kiswahili' :
@@ -854,7 +854,7 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
           }
         }
         
-        const driveUrl = `https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}${paperSuffix}-${yearVal}.pdf&embedded=true`;
+        const driveUrl = `https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/preview`;
         
         const dynamicDoc: DocumentMetadata = {
           id: documentId,

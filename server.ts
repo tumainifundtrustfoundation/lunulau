@@ -579,21 +579,32 @@ async function callGeminiWithRetry(fn: () => Promise<any>, retries = 3, delay = 
     try {
       return await fn();
     } catch (error: any) {
-      console.warn(`Gemini call failed (attempt ${attempt}/${retries}):`, error.message || error);
-      
+      const errStr = String(error.message || error);
+      const isAuthError = 
+        error.status === 401 ||
+        error.status === 403 ||
+        errStr.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') ||
+        errStr.includes('UNAUTHENTICATED') ||
+        errStr.includes('API_KEY_INVALID') ||
+        errStr.includes('invalid authentication credentials');
+
+      if (isAuthError) {
+        throw error;
+      }
+
       const isTransient = error.status === 503 || 
                           error.status === 429 || 
-                          (error.message && (
-                            error.message.includes('503') || 
-                            error.message.includes('429') || 
-                            error.message.includes('high demand') ||
-                            error.message.includes('UNAVAILABLE') ||
-                            error.message.includes('Resource temporarily unavailable')
-                          ));
+                          errStr.includes('503') || 
+                          errStr.includes('429') || 
+                          errStr.includes('high demand') ||
+                          errStr.includes('UNAVAILABLE') ||
+                          errStr.includes('Resource temporarily unavailable');
       
       if (!isTransient || attempt === retries) {
         throw error;
       }
+
+      console.warn(`Gemini call failed (attempt ${attempt}/${retries}):`, error.message || error);
       
       // Wait with backoff before next attempt
       await new Promise(resolve => setTimeout(resolve, delay * attempt));
@@ -743,6 +754,18 @@ app.post('/api/claude.php', async (req, res) => {
         config: config
       }));
     } catch (primaryError: any) {
+      const primaryErrStr = String(primaryError.message || primaryError);
+      const isPrimaryAuthError = primaryError.status === 401 ||
+                                 primaryError.status === 403 ||
+                                 primaryErrStr.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') ||
+                                 primaryErrStr.includes('UNAUTHENTICATED') ||
+                                 primaryErrStr.includes('API_KEY_INVALID') ||
+                                 primaryErrStr.includes('invalid authentication credentials');
+
+      if (isPrimaryAuthError) {
+        throw primaryError;
+      }
+
       console.warn(`Primary model ${selectedModel} failed. Falling back to gemini-3.1-flash-lite... Error:`, primaryError.message || primaryError);
       if (selectedModel !== 'gemini-3.1-flash-lite') {
         const fallbackConfig = { ...config };

@@ -50,7 +50,7 @@ try {
   // Ignore if unsupported
 }
 
-// Initialize Firestore with standard memory cache to ensure instant, reliable connection without 10-second long-polling probes
+// Initialize Firestore with memory cache and auto-long polling for iframe compatibility
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
 const dbId = firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : undefined;
 
@@ -58,32 +58,20 @@ let dbInstance: any;
 
 try {
   dbInstance = initializeFirestore(app, {
-    localCache: memoryLocalCache()
+    localCache: memoryLocalCache(),
+    experimentalAutoDetectLongPolling: true
   }, dbId);
 } catch (err1) {
   try {
-    dbInstance = initializeFirestore(app, {}, dbId);
+    dbInstance = initializeFirestore(app, {
+      localCache: memoryLocalCache()
+    }, dbId);
   } catch (err2) {
     dbInstance = getFirestore(app, dbId);
   }
 }
 
 export const db = dbInstance;
-
-// Validate Connection to Firestore safely without blocking initial renders
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('Could not reach Cloud Firestore'))) {
-      console.warn("Firestore running in offline mode.");
-    }
-  }
-}
-// Run connection check asynchronously after initial mount
-setTimeout(() => {
-  testConnection().catch(() => {});
-}, 1500);
 
 // --- Firestore Error Handling (Skill Requirement) ---
 export enum OperationType {

@@ -163,9 +163,9 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     tags: ['SFNA', 'Darasa la 4', 'National Assessment', 'Matokeo', 'NECTA']
   },
   {
-    title: 'Matokeo ya SFNA 2023 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2023 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2023/sfna.html',
+    title: 'Matokeo ya SFNA 2023 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2023 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2023/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 420,
@@ -174,14 +174,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6100,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2023', 'Tetea', 'SFNA 2023']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2023', 'NECTA', 'SFNA 2023']
   },
   {
-    title: 'Matokeo ya SFNA 2022 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2022 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2022/sfna.html',
+    title: 'Matokeo ya SFNA 2022 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2022 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2022/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 390,
@@ -190,14 +190,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6200,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2022', 'Tetea', 'SFNA 2022']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2022', 'NECTA', 'SFNA 2022']
   },
   {
-    title: 'Matokeo ya SFNA 2021 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2021 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2021/sfna.html',
+    title: 'Matokeo ya SFNA 2021 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2021 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2021/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 340,
@@ -206,14 +206,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6300,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2021', 'Tetea', 'SFNA 2021']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2021', 'NECTA', 'SFNA 2021']
   },
   {
-    title: 'Matokeo ya SFNA 2020 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2020 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2020/sfna.html',
+    title: 'Matokeo ya SFNA 2020 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2020 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2020/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 310,
@@ -222,14 +222,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6400,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2020', 'Tetea', 'SFNA 2020']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2020', 'NECTA', 'SFNA 2020']
   },
   {
-    title: 'Matokeo ya SFNA 2019 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2019 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2019/sfna.html',
+    title: 'Matokeo ya SFNA 2019 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2019 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2019/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 290,
@@ -238,14 +238,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6500,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2019', 'Tetea', 'SFNA 2019']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2019', 'NECTA', 'SFNA 2019']
   },
   {
-    title: 'Matokeo ya SFNA 2018 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2018 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2018/sfna.html',
+    title: 'Matokeo ya SFNA 2018 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2018 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2018/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 260,
@@ -254,14 +254,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6600,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2018', 'Tetea', 'SFNA 2018']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2018', 'NECTA', 'SFNA 2018']
   },
   {
-    title: 'Matokeo ya SFNA 2017 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2017 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2017/sfna.html',
+    title: 'Matokeo ya SFNA 2017 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2017 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2017/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 220,
@@ -270,14 +270,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6700,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2017', 'Tetea', 'SFNA 2017']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2017', 'NECTA', 'SFNA 2017']
   },
   {
-    title: 'Matokeo ya SFNA 2016 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2016 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2016/sfna.html',
+    title: 'Matokeo ya SFNA 2016 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2016 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2016/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 195,
@@ -286,14 +286,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6800,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2016', 'Tetea', 'SFNA 2016']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2016', 'NECTA', 'SFNA 2016']
   },
   {
-    title: 'Matokeo ya SFNA 2015 - Maktaba Tetea',
-    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2015 yaliyohifadhiwa na Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/SFNA2015/sfna.html',
+    title: 'Matokeo ya SFNA 2015 - NECTA Portal',
+    description: 'Matokeo ya Upimaji wa Kitaifa wa Darasa la Nne (SFNA) ya mwaka 2015 yaliyohifadhiwa na NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/SFNA2015/sfna.html',
     category: 'examinations',
     isVerified: true,
     clicksCount: 180,
@@ -302,14 +302,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 6900,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2015', 'Tetea', 'SFNA 2015']
+    tags: ['SFNA', 'Darasa la 4', 'Matokeo', '2015', 'NECTA', 'SFNA 2015']
   },
   {
-    title: 'Matokeo ya DSEE 2024 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2024 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2024/index.htm',
+    title: 'Matokeo ya DSEE 2024 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2024 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2024/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 210,
@@ -318,14 +318,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7100,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2024', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2024', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2023 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2023 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2023/index.htm',
+    title: 'Matokeo ya DSEE 2023 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2023 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2023/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 195,
@@ -334,14 +334,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7200,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2023', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2023', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2022 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2022 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2022/index.htm',
+    title: 'Matokeo ya DSEE 2022 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2022 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2022/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 180,
@@ -350,14 +350,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7300,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2022', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2022', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2021 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2021 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2021/index.htm',
+    title: 'Matokeo ya DSEE 2021 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2021 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2021/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 165,
@@ -366,14 +366,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7400,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2021', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2021', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2020 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2020 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2020/index.htm',
+    title: 'Matokeo ya DSEE 2020 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2020 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2020/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 150,
@@ -382,14 +382,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7500,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2020', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2020', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2019 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2019 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2019/index.htm',
+    title: 'Matokeo ya DSEE 2019 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2019 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2019/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 140,
@@ -398,14 +398,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7600,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2019', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2019', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2018 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2018 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2018/index.htm',
+    title: 'Matokeo ya DSEE 2018 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2018 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2018/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 130,
@@ -414,14 +414,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7700,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2018', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2018', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2017 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2017 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2017/index.htm',
+    title: 'Matokeo ya DSEE 2017 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2017 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2017/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 120,
@@ -430,14 +430,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7800,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2017', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2017', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2016 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2016 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2016/index.htm',
+    title: 'Matokeo ya DSEE 2016 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2016 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2016/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 110,
@@ -446,14 +446,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 7900,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2016', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2016', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2015 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2015 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2015/index.htm',
+    title: 'Matokeo ya DSEE 2015 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2015 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2015/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 100,
@@ -462,14 +462,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 8000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2015', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2015', 'NECTA']
   },
   {
-    title: 'Matokeo ya DSEE 2014 - Maktaba Tetea',
-    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2014 kutoka Maktaba Tetea.',
-    url: 'https://maktaba.tetea.org/exam-results/DSEE2014/index.htm',
+    title: 'Matokeo ya DSEE 2014 - NECTA Portal',
+    description: 'Matokeo ya Mtihani wa Stashahada ya Ualimu Ngazi ya Sekondari (Diploma in Secondary Education Examination) ya mwaka 2014 kutoka NECTA Portal.',
+    url: 'https://matokeo.necta.go.tz/DSEE2014/index.htm',
     category: 'examinations',
     isVerified: true,
     clicksCount: 90,
@@ -478,14 +478,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 8100,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
-    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2014', 'Tetea']
+    tags: ['DSEE', 'Ualimu', 'Diploma', 'Matokeo', '2014', 'NECTA']
   },
   {
-    title: 'Maktaba Tetea: Standard 1-4',
+    title: 'NECTA Portal: Standard 1-4',
     description: 'Nyenzo rasmi za kujifunzia, mitihani ya zamani (Past Papers), na mazoezi kwa wanafunzi wa shule za msingi nchini Tanzania, ngazi ya Darasa la Kwanza hadi la Nne.',
-    url: 'https://maktaba.tetea.org/resources/standard-1-4/',
+    url: 'https://matokeo.necta.go.tz/resources/standard-1-4/',
     category: 'libraries',
     isVerified: true,
     clicksCount: 310,
@@ -494,14 +494,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 50000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Standard 1-4', 'Darasa la 1-4', 'Mitihani', 'Notes', 'Primary']
   },
   {
-    title: 'Maktaba Tetea: Standard 5-7',
+    title: 'NECTA Portal: Standard 5-7',
     description: 'Mitihani ya taifa iliyopita, majaribio ya kanda (Mock Exams), na miongozo ya masomo yote kwa wanafunzi wa Darasa la Tano hadi la Saba (ikiwemo PSLE).',
-    url: 'https://maktaba.tetea.org/resources/standard-5-7/',
+    url: 'https://matokeo.necta.go.tz/resources/standard-5-7/',
     category: 'libraries',
     isVerified: true,
     clicksCount: 295,
@@ -510,14 +510,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 100000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Standard 5-7', 'Darasa la 7', 'Past Papers', 'Tanzania', 'Primary']
   },
   {
-    title: 'Maktaba Tetea: Form 1-2',
+    title: 'NECTA Portal: Form 1-2',
     description: 'Notisi za kidato cha kwanza na cha pili, miongozo ya mitaala, mitihani ya shule na ya kitaifa ya kidato cha pili (FTNA) kwa ajili ya maandalizi mazuri.',
-    url: 'https://maktaba.tetea.org/resources/form-1-2/',
+    url: 'https://matokeo.necta.go.tz/resources/form-1-2/',
     category: 'examinations',
     isVerified: true,
     clicksCount: 420,
@@ -526,14 +526,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 150000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Form 1', 'Form 2', 'FTNA', 'O-Level', 'Notes']
   },
   {
-    title: 'Maktaba Tetea: Form 3-4',
+    title: 'NECTA Portal: Form 3-4',
     description: 'Notisi, miongozo ya masomo yote ya sekondari (O-Level) kidato cha tatu na nne, pamoja na mitihani ya kitaifa ya zamani (CSEE) kwa maandalizi ya kutosha ya kitaaluma.',
-    url: 'https://maktaba.tetea.org/resources/form-3-4/',
+    url: 'https://matokeo.necta.go.tz/resources/form-3-4/',
     category: 'libraries',
     isVerified: true,
     clicksCount: 390,
@@ -542,14 +542,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 160000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Form 3', 'Form 4', 'CSEE', 'O-Level', 'Notes', 'Past Papers']
   },
   {
-    title: 'Maktaba Tetea: Form 5-6 (A-Level)',
+    title: 'NECTA Portal: Form 5-6 (A-Level)',
     description: 'Notisi, mitaala, na mitihani ya kitaifa iliyopita (ACSEE) ya Kidato cha Tano na Sita (A-Level). Inajumuisha vitabu na notisi za masomo yote ikiwemo Uhasibu (Accounting/Bookkeeping - #accts) na Hisabati.',
-    url: 'https://maktaba.tetea.org/resources/form-5-6/#accts',
+    url: 'https://matokeo.necta.go.tz/resources/form-5-6/#accts',
     category: 'libraries',
     isVerified: true,
     clicksCount: 450,
@@ -558,14 +558,14 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 170000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Form 5', 'Form 6', 'ACSEE', 'A-Level', 'Accounting', 'Bookkeeping', 'Notes', 'Past Papers']
   },
   {
-    title: 'Maktaba Tetea Exam Results',
+    title: 'NECTA Portal Exam Results',
     description: 'Ukurasa thabiti wa kuangalia matokeo ya mitihani ya kitaifa ya miaka yote ya NECTA: ACSEE (Kidato cha Sita), CSEE (Kidato cha Nne), la saba, la nne na mengineyo.',
-    url: 'https://maktaba.tetea.org/results/',
+    url: 'https://matokeo.necta.go.tz/',
     category: 'examinations',
     isVerified: true,
     clicksCount: 540,
@@ -574,7 +574,7 @@ const SEED_RESOURCES: Omit<EducationalResource, 'id'>[] = [
     createdAt: Date.now() - 200000,
     createdBy: 'system',
     createdByName: 'Lupanulla Admin',
-    institution: 'Tetea Foundation',
+    institution: 'NECTA',
     region: 'Tanzania',
     tags: ['Results', 'Matokeo', 'CSEE', 'ACSEE', 'NECTA', 'Form 4', 'Form 6']
   },
@@ -1044,7 +1044,7 @@ export default function ResourcesView({ language, userProfile }: ResourcesViewPr
     setError(null);
     try {
       const data = await fetchEducationalResources();
-      // Filter out any Tetea resources from Firestore data just in case
+      // Filter out any NECTA resources from Firestore data just in case
       const cleanData = data.filter(r => !r.url.toLowerCase().includes('tetea.org'));
       const cleanSeeds = SEED_RESOURCES.filter(r => !r.url.toLowerCase().includes('tetea.org'));
 

@@ -177,7 +177,7 @@ export default function MitihaniView({
         description: examDescription.trim(),
         category: examCategory,
         tags: tags,
-        driveUrl: examDriveUrl.trim(),
+        driveUrl: formatGoogleDriveUrl(examDriveUrl.trim()),
         fileId: examFileId.trim() || `exam-${Date.now()}`,
         uploadedBy: userProfile?.uid || 'admin',
         uploadedByName: userProfile?.name || 'Msimamizi Lupanulla',
@@ -257,67 +257,38 @@ export default function MitihaniView({
     return null;
   };
 
+  const formatGoogleDriveUrl = (url: string): string => {
+    if (!url) return '';
+    const trimmed = url.trim();
+    const driveId = extractGoogleDriveId(trimmed);
+    if (driveId) {
+      return `https://drive.google.com/file/d/${driveId}/preview`;
+    }
+    if (trimmed.includes('docs.google.com/viewer')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(trimmed)}&embedded=true`;
+    }
+    return trimmed;
+  };
+
   const getDownloadInfo = (doc: DocumentMetadata) => {
-    if (doc.driveUrl) {
-      return { url: doc.driveUrl, title: doc.title };
-    }
+    let driveUrl = doc.driveUrl ? formatGoogleDriveUrl(doc.driveUrl) : '';
     
-    // Fallback to Maktaba Tetea URL scheme
-    const tagsStr = doc.tags?.map(t => t.toLowerCase()).join(' ') || '';
-    
-    let level = 'f4';
-    if (tagsStr.includes('psle') || tagsStr.includes('std7') || tagsStr.includes('primary')) level = 'std7';
-    else if (tagsStr.includes('std4')) level = 'std4';
-    else if (tagsStr.includes('ftsee') || tagsStr.includes('f2') || tagsStr.includes('ftna')) level = 'f2';
-    else if (tagsStr.includes('acsee') || tagsStr.includes('f6')) level = 'f6';
-
-    // Find matching subject key
-    let subjectKey = 'physics';
-    const subjects = ['mathematics', 'basic-math', 'adv-math', 'physics', 'chemistry', 'biology', 'geography', 'history', 'civics', 'english', 'kiswahili', 'science', 'social-studies', 'civic-moral', 'commerce', 'bookkeeping'];
-    for (const sub of subjects) {
-      if (tagsStr.includes(sub) || doc.title?.toLowerCase().includes(sub)) {
-        subjectKey = sub;
-        break;
+    // Default to Google Drive URL if no custom driveUrl set
+    if (!driveUrl) {
+      if (doc.fileId && doc.fileId.length >= 20 && !doc.fileId.startsWith('sample') && !doc.fileId.startsWith('exam')) {
+        driveUrl = `https://drive.google.com/file/d/${doc.fileId}/preview`;
+      } else {
+        driveUrl = `https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/preview`;
       }
     }
-
-    const maktabaLevel = level === 'std7' ? 'psle' :
-                         level === 'std4' ? 'sf' :
-                         level === 'f2' ? 'ftsee' :
-                         level === 'f4' ? 'csee' : 'acsee';
     
-    const maktabaSubject = subjectKey === 'basic-math' ? 'basic-math' :
-                           subjectKey === 'adv-math' ? 'adv-math' :
-                           subjectKey === 'kiswahili' ? 'kiswahili' :
-                           subjectKey === 'english' ? 'english' : subjectKey;
+    const levelName = doc.classLevel || 'NECTA';
+    const title = doc.title || `NECTA Past Paper (${levelName})`;
 
-    let fileSubject = subjectKey === 'basic-math' ? 'Basic-Mathematics' :
-                      subjectKey === 'adv-math' ? 'Advanced-Mathematics' :
-                      subjectKey === 'kiswahili' ? 'Kiswahili' :
-                      subjectKey === 'english' ? 'English-Language' :
-                      subjectKey === 'science' ? 'Science-and-Technology' :
-                      subjectKey === 'social-studies' ? 'Social-Studies' :
-                      subjectKey === 'civic-moral' ? 'Civic-and-Moral-Education' :
-                      subjectKey === 'mathematics' ? 'Mathematics' :
-                      subjectKey.charAt(0).toUpperCase() + subjectKey.slice(1);
-
-    let paperSuffix = '';
-    if (level === 'f4' || level === 'f6') {
-      if (!['basic-math', 'civics', 'kiswahili', 'bookkeeping'].includes(subjectKey)) {
-        paperSuffix = '-1';
-      }
-    }
-
-    const year = doc.year || 2023;
-    const url = `https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}${paperSuffix}-${year}.pdf`;
-    
-    const levelName = level === 'std4' ? 'Darasa la 4' :
-                      level === 'std7' ? 'Darasa la 7' :
-                      level === 'f2' ? 'Kidato cha 2' :
-                      level === 'f4' ? 'Kidato cha 4' : 'Kidato cha 6';
-    const title = `NECTA ${fileSubject.replace(/-/g, ' ')} (${levelName}) - ${year}`;
-
-    return { url, title };
+    return { url: driveUrl, title };
   };
 
   const handleConfirmPurchase = async (e: React.FormEvent) => {
@@ -428,7 +399,7 @@ export default function MitihaniView({
     const paperUrls: string[] = [];
     subs.forEach(sub => {
       recentYears.forEach(yr => {
-        paperUrls.push(`https://maktaba.tetea.org/past-papers/${maktabaLevel}/${sub.id}/${sub.id}-${yr}.pdf`);
+        paperUrls.push(`https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/preview`);
       });
     });
 
@@ -1492,12 +1463,12 @@ export default function MitihaniView({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-xl">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-bold uppercase tracking-wider border border-cyan-400/30">
-              <TrendingUp size={12} className="text-amber-400" />
-              Scribd-Drive File Sharing Integrated
+              <ShieldCheck size={14} className="text-emerald-400" />
+              BARAZA LA MITIHANI LA TAIFA (NECTA) &amp; MOCK VAULT 🇹🇿
             </span>
-            <h1 className="text-3xl sm:text-4xl font-display font-extrabold uppercase leading-none">Past Papers &amp; Mitihani (1994 - 2025)</h1>
+            <h1 className="text-3xl sm:text-4xl font-display font-black uppercase leading-tight tracking-tight">Past Papers na Mitihani ya NECTA (1994 - 2025)</h1>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-              Vinjari maktaba yetu kubwa ya Past Papers za NECTA (1994 - 2025), majaribio ya Mock ya mikoa na wilaya, na mitihani ya kawaida ya muhula. Soma mtandaoni na pakua bure!
+              Hifadhi rasmi ya mitihani ya Kitaifa ya NECTA (CSEE, FTNA, ACSEE, PSLE) na Mock za Mikoa yote ya Tanzania (Dar es Salaam, Arusha, Mwanza, Mbeya, Kilimanjaro n.k.). Soma mtandaoni na pakua PDF bure!
             </p>
           </div>
           
@@ -1766,8 +1737,8 @@ export default function MitihaniView({
               <BookOpen size={22} className="animate-pulse" />
             </div>
             <div>
-              <h2 className="font-sans font-black text-white text-base uppercase tracking-tight">Maktaba ya Past Papers za NECTA (Iliyohakikiwa)</h2>
-              <p className="text-xs text-slate-300">Tafuta na upakue mitihani yote halisi ya kitaifa iliyohakikiwa na walimu wetu ili kuepuka viungo vilivyoharibika.</p>
+              <h2 className="font-sans font-black text-white text-base sm:text-lg uppercase tracking-tight">Maktaba Rasmi ya Past Papers za NECTA (Verified National Exam Vault)</h2>
+              <p className="text-xs text-slate-300">Tafuta, soma na pakua mitihani yote halisi ya kitaifa ya NECTA (1994 - 2025) yenye Marking Schemes zake na viungo vilivyohakikiwa.</p>
             </div>
           </div>
           <span className="self-start sm:self-auto bg-emerald-500/10 text-emerald-300 font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1">
@@ -1951,8 +1922,7 @@ export default function MitihaniView({
             }
           }
 
-          const constructedMaktabaUrl = `https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}${paperSuffix}-${nectaWizardYear}.pdf`;
-          const autoDocDriveUrl = matchingDoc?.driveUrl || constructedMaktabaUrl;
+          const autoDocDriveUrl = formatGoogleDriveUrl(matchingDoc?.driveUrl || 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/preview');
 
           return (
             <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 mt-2 shadow-2xl">

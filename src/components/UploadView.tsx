@@ -629,7 +629,7 @@ export default function UploadView({ onNavigate, userProfile }: UploadViewProps)
                       type="text" 
                       value={sourceName}
                       onChange={(e) => setSourceName(e.target.value)}
-                      placeholder="Mfano: Maktaba Tetea, NECTA, au Mwandishi" 
+                      placeholder="Mfano: Baraza la Mitihani la Taifa (NECTA), Mkoa wa Arusha, au Mwalimu" 
                       className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-800"
                     />
                   </div>

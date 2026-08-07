@@ -33,7 +33,8 @@ import {
   Globe,
   FileSpreadsheet,
   Download,
-  Smartphone
+  Smartphone,
+  Calendar
 } from 'lucide-react';
 import { UserProfile, AppNotification, AppTheme } from '../types';
 import { subscribeNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../firebase';
@@ -143,6 +144,7 @@ export default function Navbar({
     { id: 'library', label: 'Maktaba Kuu', icon: Library },
     { id: 'masomo', label: 'Masomo', icon: Book },
     { id: 'mitihani', label: 'Mitihani (Past Papers)', icon: FileText },
+    { id: 'timetable', label: 'Ratiba ya NECTA', icon: Calendar },
     { id: 'duka', label: 'Duka (Books)', icon: Store },
     { id: 'fisimaji', label: 'Lupanulla AI', icon: Bot, highlight: true },
     { id: 'workspace', label: 'Maktaba ya Google', icon: Globe },
@@ -150,6 +152,7 @@ export default function Navbar({
   ];
 
   const toolsMenuItems = [
+    { id: 'timetable', label: '📅 Ratiba ya NECTA 2025/2026', icon: Calendar },
     { id: 'flashcards-global', label: '🎴 Flashcards (Kadi za Masomo)', icon: Brain },
     { id: 'necta-progress', label: 'Maendeleo ya NECTA', icon: CheckCircle2 },
     { id: 'combinations', label: 'Kombination 2025/2026', icon: Award },

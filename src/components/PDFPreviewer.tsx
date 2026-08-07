@@ -858,10 +858,14 @@ export default function PDFPreviewer({
     if (!driveUrl) return '';
     let url = driveUrl.trim();
     if (url.includes('drive.google.com/file/d/')) {
-      return url.replace(/\/view(\?.*)?$/, '/preview');
+      return url.replace(/\/view(\?.*)?$/, '/preview').replace(/\/edit(\?.*)?$/, '/preview');
     } else if (url.includes('drive.google.com/open?id=')) {
       const id = url.split('id=')[1]?.split('&')[0];
       if (id) return `https://drive.google.com/file/d/${id}/preview`;
+    } else if (/^[a-zA-Z0-9-_]{20,100}$/.test(url)) {
+      return `https://drive.google.com/file/d/${url}/preview`;
+    } else if (!url.includes('docs.google.com/viewer') && !url.includes('drive.google.com') && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
     }
     return url;
   }, [driveUrl]);

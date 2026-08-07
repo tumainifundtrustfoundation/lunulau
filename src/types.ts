@@ -145,6 +145,7 @@ export interface DocumentMetadata {
   sourceUrl?: string;
   copyrightAccepted?: boolean;
   reportCount?: number;
+  classLevel?: string;
 }
 
 export interface Comment {

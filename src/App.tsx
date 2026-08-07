@@ -82,6 +82,7 @@ import CertificatesView from './components/CertificatesView';
 import LeaderboardView from './components/LeaderboardView';
 import ResourcesView from './components/ResourcesView';
 import NectaProgressView from './components/NectaProgressView';
+import TimetableView from './components/TimetableView';
 import RotatingBanner from './components/RotatingBanner';
 import WelcomeNotification from './components/WelcomeNotification';
 import DownloadProgressToast from './components/DownloadProgressToast';
@@ -1028,6 +1029,14 @@ export default function App() {
                       searchQuery={searchQuery}
                       onSearchChange={setSearchQuery}
                       userProfile={userProfile} 
+                    />
+                  )}
+
+                  {activeView === 'timetable' && (
+                    <TimetableView 
+                      userProfile={userProfile}
+                      onNavigate={navigateTo}
+                      language={language}
                     />
                   )}
 

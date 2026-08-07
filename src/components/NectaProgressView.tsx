@@ -724,12 +724,12 @@ export default function NectaProgressView({ userProfile, onNavigate }: NectaProg
             : [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015]
           ).map((year) => {
             let href = '';
-            if (archiveTab === 'sfna') href = `https://maktaba.tetea.org/exam-results/SFNA${year}/sfna.html`;
-            if (archiveTab === 'psle') href = `https://maktaba.tetea.org/exam-results/PSLE${year}/index.htm`;
-            if (archiveTab === 'ftna') href = `https://maktaba.tetea.org/exam-results/FTNA${year}/ftna.htm`;
-            if (archiveTab === 'csee') href = `https://maktaba.tetea.org/exam-results/CSEE${year}/index.htm`;
-            if (archiveTab === 'acsee') href = `https://maktaba.tetea.org/exam-results/ACSEE${year}/index.htm`;
-            if (archiveTab === 'dsee') href = `https://maktaba.tetea.org/exam-results/DSEE${year}/index.htm`;
+            if (archiveTab === 'sfna') href = `https://matokeo.necta.go.tz/sfna${year}/index.htm`;
+            if (archiveTab === 'psle') href = `https://matokeo.necta.go.tz/psle${year}/index.htm`;
+            if (archiveTab === 'ftna') href = `https://matokeo.necta.go.tz/ftna${year}/index.htm`;
+            if (archiveTab === 'csee') href = `https://matokeo.necta.go.tz/csee${year}/index.htm`;
+            if (archiveTab === 'acsee') href = `https://matokeo.necta.go.tz/acsee${year}/index.htm`;
+            if (archiveTab === 'dsee') href = `https://matokeo.necta.go.tz/dsee${year}/index.htm`;
 
             return (
               <a
