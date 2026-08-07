@@ -364,8 +364,9 @@ export default function MitihaniView({
 
   // --- NEW: NECTA Past Papers Library Wizard States & Configuration ---
   const [nectaWizardLevel, setNectaWizardLevel] = useState<string>('f4');
-  const [nectaWizardSubject, setNectaWizardSubject] = useState<string>('physics');
-  const [nectaWizardYear, setNectaWizardYear] = useState<string>('2023');
+  const [nectaWizardSubject, setNectaWizardSubject] = useState<string>('basic-math');
+  const [nectaWizardYear, setNectaWizardYear] = useState<string>('2025');
+  const [selectedPaperId, setSelectedPaperId] = useState<string | null>(null);
   const [requestedPapers, setRequestedPapers] = useState<string[]>([]);
   const [isRequesting, setIsRequesting] = useState<boolean>(false);
 
@@ -745,10 +746,10 @@ export default function MitihaniView({
         !d.id?.startsWith('necta-phy-f4-2023')
       );
 
-      // Merge local seed docs (such as NECTA Math papers) if not already present in Firestore fetched list
+      // Merge local seed docs (such as NECTA Math papers) ensuring local verified seed docs take precedence
       const mergedMap = new Map<string, DocumentMetadata>();
-      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
       realDocs.forEach(d => mergedMap.set(d.id, d));
+      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
 
       setDocuments(Array.from(mergedMap.values()));
     } catch (e) {
@@ -1030,7 +1031,7 @@ export default function MitihaniView({
 
   // Find matching verified document in the system
   const parsedYear = parseInt(nectaWizardYear, 10);
-  const matchingDoc = documents.find(d => {
+  const rawMatchingDocs = documents.filter(d => {
     const matchesYear = d.year === parsedYear;
     const matchesType = d.type?.toUpperCase() === 'NECTA';
     
@@ -1052,6 +1053,17 @@ export default function MitihaniView({
 
     return matchesYear && matchesType && levelMatch && subjectMatch;
   });
+
+  // Deduplicate by fileId
+  const uniqueMatchingDocsMap = new Map<string, DocumentMetadata>();
+  rawMatchingDocs.forEach(d => {
+    if (!uniqueMatchingDocsMap.has(d.fileId)) {
+      uniqueMatchingDocsMap.set(d.fileId, d);
+    }
+  });
+  const uniqueMatchingDocs = Array.from(uniqueMatchingDocsMap.values());
+  const activeWizardDoc = (selectedPaperId ? uniqueMatchingDocs.find(d => d.id === selectedPaperId || d.fileId === selectedPaperId) : null) || uniqueMatchingDocs[0];
+  const matchingDoc = activeWizardDoc;
 
   const levelLabels: Record<string, string> = {
     std7: 'Darasa la 7 (PSLE)',
@@ -1500,7 +1512,7 @@ export default function MitihaniView({
                   <button
                     key={sub.id}
                     type="button"
-                    onClick={() => setNectaWizardSubject(sub.id)}
+                    onClick={() => { setNectaWizardSubject(sub.id); setSelectedPaperId(null); }}
                     className={`text-center p-2.5 rounded-xl border text-xs font-bold transition-all line-clamp-2 min-h-[46px] flex items-center justify-center cursor-pointer ${
                       isActive 
                         ? 'bg-cyan-500/20 border-cyan-400 text-white shadow shadow-cyan-500/10' 
@@ -1526,7 +1538,7 @@ export default function MitihaniView({
                   <button
                     key={yr}
                     type="button"
-                    onClick={() => setNectaWizardYear(yr)}
+                    onClick={() => { setNectaWizardYear(yr); setSelectedPaperId(null); }}
                     className={`py-2 px-1 rounded-lg border text-[11px] font-mono font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
                       isActive 
                         ? 'bg-amber-400 border-amber-400 text-slate-950 shadow-md font-black' 
@@ -1598,6 +1610,30 @@ export default function MitihaniView({
                       MWAKA {nectaWizardYear}
                     </span>
                   </div>
+
+                  {uniqueMatchingDocs.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 my-1">
+                      <span className="text-[10px] font-extrabold text-cyan-400 uppercase tracking-wider px-1">Chagua Karatasi:</span>
+                      {uniqueMatchingDocs.map((pDoc) => {
+                        const isCurr = matchingDoc?.id === pDoc.id || matchingDoc?.fileId === pDoc.fileId;
+                        return (
+                          <button
+                            key={pDoc.id}
+                            type="button"
+                            onClick={() => setSelectedPaperId(pDoc.id)}
+                            className={`px-3 py-1 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${
+                              isCurr 
+                                ? 'bg-cyan-500 text-slate-950 shadow-md scale-105' 
+                                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                            }`}
+                          >
+                            {pDoc.paperNo || (pDoc.title.includes('Paper 2') ? 'Paper 2' : 'Paper 1')}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <h3 className="font-sans font-black text-white text-base sm:text-lg leading-tight">
                     {autoDocTitle}
                   </h3>

@@ -91,8 +91,8 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
         !d.id?.startsWith('necta-phy-f4-2023')
       );
       const mergedMap = new Map<string, DocumentMetadata>();
-      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
       realDocs.forEach(d => mergedMap.set(d.id, d));
+      localSeedDocs.forEach(d => mergedMap.set(d.id, d));
       const allDocs = Array.from(mergedMap.values());
 
       setDocuments(allDocs);

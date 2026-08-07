@@ -538,8 +538,15 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
       setLoading(true);
       setError(null);
 
-      // 1. Check local seed docs first for exact match (e.g., verified NECTA Math past papers)
-      const seedMatch = localSeedDocs.find(d => d.id === documentId);
+      // 1. Check local seed docs first for exact match or year-match (e.g., verified NECTA Math past papers)
+      let seedMatch = localSeedDocs.find(d => d.id === documentId);
+      if (!seedMatch && documentId && (documentId.includes('f4') || documentId.includes('basic-math'))) {
+        const yearMatch = documentId.match(/\d{4}/);
+        if (yearMatch) {
+          const yr = parseInt(yearMatch[0], 10);
+          seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA');
+        }
+      }
       if (seedMatch) {
         setDoc(seedMatch);
         setLoading(false);
