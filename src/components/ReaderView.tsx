@@ -540,7 +540,7 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
 
       // 1. Check local seed docs first for exact match or year-match (e.g., verified NECTA Math past papers)
       let seedMatch = localSeedDocs.find(d => d.id === documentId);
-      if (!seedMatch && documentId && (documentId.includes('f4') || documentId.includes('basic-math'))) {
+      if (!seedMatch && documentId && (documentId.includes('basic-math') || documentId.includes('hisabati') || documentId.includes('math'))) {
         const yearMatch = documentId.match(/\d{4}/);
         if (yearMatch) {
           const yr = parseInt(yearMatch[0], 10);

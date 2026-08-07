@@ -1,15 +1,13 @@
 import { DocumentMetadata } from '../types';
 
 export const NECTA_FORM4_MATH_PAPERS_DATA: { year: number; paperNo?: string; fileId: string }[] = [
-  { year: 2025, paperNo: 'Paper 1', fileId: '1-QYU34U6qed2_G8UrL2KSdq3tZKbAvdS' },
-  { year: 2025, paperNo: 'Paper 2', fileId: '1q2rmwfiOaqbayvLYOHRfy5Lb2Ewxd-fM' },
-  { year: 2024, paperNo: 'Paper 1', fileId: '1G54c4x1Da-dyIo5jau6XEVx1r4nmHPNd' },
-  { year: 2024, paperNo: 'Paper 2', fileId: '1WAKZNX-oZV8TWhMheNPi-BeKndX5MpNs' },
+  { year: 2025, fileId: '1-QYU34U6qed2_G8UrL2KSdq3tZKbAvdS' },
+  { year: 2024, fileId: '1G54c4x1Da-dyIo5jau6XEVx1r4nmHPNd' },
   { year: 2023, fileId: '1k_lPu2peSHL28SMBGiFmMvq8KrmcAGXp' },
   { year: 2022, fileId: '1puodyKKYXLbFgkXR1RmaCnp-VAgC6Ela' },
   { year: 2021, fileId: '16-VCvuv6H7miVJ5sXAAlzK0CqKBVCDxB' },
   { year: 2020, fileId: '1loIVcRhwkJq_eeT0_Li_sEg0HH3t2UxP' },
-  { year: 2019, paperNo: 'Paper 1', fileId: '1vKgXUse_bh38tsB03lqKa0uykaq13h-g' },
+  { year: 2019, paperNo: 'Paper 1', fileId: '1zl8p-36-yAxzwC9RmQC-aaFAkEbvupRB' },
   { year: 2019, paperNo: 'Paper 2', fileId: '1uLZv1YNtCzOXmeLeRa68YDWhGq1En5Uu' },
   { year: 2018, fileId: '115dTxaz0kZdeWae1zqB2ax6ZQWSw9adH' },
   { year: 2017, fileId: '1nXt2L9qPjtw9kCpu0XKw5_CcUqPqG2uo' },
@@ -34,8 +32,8 @@ export const NECTA_FORM4_MATH_PAPERS_DATA: { year: number; paperNo?: string; fil
   { year: 1998, fileId: '1T7YAbdunpzlObHSIHra8Jxwv11KAKLaN' },
   { year: 1997, fileId: '1lEMgUIblx-ldH0Cu2yKYvIHLQmwvP2G-' },
   { year: 1996, fileId: '19nAji5mqsoXQlY2eIxqpaX5g8ksWYNwL' },
-  { year: 1995, fileId: '19nAji5mqsoXQlY2eIxqpaX5g8ksWYNwL' },
-  { year: 1994, fileId: '1lEMgUIblx-ldH0Cu2yKYvIHLQmwvP2G-' },
+  { year: 1995, fileId: '1WAKZNX-oZV8TWhMheNPi-BeKndX5MpNs' },
+  { year: 1994, fileId: '1q2rmwfiOaqbayvLYOHRfy5Lb2Ewxd-fM' },
 ];
 
 const generatedDocs: DocumentMetadata[] = [];
