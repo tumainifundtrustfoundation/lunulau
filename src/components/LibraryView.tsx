@@ -85,17 +85,16 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
       setLibraryConfig(config);
 
       const docs = await fetchDocuments({ status: 'approved' });
-      const combinedDocs = [...docs];
-      localSeedDocs.forEach(seed => {
-        if (!combinedDocs.some(d => d.id === seed.id)) {
-          combinedDocs.push(seed);
-        }
-      });
-      setDocuments(combinedDocs);
+      const realDocs = docs.filter(d => 
+        !d.fileId?.startsWith('sample-drive-id') && 
+        !d.driveUrl?.includes('orimi.com') &&
+        !d.id?.startsWith('necta-phy-f4-2023')
+      );
+      setDocuments(realDocs);
 
       // Extract unique years and regions dynamically from existing records
-      const years = Array.from(new Set(combinedDocs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
-      const regions = Array.from(new Set(combinedDocs.map(d => String((d as any).region || d.accent || '')).filter(Boolean))).sort();
+      const years = Array.from(new Set(realDocs.map(d => String(d.year || '')).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+      const regions = Array.from(new Set(realDocs.map(d => String((d as any).region || d.accent || '')).filter(Boolean))).sort();
       
       setDynamicYears(years);
       setDynamicRegions(regions);
