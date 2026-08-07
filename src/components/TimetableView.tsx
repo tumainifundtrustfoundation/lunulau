@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, Variants } from 'motion/react';
 import {
   Calendar,
   Clock,
@@ -375,6 +376,43 @@ const NECTA_TIMETABLES: Record<string, LevelTimetable> = {
   }
 };
 
+const timetableContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05
+    }
+  }
+};
+
+const dayRowVariants: Variants = {
+  hidden: { opacity: 0, y: 24, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1],
+      staggerChildren: 0.06
+    }
+  }
+};
+
+const sessionRowVariants: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: 'easeOut'
+    }
+  }
+};
+
 export default function TimetableView({ userProfile, onNavigate, language = 'sw' }: TimetableViewProps) {
   const [selectedLevel, setSelectedLevel] = useState<'csee' | 'ftna' | 'acsee'>('csee');
   const [searchQuery, setSearchQuery] = useState('');
@@ -498,7 +536,7 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24">
+    <div className="TimetableView min-h-screen bg-slate-950 text-slate-100 font-sans pb-24">
       {/* ── TOP HEADER HERO BANNER ── */}
       <div className="relative bg-gradient-to-br from-slate-900 via-cyan-950/40 to-slate-950 border-b border-cyan-500/20 overflow-hidden">
         {/* Glow ambient background effects */}
@@ -746,10 +784,17 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <motion.div
+            key={`${selectedLevel}-${searchQuery}-${selectedSubjectFilter}-${showMyBookmarkedOnly}`}
+            variants={timetableContainerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
             {filteredSchedule.map((day) => (
-              <div
+              <motion.div
                 key={day.id}
+                variants={dayRowVariants}
                 className="bg-slate-900/90 border border-slate-800/80 rounded-3xl overflow-hidden shadow-lg transition-all hover:border-slate-700"
               >
                 {/* Day Header */}
@@ -795,8 +840,9 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
                         {day.morningSessions.map((session) => {
                           const isBookmarked = bookmarkedSessions.includes(session.code);
                           return (
-                            <div
+                            <motion.div
                               key={session.code}
+                              variants={sessionRowVariants}
                               className={`p-3.5 rounded-xl border transition-all ${
                                 isBookmarked
                                   ? 'bg-amber-500/10 border-amber-500/40'
@@ -845,7 +891,7 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
                                   {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
                                 </button>
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })}
                       </div>
@@ -871,8 +917,9 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
                         {day.afternoonSessions.map((session) => {
                           const isBookmarked = bookmarkedSessions.includes(session.code);
                           return (
-                            <div
+                            <motion.div
                               key={session.code}
+                              variants={sessionRowVariants}
                               className={`p-3.5 rounded-xl border transition-all ${
                                 isBookmarked
                                   ? 'bg-amber-500/10 border-amber-500/40'
@@ -921,7 +968,7 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
                                   {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
                                 </button>
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })}
                       </div>
@@ -929,9 +976,9 @@ export default function TimetableView({ userProfile, onNavigate, language = 'sw'
                   </div>
 
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
 
         {/* ── NECTA EXAMINATION RULES & INSTRUCTIONS BANNER ── */}
