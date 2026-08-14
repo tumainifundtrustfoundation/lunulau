@@ -402,7 +402,7 @@ export interface PaymentTransaction {
   planId: 'daily' | 'monthly' | 'term';
   planName: string;
   amount: number;
-  payMethod: 'mpesa' | 'tigopesa' | 'airtel';
+  payMethod: 'mpesa' | 'tigopesa' | 'airtel' | 'crdb' | string;
   transactionId: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: number;

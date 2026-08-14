@@ -31,7 +31,7 @@ export default function PremiumView({
 }: PremiumViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<'daily' | 'monthly' | 'term'>('monthly');
   const [paymentStep, setPaymentStep] = useState<'tiers' | 'instructions' | 'pending_approval' | 'success'>('tiers');
-  const [payMethod, setPayMethod] = useState<'mpesa' | 'tigopesa' | 'airtel'>('mpesa');
+  const [payMethod, setPayMethod] = useState<'mpesa' | 'tigopesa' | 'airtel' | 'crdb'>('airtel');
   
   // Verification states
   const [transactionId, setTransactionId] = useState('');
@@ -324,25 +324,25 @@ export default function PremiumView({
               <h3 className="font-display font-bold text-slate-950 text-base uppercase">Maelekezo ya Malipo ya Simu (Lipa kwa Simu)</h3>
             </div>
 
-            {/* Mobile operators tab select */}
-            <div className="flex gap-2 p-1 bg-slate-100 rounded-xl border border-slate-150 w-fit">
-              <button 
-                onClick={() => setPayMethod('mpesa')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${payMethod === 'mpesa' ? 'bg-amber-400 text-amber-950' : 'text-slate-500 hover:text-slate-800'}`}
-              >
-                M-Pesa (Vodacom)
-              </button>
-              <button 
-                onClick={() => setPayMethod('tigopesa')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${payMethod === 'tigopesa' ? 'bg-amber-400 text-amber-950' : 'text-slate-500 hover:text-slate-800'}`}
-              >
-                Tigo Pesa
-              </button>
+            {/* Mobile & Bank operators tab select */}
+            <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl border border-slate-150 w-fit">
               <button 
                 onClick={() => setPayMethod('airtel')}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${payMethod === 'airtel' ? 'bg-amber-400 text-amber-950' : 'text-slate-500 hover:text-slate-800'}`}
               >
-                Airtel Money
+                Airtel Money (0684458632)
+              </button>
+              <button 
+                onClick={() => setPayMethod('mpesa')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${payMethod === 'mpesa' ? 'bg-amber-400 text-amber-950' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                M-Pesa (0743548225)
+              </button>
+              <button 
+                onClick={() => setPayMethod('crdb')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${payMethod === 'crdb' ? 'bg-amber-400 text-amber-950' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                CRDB Bank (10368565089)
               </button>
             </div>
 
@@ -351,19 +351,21 @@ export default function PremiumView({
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
                 <p className="pt-0.5">
-                  Piga msimbo wa huduma ya kifedha: <span className="font-bold text-slate-950 bg-slate-100 px-1.5 py-0.5 rounded font-mono">{payMethod === 'mpesa' ? '*150*00#' : payMethod === 'tigopesa' ? '*150*01#' : '*150*60#'}</span>
+                  {payMethod === 'crdb' ? (
+                    <>Fungua App ya <span className="font-bold text-slate-950">CRDB SimBanking</span> au piga <span className="font-bold text-slate-950 bg-slate-100 px-1.5 py-0.5 rounded font-mono">*150*03#</span></>
+                  ) : (
+                    <>Piga msimbo wa huduma ya kifedha: <span className="font-bold text-slate-950 bg-slate-100 px-1.5 py-0.5 rounded font-mono">{payMethod === 'airtel' ? '*150*60#' : payMethod === 'mpesa' ? '*150*00#' : '*150*01#'}</span></>
+                  )}
                 </p>
               </div>
 
               <div className="flex gap-3">
                 <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
                 <p className="pt-0.5">
-                  {payMethod === 'mpesa' ? (
-                    <>Chagua huduma ya <span className="font-bold text-slate-950">Lipa kwa M-Pesa (VodaLipa)</span></>
-                  ) : payMethod === 'airtel' ? (
-                    <>Chagua huduma ya <span className="font-bold text-slate-950">Tuma Pesa</span> (Send Money)</>
+                  {payMethod === 'crdb' ? (
+                    <>Chagua <span className="font-bold text-slate-950">Tuma Pesa kwenda CRDB Bank</span> au Benki Nyingine</>
                   ) : (
-                    <>Chagua huduma ya <span className="font-bold text-slate-950">Lipa kwa Simu / Tuma Pesa</span></>
+                    <>Chagua huduma ya <span className="font-bold text-slate-950">Tuma Pesa / Lipa kwa Simu</span></>
                   )}
                 </p>
               </div>
@@ -372,40 +374,25 @@ export default function PremiumView({
                 <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
                 <div className="pt-0.5 space-y-2">
                   <p className="font-bold text-slate-950">Maelezo ya Akaunti ya Malipo:</p>
-                  {payMethod === 'mpesa' && (
-                    <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl space-y-1.5 text-xs">
-                      <p className="text-slate-800">Lipa Namba ya Vodacom (VodaLipa):</p>
-                      <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">50640388</p>
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Thibitisha Jina: <span className="font-extrabold text-slate-800">LAWRENT JOSEPH MDEGELA</span></p>
-                    </div>
-                  )}
                   {payMethod === 'airtel' && (
                     <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl space-y-1.5 text-xs">
                       <p className="text-slate-800">Namba ya Airtel Money:</p>
-                      <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">0684458632</p>
-                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Thibitisha Jina: <span className="font-extrabold text-slate-800">YOHANA MARCO BAHATI</span></p>
+                      <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">+255 684 458 632 / 0684458632</p>
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Thibitisha Jina: <span className="font-extrabold text-slate-800">YOHANA BAHATI</span></p>
                     </div>
                   )}
-                  {payMethod === 'tigopesa' && (
-                    <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl space-y-3 text-xs">
-                      <div className="space-y-1">
-                        <p className="text-slate-800 font-bold">Namba ya Tigo Pesa (Tuma Pesa):</p>
-                        <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">0652637810</p>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Thibitisha Jina: <span className="font-extrabold text-slate-850">SIGBERT EVARIST MINJA</span> au jina husika la muamala</p>
-                      </div>
-                      <div className="border-t border-amber-100/60 pt-2 text-[10px] text-slate-500 font-semibold">
-                        Njia mbadala kama huna Tigo Pesa ya moja kwa moja:
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-slate-800 font-bold">Chaguo la 2: Lipa kwenda VodaLipa Vodacom</p>
-                        <p className="font-extrabold text-slate-900 font-mono">Lipa Namba: 50640388</p>
-                        <p className="text-[10px] text-slate-400">Jina: LAWRENT JOSEPH MDEGELA</p>
-                      </div>
-                      <div className="space-y-1 border-t border-amber-100/60 pt-2">
-                        <p className="text-slate-800 font-bold">Chaguo la 3: Tuma Airtel Money</p>
-                        <p className="font-extrabold text-slate-900 font-mono">Namba: 0684458632</p>
-                        <p className="text-[10px] text-slate-400">Jina: YOHANA MARCO BAHATI</p>
-                      </div>
+                  {payMethod === 'mpesa' && (
+                    <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl space-y-1.5 text-xs">
+                      <p className="text-slate-800">Namba ya M-Pesa (Vodacom):</p>
+                      <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">+255 743 548 225 / 0743548225</p>
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Thibitisha Jina: <span className="font-extrabold text-slate-800">YOHANA BAHATI</span></p>
+                    </div>
+                  )}
+                  {payMethod === 'crdb' && (
+                    <div className="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl space-y-1.5 text-xs">
+                      <p className="text-slate-800 font-bold">Akaunti ya Benki ya CRDB (CRDB Bank):</p>
+                      <p className="font-extrabold text-amber-600 font-mono text-base tracking-wider bg-white px-2 py-1 rounded border border-amber-200/50 w-fit">10368565089</p>
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">Jina la Akaunti: <span className="font-extrabold text-slate-800">YOHANA BAHATI</span></p>
                     </div>
                   )}
                 </div>
@@ -490,13 +477,9 @@ export default function PremiumView({
                 Kama umepata changamoto yoyote wakati wa kufanya malipo au SMS haijafika, tafadhali tupigie au wasiliana nasi moja kwa moja kwa msaada wa haraka kupitia:
               </p>
               <div className="flex flex-col gap-2.5 pt-1">
-                <a href="tel:0652637810" className="flex items-center gap-2 text-xs font-bold text-white hover:text-amber-400 hover:underline">
+                <a href="tel:0684458632" className="flex items-center gap-2 text-xs font-bold text-white hover:text-amber-400 hover:underline">
                   <PhoneCall size={14} className="text-amber-400 animate-pulse" />
-                  Piga Simu (Sigbert): 0652637810
-                </a>
-                <a href="tel:0684458632" className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-amber-400 hover:underline">
-                  <PhoneCall size={14} className="text-amber-400/80" />
-                  Piga Simu (Yohana): 0684458632
+                  Piga Simu (Yohana Bahati): 0684458632 / 0743548225
                 </a>
                 <a href="tel:0699479032" className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-amber-400 hover:underline">
                   <PhoneCall size={14} className="text-amber-400/70" />

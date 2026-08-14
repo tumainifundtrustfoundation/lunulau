@@ -895,19 +895,19 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
               <h4 className="font-display font-extrabold text-xs uppercase text-slate-900 tracking-wider">Akaunti za Malipo (Payment Details)</h4>
               <div className="space-y-3.5 text-xs text-slate-700">
                 <div className="border-b border-slate-100 pb-3">
-                  <p className="font-bold text-amber-600">Vodacom VodaLipa:</p>
-                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">Lipa Namba: 50640388</p>
-                  <p className="text-[10px] text-slate-450 font-semibold mt-0.5 uppercase tracking-tight">Jina: LAWRENT JOSEPH MDEGELA</p>
+                  <p className="font-bold text-amber-600">Airtel Money:</p>
+                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">+255 684 458 632 / 0684458632</p>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-tight">Jina: YOHANA BAHATI</p>
                 </div>
                 <div className="border-b border-slate-100 pb-3">
-                  <p className="font-bold text-amber-600">Tigo Pesa (Tuma Pesa):</p>
-                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">Namba: 0652637810</p>
-                  <p className="text-[10px] text-slate-450 font-semibold mt-0.5 uppercase tracking-tight">Jina: SIGBERT EVARIST MINJA</p>
+                  <p className="font-bold text-amber-600">M-Pesa (Vodacom):</p>
+                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">+255 743 548 225 / 0743548225</p>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-tight">Jina: YOHANA BAHATI</p>
                 </div>
                 <div>
-                  <p className="font-bold text-amber-600">Airtel Money:</p>
-                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">Namba: 0684458632</p>
-                  <p className="text-[10px] text-slate-450 font-semibold mt-0.5 uppercase tracking-tight">Jina: YOHANA MARCO BAHATI</p>
+                  <p className="font-bold text-amber-600">Benki ya CRDB (CRDB Bank):</p>
+                  <p className="font-mono font-extrabold text-sm text-slate-950 mt-0.5">Akaunti: 10368565089</p>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5 uppercase tracking-tight">Jina la Akaunti: YOHANA BAHATI</p>
                 </div>
               </div>
             </div>
