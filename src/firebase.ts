@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { nectaMathDocs, nectaPhysicsDocs } from './data/seedDocs';
+import { nectaMathDocs, nectaPhysicsDocs, nectaKiswahiliDocs, form2Series2026Docs } from './data/seedDocs';
 import {
   getAuth,
   signInWithPopup,
@@ -448,6 +448,83 @@ export const saveDocumentMetadata = async (
 };
 
 /**
+ * Save or update a document with a specific custom document ID (e.g. necta-kisw-2024)
+ */
+export const saveOrUpdateDocumentWithId = async (
+  docId: string,
+  docData: Partial<DocumentMetadata>
+): Promise<string> => {
+  try {
+    const docRef = doc(db, 'documents', docId);
+    const existingSnap = await getDoc(docRef);
+    const now = Date.now();
+    
+    if (existingSnap.exists()) {
+      const merged: DocumentMetadata = {
+        ...(existingSnap.data() as DocumentMetadata),
+        ...docData,
+        id: docId,
+      };
+      await setDoc(docRef, merged, { merge: true });
+      return docId;
+    } else {
+      const fullDoc: DocumentMetadata = {
+        id: docId,
+        title: docData.title || 'Mtihani wa NECTA',
+        description: docData.description || '',
+        category: docData.category || 'Kiswahili',
+        subject: docData.subject || docData.category || 'Kiswahili',
+        tags: docData.tags || ['NECTA', 'Past Papers'],
+        fileId: docData.fileId || docId,
+        driveUrl: docData.driveUrl || '',
+        uploadedBy: docData.uploadedBy || 'system',
+        uploadedByName: docData.uploadedByName || 'NECTA Archive',
+        createdAt: docData.createdAt || now,
+        views: docData.views || 0,
+        status: docData.status || 'approved',
+        downloadsCount: docData.downloadsCount || 0,
+        rating: docData.rating || 5,
+        type: docData.type || 'NECTA',
+        year: docData.year,
+        classLevel: docData.classLevel || 'Form 4',
+        markingSchemeDocId: docData.markingSchemeDocId,
+        markingSchemeDriveUrl: docData.markingSchemeDriveUrl,
+        isMarkingScheme: docData.isMarkingScheme || false,
+        seriesName: docData.seriesName,
+        isForSale: docData.isForSale || false,
+        price: docData.price || 0,
+        documentType: docData.documentType || 'Past Papers',
+      };
+      await setDoc(docRef, fullDoc);
+      return docId;
+    }
+  } catch (err: any) {
+    console.warn(`saveOrUpdateDocumentWithId error for ${docId}:`, err.message || err);
+    throw err;
+  }
+};
+
+/**
+ * Bulk sync a list of documents into Firestore
+ */
+export const syncExamDocsToFirestore = async (
+  examDocs: DocumentMetadata[]
+): Promise<{ success: number; failed: number }> => {
+  let success = 0;
+  let failed = 0;
+  for (const item of examDocs) {
+    try {
+      await saveOrUpdateDocumentWithId(item.id, item);
+      success++;
+    } catch (e) {
+      console.warn(`Failed to sync doc ${item.id}:`, e);
+      failed++;
+    }
+  }
+  return { success, failed };
+};
+
+/**
  * Get a specific document by its Firestore ID
  */
 export const fetchDocumentById = async (id: string): Promise<DocumentMetadata | null> => {
@@ -560,7 +637,9 @@ export const fetchDocuments = async (filters?: {
           type: "books"
         },
         ...nectaMathDocs,
-        ...nectaPhysicsDocs
+        ...nectaPhysicsDocs,
+        ...nectaKiswahiliDocs,
+        ...form2Series2026Docs
       ];
 
       for (const docData of INITIAL_DOCS) {
@@ -599,6 +678,70 @@ export const fetchDocuments = async (filters?: {
     }
     return [];
   }
+};
+
+/**
+ * Save or update a specific document using its explicit ID in Firestore
+ */
+export const saveOrUpdateDocumentWithId = async (docData: DocumentMetadata): Promise<void> => {
+  const path = 'documents';
+  try {
+    const docRef = doc(db, path, docData.id);
+    const cleanPayload: any = {
+      id: docData.id,
+      title: docData.title,
+      description: docData.description || '',
+      category: docData.category || 'NECTA',
+      tags: docData.tags || [],
+      fileId: docData.fileId,
+      driveUrl: docData.driveUrl,
+      uploadedBy: docData.uploadedBy || 'system',
+      uploadedByName: docData.uploadedByName || 'Baraza la Mitihani la Tanzania (NECTA)',
+      createdAt: docData.createdAt || Date.now(),
+      views: docData.views || 0,
+      status: docData.status || 'approved',
+      downloadsCount: docData.downloadsCount || 0,
+      rating: docData.rating || 5,
+      type: docData.type || 'NECTA',
+      year: docData.year || 2024,
+      paperNo: docData.paperNo || 'Paper 1',
+    };
+
+    if (docData.subject) cleanPayload.subject = docData.subject;
+    if (docData.isMarkingScheme !== undefined) cleanPayload.isMarkingScheme = docData.isMarkingScheme;
+    if (docData.markingSchemeFileId) cleanPayload.markingSchemeFileId = docData.markingSchemeFileId;
+    if (docData.markingSchemeDriveUrl) cleanPayload.markingSchemeDriveUrl = docData.markingSchemeDriveUrl;
+    if (docData.markingSchemeDocId) cleanPayload.markingSchemeDocId = docData.markingSchemeDocId;
+    if (docData.educationLevel) cleanPayload.educationLevel = docData.educationLevel;
+    if (docData.classLevel) cleanPayload.classLevel = docData.classLevel;
+    if (docData.documentType) cleanPayload.documentType = docData.documentType;
+    if (docData.isForSale !== undefined) cleanPayload.isForSale = docData.isForSale;
+    if (docData.price !== undefined) cleanPayload.price = docData.price;
+    if (docData.sizeKB !== undefined) cleanPayload.sizeKB = docData.sizeKB;
+
+    await setDoc(docRef, cleanPayload, { merge: true });
+  } catch (err: any) {
+    handleFirestoreError(err, OperationType.WRITE, `${path}/${docData.id}`);
+    throw err;
+  }
+};
+
+/**
+ * Batch synchronize a list of Exam documents to Firestore
+ */
+export const syncExamDocsToFirestore = async (docsToSync: DocumentMetadata[]): Promise<{ saved: number; errors: number }> => {
+  let saved = 0;
+  let errors = 0;
+  for (const item of docsToSync) {
+    try {
+      await saveOrUpdateDocumentWithId(item);
+      saved++;
+    } catch (e) {
+      console.error(`Failed to sync doc ${item.id} to Firestore:`, e);
+      errors++;
+    }
+  }
+  return { saved, errors };
 };
 
 /**

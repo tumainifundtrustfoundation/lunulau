@@ -146,6 +146,11 @@ export interface DocumentMetadata {
   copyrightAccepted?: boolean;
   reportCount?: number;
   classLevel?: string;
+  markingSchemeDriveUrl?: string;
+  markingSchemeFileId?: string;
+  markingSchemeDocId?: string;
+  isMarkingScheme?: boolean;
+  seriesName?: string;
 }
 
 export interface Comment {

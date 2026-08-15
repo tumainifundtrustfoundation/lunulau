@@ -33,7 +33,8 @@ import {
   List,
   ListOrdered,
   Heading2,
-  Quote
+  Quote,
+  CheckCircle2
 } from 'lucide-react';
 import { fetchDocuments, saveHighlight, fetchHighlights, deleteHighlight, toggleBookmark, fetchUserBookmarks, submitFeedback, updateDocument, saveReadingProgress, fetchReadingProgress, saveUserPrivateNote } from '../firebase';
 import { DocumentMetadata, HighlightAnnotation, UserBookmark, UserReadingProgress } from '../types';
@@ -548,6 +549,9 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
             seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA' && (d.subject === 'Basic Mathematics' || d.category === 'Mathematics'));
           } else if (documentId.includes('physics') || documentId.includes('fizikia') || documentId.includes('phy')) {
             seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA' && (d.subject === 'Physics' || d.category === 'Physics'));
+          } else if (documentId.includes('kiswahili') || documentId.includes('kisw')) {
+            const isMs = documentId.endsWith('-ms') || documentId.includes('solution') || documentId.includes('marking');
+            seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA' && (d.subject === 'Kiswahili' || d.category === 'Kiswahili') && (isMs ? d.isMarkingScheme : !d.isMarkingScheme));
           }
         }
       }
@@ -1295,28 +1299,55 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
         </div>
       </div>
 
-      {/* Tab Switcher for Reader Mode */}
-      <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
-        <button
-          onClick={() => handleToggleReaderMode('pdf')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            readerMode === 'pdf' 
-              ? 'bg-slate-900 text-white shadow-sm' 
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <FileText size={14} /> Karatasi ya PDF (Original)
-        </button>
-        <button
-          onClick={() => handleToggleReaderMode('notes')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            readerMode === 'notes' 
-              ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm' 
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Sparkles size={14} className={readerMode === 'notes' ? 'animate-pulse text-amber-300' : 'text-cyan-500'} /> Notisi Mahiri (Smart Notes)
-        </button>
+      {/* Tab Switcher for Reader Mode & Solutions Action */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
+          <button
+            onClick={() => handleToggleReaderMode('pdf')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              readerMode === 'pdf' 
+                ? 'bg-slate-900 text-white shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <FileText size={14} /> Karatasi ya PDF (Original)
+          </button>
+          <button
+            onClick={() => handleToggleReaderMode('notes')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+              readerMode === 'notes' 
+                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles size={14} className={readerMode === 'notes' ? 'animate-pulse text-amber-300' : 'text-cyan-500'} /> Notisi Mahiri (Smart Notes)
+          </button>
+        </div>
+
+        {/* Quick Link to Marking Scheme or Parent Exam Paper */}
+        {doc.markingSchemeDocId && (
+          <button
+            type="button"
+            onClick={() => onNavigate('reader', doc.markingSchemeDocId!)}
+            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer"
+          >
+            <CheckCircle2 size={14} />
+            <span>Fungua Majibu (Marking Scheme)</span>
+          </button>
+        )}
+        {doc.isMarkingScheme && (
+          <button
+            type="button"
+            onClick={() => {
+              const parentId = doc.id.replace(/-ms$/, '');
+              onNavigate('reader', parentId);
+            }}
+            className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer"
+          >
+            <FileText size={14} />
+            <span>Rudi Kwenye Mtihani (Paper)</span>
+          </button>
+        )}
       </div>
 
       {/* Main Column Grid Layout */}

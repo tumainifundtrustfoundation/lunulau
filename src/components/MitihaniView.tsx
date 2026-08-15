@@ -33,7 +33,15 @@ import {
   Award,
   DownloadCloud,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  Database,
+  UploadCloud,
+  Check,
+  Layers,
+  LayoutGrid,
+  FileCheck,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 import { 
   fetchDocuments, 
@@ -46,10 +54,12 @@ import {
   updateDocument,
   deleteDocumentMetadata,
   fetchNectaProgress,
-  saveNectaProgress
+  saveNectaProgress,
+  saveOrUpdateDocumentWithId,
+  syncExamDocsToFirestore
 } from '../firebase';
 import { DocumentMetadata, ExamResult, UserBookmark, NectaProgress, NectaProgressStatus } from '../types';
-import { localSeedDocs } from '../data/seedDocs';
+import { localSeedDocs, nectaKiswahiliDocs, nectaMathDocs, nectaPhysicsDocs, form2Series2026Docs } from '../data/seedDocs';
 import { GoogleAdSenseUnit } from './MatangazoView';
 import ExamTimer from './ExamTimer';
 import MatokeoValidationModal from './MatokeoValidationModal';
@@ -62,6 +72,327 @@ interface MitihaniViewProps {
   userProfile: any;
 }
 
+export function getDocSubject(doc: DocumentMetadata): string {
+  const rawSub = `${doc.subject || ''} ${doc.category || ''} ${doc.title || ''} ${(doc.tags || []).join(' ')}`.toLowerCase();
+  if (rawSub.includes('physics') || rawSub.includes('fizikia')) return 'Physics (Fizikia)';
+  if (rawSub.includes('basic math') || rawSub.includes('math') || rawSub.includes('hisabati')) return 'Mathematics (Hisabati)';
+  if (rawSub.includes('chem') || rawSub.includes('kemia')) return 'Chemistry (Kemia)';
+  if (rawSub.includes('bio') || rawSub.includes('biolojia')) return 'Biology (Biolojia)';
+  if (rawSub.includes('hist') || rawSub.includes('historia')) return 'History (Historia)';
+  if (rawSub.includes('geo') || rawSub.includes('jiografia')) return 'Geography (Jiografia)';
+  if (rawSub.includes('civ') || rawSub.includes('uraia')) return 'Civics (Uraia)';
+  if (rawSub.includes('business') || rawSub.includes('biashara')) return 'Business Studies';
+  if (rawSub.includes('htm') || rawSub.includes('hospitality') || rawSub.includes('tourism') || rawSub.includes('heritage')) return 'HTM (Tourism/Heritage)';
+  if (rawSub.includes('eng') || rawSub.includes('kiingereza')) return 'English Language';
+  if (rawSub.includes('kisw')) return 'Kiswahili';
+  if (rawSub.includes('comm')) return 'Commerce (Biashara)';
+  if (rawSub.includes('book') || rawSub.includes('uhasibu')) return 'Book-keeping';
+
+  if (doc.subject) return doc.subject;
+  return doc.category || 'Masomo Mengine';
+}
+
+export function getSubjectTheme(subjectName: string) {
+  const sub = subjectName.toLowerCase();
+  
+  if (sub.includes('math') || sub.includes('hisabati')) {
+    return {
+      gradient: 'from-blue-600 to-indigo-800',
+      accentColor: 'text-blue-200',
+      icon: Compass,
+      pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:12px_12px]'
+    };
+  }
+  if (sub.includes('physics') || sub.includes('fizikia')) {
+    return {
+      gradient: 'from-violet-700 to-indigo-950',
+      accentColor: 'text-indigo-200',
+      icon: Atom,
+      pattern: 'bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] [background-size:10px_10px]'
+    };
+  }
+  if (sub.includes('chemistry') || sub.includes('kemia')) {
+    return {
+      gradient: 'from-teal-600 to-emerald-950',
+      accentColor: 'text-teal-200',
+      icon: Sparkles,
+      pattern: 'bg-[radial-gradient(#ffffff0c_1.5px,transparent_1.5px)] [background-size:16px_16px]'
+    };
+  }
+  if (sub.includes('biology') || sub.includes('biolojia')) {
+    return {
+      gradient: 'from-emerald-600 to-teal-900',
+      accentColor: 'text-emerald-100',
+      icon: GraduationCap,
+      pattern: 'bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:8px_8px]'
+    };
+  }
+  if (sub.includes('business')) {
+    return {
+      gradient: 'from-emerald-700 to-cyan-950',
+      accentColor: 'text-emerald-200',
+      icon: FileText,
+      pattern: 'bg-[linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] [background-size:10px_8px]'
+    };
+  }
+  if (sub.includes('htm') || sub.includes('tourism') || sub.includes('heritage')) {
+    return {
+      gradient: 'from-amber-600 to-teal-950',
+      accentColor: 'text-amber-200',
+      icon: Globe,
+      pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:10px_10px]'
+    };
+  }
+  if (sub.includes('history') || sub.includes('historia')) {
+    return {
+      gradient: 'from-amber-800 to-red-950',
+      accentColor: 'text-amber-200',
+      icon: FileText,
+      pattern: 'bg-[repeating-linear-gradient(45deg,#ffffff03_0px,#ffffff03_2px,transparent_2px,transparent_10px)]'
+    };
+  }
+  if (sub.includes('geography') || sub.includes('jiografia')) {
+    return {
+      gradient: 'from-sky-600 to-blue-900',
+      accentColor: 'text-sky-200',
+      icon: Globe,
+      pattern: 'bg-[radial-gradient(#ffffff0d_1.5px,transparent_1.5px)] [background-size:14px_14px]'
+    };
+  }
+  if (sub.includes('civics') || sub.includes('uraia')) {
+    return {
+      gradient: 'from-red-600 to-rose-950',
+      accentColor: 'text-red-200',
+      icon: Scale,
+      pattern: 'bg-[linear-gradient(45deg,#ffffff04_25%,transparent_25%,transparent_75%,#ffffff04_75%,#ffffff04),linear-gradient(45deg,#ffffff04_25%,transparent_25%,transparent_75%,#ffffff04_75%,#ffffff04)] [background-size:16px_16px] [background-position:0_0,8px_8px]'
+    };
+  }
+  if (sub.includes('english') || sub.includes('kiingereza')) {
+    return {
+      gradient: 'from-fuchsia-700 to-rose-950',
+      accentColor: 'text-fuchsia-200',
+      icon: BookOpen,
+      pattern: 'bg-[repeating-linear-gradient(to_right,#ffffff03_0px,#ffffff03_1px,transparent_1px,transparent_12px)]'
+    };
+  }
+  if (sub.includes('kiswahili')) {
+    return {
+      gradient: 'from-orange-600 to-amber-950',
+      accentColor: 'text-orange-200',
+      icon: BookOpen,
+      pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:10px_10px]'
+    };
+  }
+  if (sub.includes('commerce') || sub.includes('biashara') || sub.includes('bookkeeping') || sub.includes('uhasibu')) {
+    return {
+      gradient: 'from-cyan-600 to-indigo-950',
+      accentColor: 'text-cyan-200',
+      icon: FileText,
+      pattern: 'bg-[linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] [background-size:10px_8px]'
+    };
+  }
+  
+  // Default fallback
+  return {
+    gradient: 'from-slate-600 to-slate-900',
+    accentColor: 'text-slate-300',
+    icon: BookOpen,
+    pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:12px_12px]'
+  };
+}
+
+export interface ParsedDriveExam {
+  rawUrl: string;
+  driveId: string;
+  year: number;
+  subject: string;
+  category: string;
+  level: string; // 'Form 4', 'Form 2', 'Form 6', 'Standard 7', etc.
+  classLevel: string;
+  type: string; // 'NECTA', 'Mock', 'Series', 'Terminal'
+  paperNo: string; // 'Paper 1', 'Paper 2'
+  isMarkingScheme: boolean;
+  title: string;
+  description: string;
+  tags: string[];
+  docId: string;
+  markingSchemeDocId?: string;
+  markingSchemeDriveUrl?: string;
+}
+
+export function parseGoogleDriveExamText(inputText: string, defaultSubject = 'Kiswahili', defaultLevel = 'Form 4'): ParsedDriveExam[] {
+  if (!inputText) return [];
+  
+  const lines = inputText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const driveItems: { url: string; driveId: string; contextText: string }[] = [];
+
+  const urlRegex = /https?:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)[^\s]*/gi;
+  const rawMatches = inputText.match(urlRegex) || [];
+
+  if (rawMatches.length > 0) {
+    rawMatches.forEach(url => {
+      const idMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (idMatch && idMatch[1]) {
+        const lineWithUrl = lines.find(l => l.includes(url)) || url;
+        driveItems.push({
+          url: url,
+          driveId: idMatch[1],
+          contextText: lineWithUrl
+        });
+      }
+    });
+  } else {
+    lines.forEach(line => {
+      const idMatch = line.match(/\/d\/([a-zA-Z0-9_-]+)/) || line.match(/id=([a-zA-Z0-9_-]+)/);
+      const driveId = idMatch ? idMatch[1] : (/^[a-zA-Z0-9_-]{20,100}$/.test(line) ? line : null);
+      if (driveId) {
+        driveItems.push({
+          url: `https://drive.google.com/file/d/${driveId}/view`,
+          driveId,
+          contextText: line
+        });
+      }
+    });
+  }
+
+  const results: ParsedDriveExam[] = [];
+
+  driveItems.forEach((item) => {
+    const text = item.contextText.toLowerCase();
+    
+    // 1. Detect Year (e.g. 1993 to 2026)
+    const yearMatch = text.match(/\b(19\d{2}|20\d{2})\b/);
+    let year = yearMatch ? parseInt(yearMatch[1], 10) : 2024;
+
+    // 2. Detect Is Marking Scheme / Mwongozo wa Majibu / Answers
+    const isMS = text.includes('marking') || text.includes('scheme') || text.includes('ms') || 
+                 text.includes('majibu') || text.includes('mwongozo') || text.includes('answers') ||
+                 text.includes('solutions');
+
+    // 3. Detect Subject / Somo / Mada
+    let subject = defaultSubject;
+    if (text.includes('kiswahili') || text.includes('kisw')) subject = 'Kiswahili';
+    else if (text.includes('physics') || text.includes('fizikia')) subject = 'Physics';
+    else if (text.includes('basic math') || text.includes('mathematics') || text.includes('hisabati') || text.includes('math')) subject = 'Basic Mathematics';
+    else if (text.includes('chemistry') || text.includes('kemia')) subject = 'Chemistry';
+    else if (text.includes('biology') || text.includes('biolojia')) subject = 'Biology';
+    else if (text.includes('geography') || text.includes('jiografia')) subject = 'Geography';
+    else if (text.includes('history') || text.includes('historia')) subject = 'History';
+    else if (text.includes('civics') || text.includes('uraia')) subject = 'Civics';
+    else if (text.includes('english') || text.includes('kiingereza')) subject = 'English Language';
+    else if (text.includes('commerce')) subject = 'Commerce';
+    else if (text.includes('bookkeeping') || text.includes('book-keeping') || text.includes('uhasibu')) subject = 'Book-keeping';
+    else if (text.includes('htm') || text.includes('tourism')) subject = 'HTM';
+
+    // 4. Detect Level
+    let level = defaultLevel;
+    let educationLevel = 'O-Level';
+    let levelTag = 'f4';
+    if (text.includes('form 2') || text.includes('f2') || text.includes('ftna') || text.includes('ftsee') || text.includes('kidato cha 2')) {
+      level = 'Form 2';
+      educationLevel = 'O-Level';
+      levelTag = 'f2';
+    } else if (text.includes('form 6') || text.includes('f6') || text.includes('acsee') || text.includes('kidato cha 6')) {
+      level = 'Form 6';
+      educationLevel = 'A-Level';
+      levelTag = 'f6';
+    } else if (text.includes('form 1') || text.includes('f1')) {
+      level = 'Form 1';
+      educationLevel = 'O-Level';
+      levelTag = 'f1';
+    } else if (text.includes('form 3') || text.includes('f3')) {
+      level = 'Form 3';
+      educationLevel = 'O-Level';
+      levelTag = 'f3';
+    } else if (text.includes('std 7') || text.includes('standard 7') || text.includes('psle') || text.includes('darasa la 7')) {
+      level = 'Standard 7';
+      educationLevel = 'Primary';
+      levelTag = 'std7';
+    } else if (text.includes('std 4') || text.includes('standard 4') || text.includes('sfna') || text.includes('darasa la 4')) {
+      level = 'Standard 4';
+      educationLevel = 'Primary';
+      levelTag = 'std4';
+    }
+
+    // 5. Detect Paper Type
+    let examType = 'NECTA';
+    if (text.includes('mock')) examType = 'Mock';
+    else if (text.includes('series')) examType = 'Series';
+    else if (text.includes('terminal')) examType = 'Terminal';
+    else if (text.includes('midterm') || text.includes('mid-term')) examType = 'Mid-Term';
+
+    // 6. Detect Paper Number
+    let paperNo = 'Paper 1';
+    if (text.includes('paper 2') || text.includes('paper-2') || text.includes('p2') || text.includes('karatasi ya 2')) paperNo = 'Paper 2';
+    if (text.includes('paper 3') || text.includes('paper-3') || text.includes('p3') || text.includes('karatasi ya 3')) paperNo = 'Paper 3';
+
+    // Standard title and description
+    const subjectClean = subject.replace(/\s*\(.*\)/, '');
+    const title = isMS
+      ? `NECTA ${subjectClean} ${year} (${level}) - Mwongozo wa Majibu (Marking Scheme)`
+      : `NECTA ${subjectClean} ${year} (${level}) - Mtihani wa Taifa`;
+
+    const description = isMS
+      ? `Mwongozo rasmi wa majibu na masahihisho wa Mtihani wa Taifa wa NECTA wa somo la ${subject} (${level}) kwa mwaka ${year}.`
+      : `Mtihani halisi wa Taifa wa NECTA wa somo la ${subject} (${level}) kwa mwaka ${year}. Una muundo kamili na maswali yote.`;
+
+    const subSlug = subject.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const docId = isMS
+      ? `necta-${levelTag}-${subSlug}-${year}-ms`
+      : `necta-${levelTag}-${subSlug}-${year}`;
+
+    const tags = [
+      'NECTA',
+      level,
+      levelTag,
+      educationLevel,
+      subject,
+      String(year),
+      examType,
+      paperNo,
+      isMS ? 'Marking Scheme' : 'Question Paper',
+      isMS ? 'Majibu' : 'Mtihani'
+    ];
+
+    results.push({
+      rawUrl: item.url,
+      driveId: item.driveId,
+      year,
+      subject,
+      category: 'NECTA',
+      level,
+      classLevel: level,
+      type: isMS ? 'Marking Scheme' : examType,
+      paperNo,
+      isMarkingScheme: isMS,
+      title,
+      description,
+      tags,
+      docId
+    });
+  });
+
+  // Cross-link Question Papers with Marking Schemes
+  const msMap = new Map<string, ParsedDriveExam>();
+  results.filter(r => r.isMarkingScheme).forEach(r => {
+    const key = `${r.subject.toLowerCase()}_${r.year}_${r.level.toLowerCase()}`;
+    msMap.set(key, r);
+  });
+
+  results.forEach(r => {
+    if (!r.isMarkingScheme) {
+      const key = `${r.subject.toLowerCase()}_${r.year}_${r.level.toLowerCase()}`;
+      const matchingMS = msMap.get(key);
+      if (matchingMS) {
+        r.markingSchemeDocId = matchingMS.docId;
+        r.markingSchemeDriveUrl = `https://drive.google.com/file/d/${matchingMS.driveId}/preview`;
+      }
+    }
+  });
+
+  return results;
+}
+
 export default function MitihaniView({
   onNavigate,
   searchQuery,
@@ -72,6 +403,9 @@ export default function MitihaniView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Display Mode: 'matrix' (Organized by Subject & Year) vs 'catalog' (Card Grid)
+  const [activeDisplayMode, setActiveDisplayMode] = useState<'matrix' | 'catalog'>('matrix');
+
   // Advanced Filtering States
   const [selectedType, setSelectedType] = useState<string>(''); // 'NECTA', 'Mock', 'Terminal', 'Majaribio'
   const [selectedLevel, setSelectedLevel] = useState<string>(''); // 'Primary', 'O-Level', 'A-Level'
@@ -80,6 +414,17 @@ export default function MitihaniView({
   const [sortBy, setSortBy] = useState<string>('subjectYear'); // 'subjectYear', 'newest', 'views', 'alphabetical'
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [showTimer, setShowTimer] = useState(false);
+
+  // Google Drive Metadata Importer & Firestore Sync States
+  const [isDriveImporterOpen, setIsDriveImporterOpen] = useState(false);
+  const [driveRawInput, setDriveRawInput] = useState('');
+  const [importerDefaultSubject, setImporterDefaultSubject] = useState('Kiswahili');
+  const [importerDefaultLevel, setImporterDefaultLevel] = useState('Form 4');
+  const [parsedExams, setParsedExams] = useState<ParsedDriveExam[]>([]);
+  const [isSavingToFirestore, setIsSavingToFirestore] = useState(false);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
+  const [isSyncingAllSeedToFirestore, setIsSyncingAllSeedToFirestore] = useState(false);
+  const [syncAllStatusMsg, setSyncAllStatusMsg] = useState<string | null>(null);
 
   // Exam Preparation Progress Visualizer State
   const [progressList, setProgressList] = useState<NectaProgress[]>([]);
@@ -238,6 +583,104 @@ export default function MitihaniView({
   const handleDocClick = (doc: DocumentMetadata) => {
     setQuickViewDoc(doc);
     setQuickViewTab('summary');
+  };
+
+  // Synchronize all verified seed papers (Kiswahili 1993-2025, Math, Physics, Form 2) to Firestore
+  const handleSyncAllToFirestore = async () => {
+    try {
+      setIsSyncingAllSeedToFirestore(true);
+      setSyncAllStatusMsg('Inahifadhi mitihani yote (Kiswahili, Hisabati, Fizikia & Form 2) kwenye Firestore...');
+
+      const allVerifiedDocs: DocumentMetadata[] = [
+        ...nectaKiswahiliDocs,
+        ...nectaMathDocs,
+        ...nectaPhysicsDocs,
+        ...form2Series2026Docs
+      ];
+
+      const res = await syncExamDocsToFirestore(allVerifiedDocs);
+      setSyncAllStatusMsg(`Imekamilika! Mitihani ${res.saved} imehifadhiwa kikamilifu kwenye Firestore database.`);
+      await loadDocs();
+      setTimeout(() => setSyncAllStatusMsg(null), 5000);
+    } catch (err: any) {
+      console.error('Sync failed:', err);
+      setSyncAllStatusMsg('Hitilafu wakati wa kuhifadhi kwenye Firestore: ' + (err.message || err));
+    } finally {
+      setIsSyncingAllSeedToFirestore(false);
+    }
+  };
+
+  // Live trigger parser on user text change in Drive Importer
+  const handleDriveInputChange = (val: string) => {
+    setDriveRawInput(val);
+    if (val.trim().length > 5) {
+      const parsed = parseGoogleDriveExamText(val, importerDefaultSubject, importerDefaultLevel);
+      setParsedExams(parsed);
+    } else {
+      setParsedExams([]);
+    }
+  };
+
+  const handleReParse = (subject = importerDefaultSubject, level = importerDefaultLevel) => {
+    if (driveRawInput.trim().length > 5) {
+      const parsed = parseGoogleDriveExamText(driveRawInput, subject, level);
+      setParsedExams(parsed);
+    }
+  };
+
+  // Save all parsed Drive links/metadata to Firestore
+  const handleSaveParsedToFirestore = async () => {
+    if (parsedExams.length === 0) {
+      alert('Hakuna viungo vilivyotambuliwa. Tafadhali bandika Google Drive link halali.');
+      return;
+    }
+
+    try {
+      setIsSavingToFirestore(true);
+      setSaveSuccessMessage('Inahifadhi mitihani iliyochambuliwa kwenye Firestore...');
+
+      const docsToSave: DocumentMetadata[] = parsedExams.map(pe => ({
+        id: pe.docId,
+        title: pe.title,
+        description: pe.description,
+        category: pe.category,
+        tags: pe.tags,
+        fileId: pe.driveId,
+        driveUrl: pe.rawUrl,
+        uploadedBy: userProfile?.uid || 'system',
+        uploadedByName: userProfile?.name || 'Baraza la Mitihani la Tanzania (NECTA)',
+        createdAt: Date.now(),
+        views: 0,
+        status: 'approved',
+        downloadsCount: 0,
+        rating: 5,
+        type: pe.type,
+        year: pe.year,
+        paperNo: pe.paperNo,
+        subject: pe.subject,
+        classLevel: pe.level,
+        educationLevel: pe.level.includes('Form 6') ? 'A-Level' : pe.level.includes('Standard') ? 'Primary' : 'O-Level',
+        isMarkingScheme: pe.isMarkingScheme,
+        markingSchemeDocId: pe.markingSchemeDocId,
+        markingSchemeDriveUrl: pe.markingSchemeDriveUrl,
+        documentType: pe.type
+      }));
+
+      const res = await syncExamDocsToFirestore(docsToSave);
+      setSaveSuccessMessage(`Hongera! Mitihani ${res.saved} imechambuliwa na kuhifadhiwa kikamilifu kwenye Firestore!`);
+      await loadDocs();
+      setTimeout(() => {
+        setSaveSuccessMessage(null);
+        setIsDriveImporterOpen(false);
+        setDriveRawInput('');
+        setParsedExams([]);
+      }, 2200);
+    } catch (err: any) {
+      console.error('Failed to save parsed exams to Firestore:', err);
+      setSaveSuccessMessage('Hitilafu: ' + (err.message || err));
+    } finally {
+      setIsSavingToFirestore(false);
+    }
   };
 
   const extractGoogleDriveId = (url: string): string | null => {
@@ -801,10 +1244,24 @@ export default function MitihaniView({
       (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())));
 
     // Advanced specific filters
-    const docType = doc.type || ((doc.tags && doc.tags.some(t => t.toLowerCase() === 'necta')) ? 'NECTA' : 'Mtihani');
-    const matchesType = !selectedType || docType.toLowerCase() === selectedType.toLowerCase();
+    const isMS = doc.isMarkingScheme || (doc.tags && doc.tags.some(t => t.toLowerCase().includes('marking scheme') || t.toLowerCase() === 'majibu'));
+    const isSeries = (doc.type && doc.type.toLowerCase() === 'series') || (doc.tags && doc.tags.some(t => t.toLowerCase() === 'series' || t.toLowerCase().includes('isese')));
+    
+    let matchesType = true;
+    if (selectedType) {
+      if (selectedType.toLowerCase() === 'series') {
+        matchesType = isSeries;
+      } else if (selectedType.toLowerCase() === 'marking scheme') {
+        matchesType = isMS;
+      } else {
+        const docType = doc.type || ((doc.tags && doc.tags.some(t => t.toLowerCase() === 'necta')) ? 'NECTA' : 'Mtihani');
+        matchesType = docType.toLowerCase() === selectedType.toLowerCase();
+      }
+    }
 
+    const subjectName = getDocSubject(doc).toLowerCase();
     const matchesSubject = !selectedSubject || 
+      subjectName.includes(selectedSubject.toLowerCase()) ||
       (doc.tags && doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase() || t.toLowerCase().includes(selectedSubject.toLowerCase()))) ||
       (doc.subject && (doc.subject.toLowerCase() === selectedSubject.toLowerCase() || doc.subject.toLowerCase().includes(selectedSubject.toLowerCase()))) ||
       (doc.category && (doc.category.toLowerCase() === selectedSubject.toLowerCase() || doc.category.toLowerCase().includes(selectedSubject.toLowerCase())));
@@ -846,117 +1303,6 @@ export default function MitihaniView({
 
     return matchesSearch && matchesType && matchesSubject && matchesYear && matchesLevel && matchesProgressStatus;
   });
-
-  const getDocSubject = (doc: DocumentMetadata) => {
-    const rawSub = `${doc.subject || ''} ${doc.category || ''} ${doc.title || ''} ${(doc.tags || []).join(' ')}`.toLowerCase();
-    if (rawSub.includes('physics') || rawSub.includes('fizikia')) return 'Physics (Fizikia)';
-    if (rawSub.includes('basic math') || rawSub.includes('math') || rawSub.includes('hisabati')) return 'Mathematics (Hisabati)';
-    if (rawSub.includes('chem') || rawSub.includes('kemia')) return 'Chemistry (Kemia)';
-    if (rawSub.includes('bio') || rawSub.includes('biolojia')) return 'Biology (Biolojia)';
-    if (rawSub.includes('hist') || rawSub.includes('historia')) return 'History (Historia)';
-    if (rawSub.includes('geo') || rawSub.includes('jiografia')) return 'Geography (Jiografia)';
-    if (rawSub.includes('civ') || rawSub.includes('uraia')) return 'Civics (Uraia)';
-    if (rawSub.includes('eng') || rawSub.includes('kiingereza')) return 'English Language';
-    if (rawSub.includes('kisw')) return 'Kiswahili';
-    if (rawSub.includes('comm') || rawSub.includes('biashara')) return 'Commerce (Biashara)';
-    if (rawSub.includes('book') || rawSub.includes('uhasibu')) return 'Book-keeping';
-
-    if (doc.subject) return doc.subject;
-    return doc.category || 'Masomo Mengine';
-  };
-
-  const getSubjectTheme = (subjectName: string) => {
-    const sub = subjectName.toLowerCase();
-    
-    if (sub.includes('math') || sub.includes('hisabati')) {
-      return {
-        gradient: 'from-blue-600 to-indigo-800',
-        accentColor: 'text-blue-200',
-        icon: Compass,
-        pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:12px_12px]'
-      };
-    }
-    if (sub.includes('physics') || sub.includes('fizikia')) {
-      return {
-        gradient: 'from-violet-700 to-indigo-950',
-        accentColor: 'text-indigo-200',
-        icon: Atom,
-        pattern: 'bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] [background-size:10px_10px]'
-      };
-    }
-    if (sub.includes('chemistry') || sub.includes('kemia')) {
-      return {
-        gradient: 'from-teal-600 to-emerald-950',
-        accentColor: 'text-teal-200',
-        icon: Sparkles,
-        pattern: 'bg-[radial-gradient(#ffffff0c_1.5px,transparent_1.5px)] [background-size:16px_16px]'
-      };
-    }
-    if (sub.includes('biology') || sub.includes('biolojia')) {
-      return {
-        gradient: 'from-emerald-600 to-teal-900',
-        accentColor: 'text-emerald-100',
-        icon: GraduationCap,
-        pattern: 'bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:8px_8px]'
-      };
-    }
-    if (sub.includes('history') || sub.includes('historia')) {
-      return {
-        gradient: 'from-amber-800 to-red-950',
-        accentColor: 'text-amber-200',
-        icon: FileText,
-        pattern: 'bg-[repeating-linear-gradient(45deg,#ffffff03_0px,#ffffff03_2px,transparent_2px,transparent_10px)]'
-      };
-    }
-    if (sub.includes('geography') || sub.includes('jiografia')) {
-      return {
-        gradient: 'from-sky-600 to-blue-900',
-        accentColor: 'text-sky-200',
-        icon: Globe,
-        pattern: 'bg-[radial-gradient(#ffffff0d_1.5px,transparent_1.5px)] [background-size:14px_14px]'
-      };
-    }
-    if (sub.includes('civics') || sub.includes('uraia')) {
-      return {
-        gradient: 'from-red-600 to-rose-950',
-        accentColor: 'text-red-200',
-        icon: Scale,
-        pattern: 'bg-[linear-gradient(45deg,#ffffff04_25%,transparent_25%,transparent_75%,#ffffff04_75%,#ffffff04),linear-gradient(45deg,#ffffff04_25%,transparent_25%,transparent_75%,#ffffff04_75%,#ffffff04)] [background-size:16px_16px] [background-position:0_0,8px_8px]'
-      };
-    }
-    if (sub.includes('english') || sub.includes('kiingereza')) {
-      return {
-        gradient: 'from-fuchsia-700 to-rose-950',
-        accentColor: 'text-fuchsia-200',
-        icon: BookOpen,
-        pattern: 'bg-[repeating-linear-gradient(to_right,#ffffff03_0px,#ffffff03_1px,transparent_1px,transparent_12px)]'
-      };
-    }
-    if (sub.includes('kiswahili')) {
-      return {
-        gradient: 'from-orange-600 to-amber-950',
-        accentColor: 'text-orange-200',
-        icon: BookOpen,
-        pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:10px_10px]'
-      };
-    }
-    if (sub.includes('commerce') || sub.includes('biashara') || sub.includes('bookkeeping') || sub.includes('uhasibu')) {
-      return {
-        gradient: 'from-cyan-600 to-indigo-950',
-        accentColor: 'text-cyan-200',
-        icon: FileText,
-        pattern: 'bg-[linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] [background-size:10px_8px]'
-      };
-    }
-    
-    // Default fallback
-    return {
-      gradient: 'from-slate-600 to-slate-900',
-      accentColor: 'text-slate-300',
-      icon: BookOpen,
-      pattern: 'bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:12px_12px]'
-    };
-  };
 
   const renderBookCover = (doc: DocumentMetadata) => {
     const subject = getDocSubject(doc);
@@ -1165,36 +1511,68 @@ export default function MitihaniView({
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+            <button 
+              onClick={() => setIsDriveImporterOpen(true)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wide border border-emerald-300/40 hover:scale-[1.02]"
+              title="Chambua viungo vya Google Drive, gundua Mwaka na Somo na uhifadhi moja kwa moja Firestore"
+            >
+              <UploadCloud size={16} /> Mchambuzi wa Drive
+            </button>
+
+            <button 
+              onClick={handleSyncAllToFirestore}
+              disabled={isSyncingAllSeedToFirestore}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wide border border-indigo-400/40 hover:scale-[1.02] disabled:opacity-50"
+              title="Hifadhi mitihani yote 70+ ya Kiswahili (1993-2025), Math, na Physics kwenye Firestore"
+            >
+              <Database size={16} /> 
+              {isSyncingAllSeedToFirestore ? 'Inasawazisha...' : 'Sawazisha Firestore'}
+            </button>
+
             <button 
               onClick={() => setShowTimer(!showTimer)}
-              className={`font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md ${
+              className={`font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md ${
                 showTimer 
                   ? 'bg-amber-400 text-amber-950 hover:bg-amber-500' 
                   : 'bg-slate-900 text-white hover:bg-slate-800'
               }`}
             >
               <Clock size={16} /> 
-              {showTimer ? 'Funga Kipima Muda' : 'Kipima Muda (Timer)'}
+              {showTimer ? 'Funga Saa' : 'Kipima Saa'}
             </button>
 
             <button 
               onClick={() => onNavigate('upload')}
-              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wide"
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wide"
             >
-              <Plus size={16} /> Pakia Mtihani
+              <Plus size={16} /> Pakia
             </button>
 
             {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
               <button 
                 onClick={handleOpenAddModal}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
               >
-                <Plus size={16} /> Haraka (Admin)
+                <Plus size={16} /> Admin Add
               </button>
             )}
           </div>
         </div>
+
+        {/* Sync All Status Notification Banner */}
+        {syncAllStatusMsg && (
+          <div className="mt-4 p-3.5 bg-cyan-950/90 border border-cyan-400/40 rounded-2xl flex items-center gap-3 text-cyan-200 text-xs font-bold animate-fade-in shadow-md">
+            <Database size={16} className="text-cyan-400 shrink-0 animate-pulse" />
+            <span className="flex-1">{syncAllStatusMsg}</span>
+            <button 
+              onClick={() => setSyncAllStatusMsg(null)}
+              className="text-cyan-400 hover:text-white text-xs font-bold px-2 py-1 bg-cyan-900/50 rounded-lg"
+            >
+              Funga
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ── EXAM PREPARATION PROGRESS VISUALIZER ── */}
@@ -1909,6 +2287,8 @@ export default function MitihaniView({
               className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
             >
               <option value="">Aina Zote</option>
+              <option value="Series">Series Exams (ISESE &amp; Joint)</option>
+              <option value="Marking Scheme">Marking Schemes (Majibu)</option>
               <option value="NECTA">NECTA National</option>
               <option value="Mock">Mock za Mikoa</option>
               <option value="Terminal">Terminal &amp; Midterm</option>
@@ -1938,6 +2318,8 @@ export default function MitihaniView({
               className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 text-slate-700 cursor-pointer"
             >
               <option value="">Masomo Yote</option>
+              <option value="Business Studies">Business Studies</option>
+              <option value="HTM">HTM (Tourism &amp; Heritage)</option>
               <option value="Mathematics">Mathematics</option>
               <option value="Physics">Physics</option>
               <option value="Chemistry">Chemistry</option>
@@ -1945,7 +2327,9 @@ export default function MitihaniView({
               <option value="History">History</option>
               <option value="Geography">Geography</option>
               <option value="Kiswahili">Kiswahili</option>
-              <option value="English">English</option>
+              <option value="English">English Language</option>
+              <option value="Civics">Civics</option>
+              <option value="Commerce">Commerce &amp; Bookkeeping</option>
             </select>
           </div>
 
@@ -2004,27 +2388,55 @@ export default function MitihaniView({
 
       {/* ── Main Catalog Document Grid ── */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 font-bold bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 bg-cyan-500/10 text-cyan-800 border border-cyan-400/20 text-[10px] font-extrabold uppercase rounded-lg">
-              Mpangilio: {sortBy === 'subjectYear' ? 'Somo & Mwaka (A-Z, 2026-1994)' : sortBy === 'newest' ? 'Mpya Zaidi Kwanza' : sortBy === 'views' ? 'Wasomaji Wengi Zaidi' : 'Herufi A-Z'}
-            </span>
-            <span className="text-slate-600 text-xs font-semibold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 font-bold bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Switcher */}
+            <div className="bg-slate-100 p-0.5 rounded-xl flex items-center border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setActiveDisplayMode('matrix')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeDisplayMode === 'matrix'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Layers size={13} />
+                Mpangilio wa Mada &amp; Miaka (Matrix)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDisplayMode('catalog')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeDisplayMode === 'catalog'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid size={13} />
+                Kadi za Katalogi
+              </button>
+            </div>
+
+            <span className="text-slate-600 text-xs font-semibold px-2 py-1 bg-slate-50 rounded-lg border border-slate-200/60">
               Mitihani {sortedDocs.length} inapatikana
             </span>
           </div>
-          <button 
-            onClick={() => {
-              setSelectedType('');
-              setSelectedLevel('');
-              setSelectedSubject('');
-              setSelectedYear('');
-              onSearchChange('');
-            }}
-            className="text-cyan-600 hover:text-cyan-700 hover:underline text-xs font-bold self-end sm:self-auto"
-          >
-            Futa Vichujio Vyote
-          </button>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button 
+              onClick={() => {
+                setSelectedType('');
+                setSelectedLevel('');
+                setSelectedSubject('');
+                setSelectedYear('');
+                onSearchChange('');
+              }}
+              className="text-cyan-600 hover:text-cyan-700 hover:underline text-xs font-bold"
+            >
+              Futa Vichujio
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -2033,7 +2445,161 @@ export default function MitihaniView({
             <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Inasoma Maktaba ya Nyaraka...</p>
           </div>
         ) : sortedDocs.length > 0 ? (
-          sortBy === 'subjectYear' ? (
+          activeDisplayMode === 'matrix' ? (
+            /* ── SUBJECT & YEAR MATRIX PRESENTATION ── */
+            <div className="space-y-8">
+              {Object.entries(
+                sortedDocs.reduce((acc, doc) => {
+                  const sub = getDocSubject(doc);
+                  if (!acc[sub]) acc[sub] = [];
+                  acc[sub].push(doc);
+                  return acc;
+                }, {} as Record<string, DocumentMetadata[]>)
+              ).map(([subject, docs]) => {
+                // Sort docs by year descending
+                const sortedByYr = [...docs].sort((a, b) => (b.year || 0) - (a.year || 0));
+                const questionPapers = sortedByYr.filter(d => !d.isMarkingScheme);
+                const msPapers = sortedByYr.filter(d => d.isMarkingScheme);
+                const yearList = Array.from(new Set(sortedByYr.map(d => d.year).filter(Boolean))) as number[];
+                yearList.sort((a, b) => b - a);
+
+                const theme = getSubjectTheme(subject);
+                const ThemeIcon = theme.icon;
+
+                return (
+                  <div key={subject} className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+                    {/* Subject Header Banner */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${theme.gradient} text-white flex items-center justify-center shadow-md shrink-0`}>
+                          <ThemeIcon size={22} className={theme.accentColor} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-display font-black text-slate-950 text-base sm:text-lg uppercase tracking-tight">
+                              {subject}
+                            </h3>
+                            {yearList.length > 0 && (
+                              <span className="bg-cyan-50 text-cyan-800 border border-cyan-200 text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
+                                Miaka {yearList[yearList.length - 1]} - {yearList[0]}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 font-medium">
+                            Jumla ya Mitihani: <strong className="text-slate-800">{questionPapers.length}</strong> | Miongozo ya Majibu (Marking Schemes): <strong className="text-emerald-700">{msPapers.length}</strong>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedSubject(subject.replace(/\s*\(.*\)/, ''));
+                            setActiveDisplayMode('catalog');
+                          }}
+                          className="text-xs font-bold text-cyan-700 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 px-3.5 py-2 rounded-xl border border-cyan-200/80 transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          Tazama Kadi Zote ({docs.length}) &rarr;
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Matrix Grid of Years */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {yearList.map(yr => {
+                        const qp = questionPapers.find(p => p.year === yr);
+                        const ms = msPapers.find(p => p.year === yr) || (qp?.markingSchemeDocId ? documents.find(d => d.id === qp.markingSchemeDocId) || localSeedDocs.find(d => d.id === qp.markingSchemeDocId) : null);
+
+                        return (
+                          <div 
+                            key={yr} 
+                            className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 hover:bg-white hover:border-cyan-300 hover:shadow-md transition-all flex flex-col justify-between gap-3 group"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-base font-black text-slate-900 font-mono flex items-center gap-1">
+                                  <Calendar size={14} className="text-cyan-600" />
+                                  {yr}
+                                </span>
+                                <span className="text-[9.5px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <CheckCircle2 size={10} className="text-emerald-600" /> Firestore DB
+                                </span>
+                              </div>
+
+                              {/* Question Paper info */}
+                              {qp ? (
+                                <div className="space-y-1">
+                                  <h4 className="text-xs font-bold text-slate-900 group-hover:text-cyan-700 transition-colors line-clamp-2">
+                                    {qp.title}
+                                  </h4>
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                                    <span>{qp.type || 'NECTA'}</span> &bull; 
+                                    <span>{qp.classLevel || 'Form 4'}</span> &bull; 
+                                    <span className="text-emerald-700 font-bold">BURE</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 italic">Mtihani wa maswali unathibitishwa</p>
+                              )}
+                            </div>
+
+                            {/* Action Buttons for this Year */}
+                            <div className="space-y-2 pt-2 border-t border-slate-200/80">
+                              <div className="flex gap-2">
+                                {qp && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onNavigate('reader', qp.id)}
+                                    className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-xs py-2 px-3 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
+                                  >
+                                    <Eye size={13} /> Soma Mtihani
+                                  </button>
+                                )}
+
+                                {qp && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDocClick(qp)}
+                                    className="p-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs transition-all cursor-pointer"
+                                    title="Hakiki (Preview)"
+                                  >
+                                    <BookOpen size={13} />
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Marking Scheme direct button */}
+                              {ms ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onNavigate('reader', ms.id)}
+                                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] py-2 px-3 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
+                                >
+                                  <CheckCircle2 size={13} /> Mwongozo wa Majibu (MS) ↗
+                                </button>
+                              ) : qp?.markingSchemeDriveUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onNavigate('reader', qp.markingSchemeDocId || qp.id)}
+                                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] py-2 px-3 rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
+                                >
+                                  <CheckCircle2 size={13} /> Mwongozo wa Majibu (MS) ↗
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 font-semibold italic text-center block py-1 bg-slate-100/60 rounded-lg">
+                                  Marking scheme inatayarishwa
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : sortBy === 'subjectYear' ? (
             <div className="space-y-10">
               {Object.entries(
                 sortedDocs.reduce((acc, doc) => {
@@ -2075,6 +2641,16 @@ export default function MitihaniView({
                                   {isPremium && (
                                     <span className="bg-amber-400 text-amber-950 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
                                       <Crown size={10} /> PRO
+                                    </span>
+                                  )}
+                                  {doc.isMarkingScheme && (
+                                    <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                                      <CheckCircle2 size={10} /> MS
+                                    </span>
+                                  )}
+                                  {doc.seriesName && (
+                                    <span className="bg-indigo-100 text-indigo-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md">
+                                      {doc.seriesName}
                                     </span>
                                   )}
                                   {doc.isForSale ? (
@@ -2199,6 +2775,16 @@ export default function MitihaniView({
                             {isPremium && (
                               <span className="bg-amber-400 text-amber-950 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
                                 <Crown size={10} /> PRO
+                              </span>
+                            )}
+                            {doc.isMarkingScheme && (
+                              <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                                <CheckCircle2 size={10} /> MS
+                              </span>
+                            )}
+                            {doc.seriesName && (
+                              <span className="bg-indigo-100 text-indigo-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md">
+                                {doc.seriesName}
                               </span>
                             )}
                             {doc.isForSale ? (
@@ -2892,6 +3478,16 @@ export default function MitihaniView({
                   <span className="bg-cyan-100 text-cyan-800 text-[10px] font-black px-2.5 py-1 rounded-lg border border-cyan-200 uppercase tracking-widest">
                     {quickViewDoc.type || 'NECTA'}
                   </span>
+                  {quickViewDoc.isMarkingScheme && (
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-lg border border-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                      <CheckCircle2 size={12} className="text-emerald-600" /> Mwongozo wa Majibu (Marking Scheme)
+                    </span>
+                  )}
+                  {quickViewDoc.seriesName && (
+                    <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2.5 py-1 rounded-lg border border-indigo-200 uppercase tracking-wider">
+                      {quickViewDoc.seriesName}
+                    </span>
+                  )}
                   <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-slate-200">
                     Mwaka {quickViewDoc.year || 2024}
                   </span>
@@ -2995,6 +3591,43 @@ export default function MitihaniView({
 
               {/* Action Buttons inside footer-like space */}
               <div className="space-y-3 pt-6 border-t border-slate-100 mt-6 flex-shrink-0">
+                {/* Dedicated Marking Scheme switch button if available */}
+                {quickViewDoc.markingSchemeDocId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const msDoc = documents.find(d => d.id === quickViewDoc.markingSchemeDocId) || localSeedDocs.find(d => d.id === quickViewDoc.markingSchemeDocId);
+                      if (msDoc) {
+                        setQuickViewDoc(msDoc);
+                      } else {
+                        onNavigate('reader', quickViewDoc.markingSchemeDocId!);
+                      }
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <CheckCircle2 size={16} />
+                    Fungua Marking Scheme (Mwongozo wa Majibu)
+                  </button>
+                )}
+
+                {/* If current preview is a Marking Scheme, allow switching to its question paper */}
+                {quickViewDoc.isMarkingScheme && (() => {
+                  const parentPaper = documents.find(d => d.markingSchemeDocId === quickViewDoc.id) || localSeedDocs.find(d => d.markingSchemeDocId === quickViewDoc.id);
+                  if (parentPaper) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setQuickViewDoc(parentPaper)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <FileText size={16} />
+                        Fungua Karatasi ya Maswali (Exam Paper)
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="flex flex-col sm:flex-row gap-3">
                   {/* Primary: Soma kwa Skrini Nzima */}
                   <button
@@ -3051,6 +3684,191 @@ export default function MitihaniView({
                   Anza Zoezi la Saa 3 (Simulated Exam)
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── GOOGLE DRIVE METADATA IMPORTER & FIRESTORE SYNC MODAL ── */}
+      {isDriveImporterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto animate-fade-in text-slate-800">
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                  <UploadCloud size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-display font-black text-slate-950 uppercase tracking-tight">
+                    Mchambuzi wa Metadata za Google Drive &amp; Firestore
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Mfumo unachambua kiotomatiki <strong>Mwaka</strong>, <strong>Aina ya Mtihani</strong>, na <strong>Somo/Mada</strong> kutoka kwenye link kisha kuhifadhi moja kwa moja kwenye Firestore.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsDriveImporterOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Quick Helper Notice */}
+            <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-4 text-xs text-cyan-900 space-y-2">
+              <p className="font-extrabold flex items-center gap-1.5 text-cyan-950">
+                <Sparkles size={16} className="text-cyan-600" /> Jinsi Mfumo Unavyofanya Kazi:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-cyan-800 text-[11px] leading-relaxed">
+                <li>Bandika viungo vya Google Drive (kiungo kimoja au vingi, kwa mistari au ndani ya aya).</li>
+                <li>Mfumo utatambua miaka (k.m. 1993 - 2025), masomo (Kiswahili, Physics, Math, n.k.), na miongozo ya majibu (Marking Schemes).</li>
+                <li>Kila karatasi ya mtihani itaunganishwa kiotomatiki na Marking Scheme yake kwa ajili ya usomaji wa pamoja.</li>
+              </ul>
+            </div>
+
+            {/* Controls for Defaults */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Somo Msingi (Default Subject)</label>
+                <select 
+                  value={importerDefaultSubject} 
+                  onChange={(e) => {
+                    setImporterDefaultSubject(e.target.value);
+                    handleReParse(e.target.value, importerDefaultLevel);
+                  }}
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 cursor-pointer"
+                >
+                  <option value="Kiswahili">Kiswahili</option>
+                  <option value="Basic Mathematics">Basic Mathematics (Hisabati)</option>
+                  <option value="Physics">Physics (Fizikia)</option>
+                  <option value="Chemistry">Chemistry (Kemia)</option>
+                  <option value="Biology">Biology (Biolojia)</option>
+                  <option value="Geography">Geography (Jiografia)</option>
+                  <option value="History">History (Historia)</option>
+                  <option value="Civics">Civics (Uraia)</option>
+                  <option value="English Language">English Language</option>
+                  <option value="Commerce">Commerce</option>
+                  <option value="Book-keeping">Book-keeping</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Kiwango cha Elimu (Default Level)</label>
+                <select 
+                  value={importerDefaultLevel} 
+                  onChange={(e) => {
+                    setImporterDefaultLevel(e.target.value);
+                    handleReParse(importerDefaultSubject, e.target.value);
+                  }}
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 cursor-pointer"
+                >
+                  <option value="Form 4">Form 4 (Kidato cha Nne - CSEE)</option>
+                  <option value="Form 2">Form 2 (Kidato cha Pili - FTNA)</option>
+                  <option value="Form 6">Form 6 (Kidato cha Sita - ACSEE)</option>
+                  <option value="Standard 7">Standard 7 (Darasa la Saba - PSLE)</option>
+                  <option value="Standard 4">Standard 4 (Darasa la Nne - SFNA)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Input Textarea */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Bandika Viungo vya Google Drive (Paste URLs / Drive Links) *
+                </label>
+                <span className="text-[10.5px] font-bold text-emerald-600">
+                  Viungo Vilivyotambuliwa: {parsedExams.length}
+                </span>
+              </div>
+              <textarea 
+                value={driveRawInput}
+                onChange={(e) => handleDriveInputChange(e.target.value)}
+                placeholder="Bandika hapa viungo vya Google Drive, mfano:&#10;https://drive.google.com/file/d/1rl4jSFXzIGo2z6MzruK5nSZvfbIdQoG1/view&#10;https://drive.google.com/file/d/1Pwlytgo2sdgEnXluURtPLuv5pZ0i-m8R/view&#10;..."
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 rounded-2xl p-4 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 leading-relaxed placeholder-slate-400"
+              />
+            </div>
+
+            {/* Live Parsed Preview Table */}
+            {parsedExams.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileCheck size={14} className="text-emerald-600" />
+                    Matokeo ya Uchambuzi ({parsedExams.length} Nyaraka Zimepangwa)
+                  </h4>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md">
+                      Mitihani: {parsedExams.filter(p => !p.isMarkingScheme).length}
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md">
+                      Marking Schemes: {parsedExams.filter(p => p.isMarkingScheme).length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100 bg-slate-50/50">
+                  {parsedExams.map((pe, idx) => (
+                    <div key={idx} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-white transition-colors">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-slate-900 text-xs">{pe.year}</span>
+                          <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-800 rounded font-bold text-[9px] uppercase">{pe.subject}</span>
+                          <span className="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold text-[9px]">{pe.level}</span>
+                          {pe.isMarkingScheme ? (
+                            <span className="px-1.5 py-0.5 bg-emerald-600 text-white rounded font-black text-[9px]">MARKING SCHEME</span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded font-black text-[9px]">MTIHANI</span>
+                          )}
+                          {pe.markingSchemeDocId && (
+                            <span className="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                              ✓ Imeunganishwa na Majibu
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-600 truncate">{pe.title}</p>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0">ID: {pe.driveId.slice(0, 8)}...</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Status / Success Message */}
+            {saveSuccessMessage && (
+              <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                saveSuccessMessage.includes('Hongera') 
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-cyan-50 text-cyan-800 border border-cyan-200'
+              }`}>
+                <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                <span>{saveSuccessMessage}</span>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <button 
+                type="button"
+                onClick={() => setIsDriveImporterOpen(false)}
+                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs cursor-pointer transition-all"
+              >
+                Funga
+              </button>
+
+              <button 
+                type="button"
+                onClick={handleSaveParsedToFirestore}
+                disabled={parsedExams.length === 0 || isSavingToFirestore}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wide cursor-pointer transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Database size={15} />
+                {isSavingToFirestore ? 'Inahifadhi Kwenye Firestore...' : `Hifadhi Nyaraka ${parsedExams.length} Kwenye Firestore`}
+              </button>
             </div>
           </div>
         </div>
