@@ -211,25 +211,10 @@ export default function SwipeNavigationWrapper({
         </div>
       )}
 
-      {/* Animated Main View Content Container */}
-      <AnimatePresence mode="wait" custom={slideDirection}>
-        <motion.div
-          key={activeView}
-          custom={slideDirection}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: 'spring', stiffness: 320, damping: 32 },
-            opacity: { duration: 0.2 },
-            scale: { duration: 0.2 }
-          }}
-          className="w-full min-h-screen"
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
+      {/* Main View Content Container */}
+      <div className="w-full min-h-screen">
+        {children}
+      </div>
 
       {/* Animated Swipe HUD Gesture Toast */}
       <AnimatePresence>

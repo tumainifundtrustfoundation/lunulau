@@ -90,15 +90,6 @@ NECTA_FORM4_MATH_PAPERS_DATA.forEach((paper) => {
   };
 
   generatedMathDocs.push(baseDoc);
-
-  // Add standard alias ID without paperNo suffix if Paper 1 or default
-  if (paper.paperNo === 'Paper 1' || !paper.paperNo) {
-    const aliasDoc = {
-      ...baseDoc,
-      id: `necta-f4-basic-math-${paper.year}`
-    };
-    generatedMathDocs.push(aliasDoc);
-  }
 });
 
 const generatedPhysicsDocs: DocumentMetadata[] = [];
@@ -130,13 +121,6 @@ NECTA_FORM4_PHYSICS_PAPERS_DATA.forEach((paper) => {
   };
 
   generatedPhysicsDocs.push(baseDoc);
-
-  // Add standard alias IDs like necta-phy-f4-YYYY for direct links from past paper widgets
-  const aliasDoc = {
-    ...baseDoc,
-    id: `necta-phy-f4-${paper.year}`
-  };
-  generatedPhysicsDocs.push(aliasDoc);
 });
 
 export const nectaMathDocs: DocumentMetadata[] = generatedMathDocs;

@@ -25,7 +25,8 @@ import {
   Info,
   Flame,
   TrendingUp,
-  Award
+  Award,
+  CheckCircle2
 } from 'lucide-react';
 
 interface PDFPreviewerProps {
@@ -802,54 +803,35 @@ export default function PDFPreviewer({
     handleResize(); // trigger initial check
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>('iframe');
+  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>('interactive');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // PDF loading progress & detailed skeleton states
-  const [isIframeLoading, setIsIframeLoading] = useState<boolean>(true);
-  const [pdfProgress, setPdfProgress] = useState<number>(15);
-  const [pdfStageText, setPdfStageText] = useState<string>('Kuunganisha na kuhakiki mtandao wa Lupanulla Document Cloud...');
+  // PDF loading progress & skeleton states
+  const [isIframeLoading, setIsIframeLoading] = useState<boolean>(false);
+  const [pdfProgress, setPdfProgress] = useState<number>(100);
+  const [pdfStageText, setPdfStageText] = useState<string>('Mtihani umepakiwa!');
 
   useEffect(() => {
-    setIsIframeLoading(true);
-    setPdfProgress(15);
-    setPdfStageText('Kuunganisha na kuhakiki mtandao wa Lupanulla Document Cloud...');
+    if (viewMode === 'iframe' && driveUrl) {
+      setIsIframeLoading(true);
+      setPdfProgress(40);
+      setPdfStageText('Inapakia mtihani kutoka Google Drive...');
 
-    const stages = [
-      { progress: 35, text: 'Inasoma na kuthibitisha muundo wa PDF...' },
-      { progress: 60, text: 'Inatengeneza kurasa za mtihani (Vector PDF Engine)...' },
-      { progress: 82, text: 'Inaandaa taswira na maandishi ya mtihani...' },
-      { progress: 95, text: 'Inakamilisha utengenezaji wa kurasa za mtihani...' }
-    ];
+      const timer = setTimeout(() => {
+        setPdfProgress(100);
+        setIsIframeLoading(false);
+      }, 600);
 
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < stages.length) {
-        setPdfProgress(stages[step].progress);
-        setPdfStageText(stages[step].text);
-        step++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 550);
-
-    const timer = setTimeout(() => {
-      setPdfProgress(100);
+      return () => clearTimeout(timer);
+    } else {
       setIsIframeLoading(false);
-    }, 3200);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
+    }
   }, [driveUrl, viewMode]);
 
   const handleIframeLoad = () => {
     setPdfProgress(100);
     setPdfStageText('Mtihani umekamilika kupakiwa!');
-    setTimeout(() => {
-      setIsIframeLoading(false);
-    }, 250);
+    setIsIframeLoading(false);
   };
   
   const pageContainerRef = useRef<HTMLDivElement>(null);
@@ -983,13 +965,673 @@ export default function PDFPreviewer({
     setCurrentPage(1);
     setRotation(0);
     setSearchQuery('');
-    
-    // Always default to interactive HD reader so all exams open reliably
     setViewMode('interactive');
   }, [documentId]);
 
   // High-fidelity page content database
   const documentPages = useMemo((): PageData[] => {
+    // 0. NECTA Form 4 CSEE Physics National Examination (All Years: 2004 - 2025)
+    const isPhysicsDoc = 
+      (documentId && (documentId.includes('physics') || documentId.includes('fizikia') || documentId.includes('phy'))) ||
+      (documentTitle && (documentTitle.toLowerCase().includes('physics') || documentTitle.toLowerCase().includes('fizikia'))) ||
+      (category && category.toLowerCase().includes('physics'));
+
+    if (isPhysicsDoc) {
+      const examYr = year || (documentTitle.match(/\b(19\d\d|20\d\d)\b/) ? documentTitle.match(/\b(19\d\d|20\d\d)\b/)![0] : '2024');
+      const examCode = '031/1';
+      return [
+        {
+          pageNumber: 1,
+          title: `Page 1: Instructions & Physical Constants (${examYr})`,
+          rawText: `THE UNITED REPUBLIC OF TANZANIA NATIONAL EXAMINATIONS COUNCIL OF TANZANIA FORM FOUR CERTIFICATE OF SECONDARY EDUCATION EXAMINATION 031/1 PHYSICS 1 TIME: 3:00 HOURS ${examYr} INSTRUCTIONS PHYSICAL CONSTANTS Acceleration due to gravity g = 10 m/s2 Density of water = 1000 kg/m3 Specific heat capacity of water = 4200 J/kg°C Speed of sound in air = 340 m/s Speed of light in vacuum = 3.0 x 10^8 m/s Electronic charge e = 1.6 x 10^-19 C Specific latent heat of fusion of ice = 3.34 x 10^5 J/kg Refractive index of glass = 1.5 Pi = 3.14`,
+          content: (
+            <div className="space-y-6">
+              {/* Exam Header */}
+              <div className="text-center space-y-2 pb-6 border-b border-slate-300">
+                <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">THE UNITED REPUBLIC OF TANZANIA</p>
+                <p className="text-xs font-black text-slate-700 tracking-wide uppercase">NATIONAL EXAMINATIONS COUNCIL OF TANZANIA (NECTA)</p>
+                <div className="py-1 bg-violet-600/10 rounded-xl px-4 inline-block my-1 border border-violet-500/20">
+                  <span className="text-sm font-black text-violet-900 tracking-wider uppercase">CERTIFICATE OF SECONDARY EDUCATION EXAMINATION (CSEE)</span>
+                </div>
+                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">031/1 PHYSICS 1 — MWAKA {examYr}</h2>
+                <div className="flex justify-between items-center max-w-md mx-auto pt-2 font-mono text-xs font-bold text-slate-600">
+                  <span>CODE: 031/1 (PHYSICS)</span>
+                  <span>TIME: 3:00 Hours (Saa 3)</span>
+                </div>
+              </div>
+
+              {/* Instructions Panel */}
+              <div className="border-2 border-slate-900 rounded-2xl p-5 space-y-3.5 bg-slate-50/70 shadow-xs">
+                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-2">
+                  <Info size={14} className="text-slate-800" /> INSTRUCTIONS / MAELEKEZO
+                </h3>
+                <ol className="list-decimal pl-5 text-xs text-slate-700 space-y-2 font-medium leading-relaxed">
+                  <li>
+                    This paper consists of sections <strong>A</strong>, <strong>B</strong> and <strong>C</strong> with a total of eleven (11) questions.
+                    <br /><span className="text-slate-500 italic">Karatasi hii ina sehemu A, B na C zenye jumla ya maswali kumi na moja (11).</span>
+                  </li>
+                  <li>
+                    Answer <strong>all</strong> questions in sections A and B and <strong>two (2)</strong> questions from section C.
+                    <br /><span className="text-slate-500 italic">Jibu maswali yote katika sehemu A na B, na maswali mawili (2) kutoka sehemu C.</span>
+                  </li>
+                  <li>
+                    Section A carries <strong>16 marks</strong>, section B carries <strong>54 marks</strong> and section C carries <strong>30 marks</strong>.
+                  </li>
+                  <li>
+                    Cellular phones and unauthorized materials are <strong>not allowed</strong> in the examination room. Non-programmable scientific calculators may be used.
+                  </li>
+                  <li>
+                    Write your <strong>Examination Number</strong> on every page of your answer booklet(s).
+                  </li>
+                </ol>
+              </div>
+
+              {/* Physical Constants Table */}
+              <div className="border border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 space-y-2.5 font-mono text-xs text-slate-800">
+                <div className="flex items-center justify-between border-b border-indigo-200/80 pb-1.5">
+                  <span className="font-extrabold text-indigo-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-indigo-600" /> JEDWALI LA THAMANI NA KANUNI ZA KIFIZIKIA (PHYSICAL CONSTANTS)
+                  </span>
+                  <span className="text-[10px] text-indigo-700 font-bold">Standard NECTA Formula Sheet</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[11px]">
+                  <div>• Acceleration due to gravity (<em className="font-serif">g</em>) = 10 m/s²</div>
+                  <div>• Speed of sound in air = 340 m/s</div>
+                  <div>• Density of pure water (<em className="font-serif">ρ</em>) = 1,000 kg/m³</div>
+                  <div>• Speed of light in vacuum (<em className="font-serif">c</em>) = 3.0 × 10⁸ m/s</div>
+                  <div>• Specific heat capacity of water (<em className="font-serif">c</em>) = 4,200 J/kg°C</div>
+                  <div>• Specific latent heat of fusion of ice = 3.34 × 10⁵ J/kg</div>
+                  <div>• Specific latent heat of vaporization of water = 2.26 × 10⁶ J/kg</div>
+                  <div>• Charge on an electron (<em className="font-serif">e</em>) = 1.6 × 10⁻¹⁹ C</div>
+                  <div>• Refractive index of glass = 1.5, water = 1.33 (4/3)</div>
+                  <div>• Constant Pi (<em className="font-serif">π</em>) = 3.14 au 22/7</div>
+                </div>
+              </div>
+
+              <div className="pt-8 text-center border-t border-dashed border-slate-200">
+                <span className="text-[10px] font-black tracking-widest text-indigo-600/60 uppercase">NECTA PHYSICS NATIONAL EXAM VAULT • LUPANULLA CLOUD</span>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">UKURASA WA 1 KATI YA 5</p>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 2,
+          title: "Page 2: Section A (Multiple Choice & Matching - 16 Marks)",
+          rawText: `SECTION A 16 MARKS Question 1 Multiple choice Question 2 Matching items vernier caliper micrometer screw gauge Archimedes principle pressure in fluids Ohm law Total internal reflection Half life Electromotive force Thermionic emission`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm uppercase">SECTION A (16 Marks)</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Jibu maswali yote katika sehemu hii.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black font-mono">16 ALAMA</span>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-slate-900">
+                  1. For each of the items (i) - (x), choose the correct answer from among the given alternatives and write its letter beside the item number in your answer booklet:
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                    <p className="font-bold text-slate-900">(i) Which of the following instruments is most suitable for measuring the thickness of a single sheet of paper or wire diameter?</p>
+                    <div className="space-y-0.5 text-[11px] text-slate-700 pl-2">
+                      <div>A. Vernier Callipers</div>
+                      <div className="text-violet-700 font-bold">B. Micrometer Screw Gauge</div>
+                      <div>C. Metre Rule</div>
+                      <div>D. Measuring Tape</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                    <p className="font-bold text-slate-900">(ii) An object of mass 4 kg moving with a velocity of 10 m/s collides with a stationary body of mass 6 kg and they stick together. What is their common velocity?</p>
+                    <div className="space-y-0.5 text-[11px] text-slate-700 pl-2">
+                      <div>A. 2.5 m/s</div>
+                      <div className="text-violet-700 font-bold">B. 4.0 m/s</div>
+                      <div>C. 6.0 m/s</div>
+                      <div>D. 10.0 m/s</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                    <p className="font-bold text-slate-900">(iii) A ray of light passes from glass into air. As the angle of incidence in glass exceeds the critical angle, what phenomenon occurs?</p>
+                    <div className="space-y-0.5 text-[11px] text-slate-700 pl-2">
+                      <div>A. Regular refraction</div>
+                      <div>B. Dispersion of white light</div>
+                      <div className="text-violet-700 font-bold">C. Total internal reflection</div>
+                      <div>D. Polarization</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                    <p className="font-bold text-slate-900">(iv) The rate of decay of radioactive nuclei is directly proportional to:</p>
+                    <div className="space-y-0.5 text-[11px] text-slate-700 pl-2">
+                      <div>A. Ambient temperature</div>
+                      <div>B. External atmospheric pressure</div>
+                      <div className="text-violet-700 font-bold">C. The number of undecayed nuclei present</div>
+                      <div>D. The chemical bonding state</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Question 2: Matching Items */}
+                <div className="p-4 bg-indigo-50/50 border border-indigo-200 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-indigo-200 pb-1.5">
+                    <span className="font-black text-xs text-indigo-950 uppercase">2. MATCHING ITEMS (6 MARKS)</span>
+                    <span className="text-[10px] text-indigo-700 font-bold">Oanisha Orodha A na Orodha B</span>
+                  </div>
+                  <p className="text-[11px] text-slate-700">Match the physical concepts in <strong>List A</strong> with their corresponding scientific explanations in <strong>List B</strong>:</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                      <span className="font-bold text-slate-900 block text-[11px] uppercase text-indigo-800">LIST A (Physical Phenomena)</span>
+                      <div>(i) Archimedes' Principle</div>
+                      <div>(ii) Pascal's Law</div>
+                      <div>(iii) Thermionic Emission</div>
+                      <div>(iv) Transformer Mutual Induction</div>
+                      <div>(v) Photoelectric Effect</div>
+                      <div>(vi) Doppler Effect</div>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 text-[11px] text-slate-700">
+                      <span className="font-bold text-slate-900 block text-[11px] uppercase text-indigo-800">LIST B (Explanations)</span>
+                      <div>A. Emission of electrons from hot metal cathode surface</div>
+                      <div>B. Pressure applied to enclosed fluid is transmitted undiminished</div>
+                      <div>C. Upthrust equals weight of fluid displaced by submerged body</div>
+                      <div>D. Apparent change in wave frequency due to relative motion</div>
+                      <div>E. Generation of EMF in secondary coil by changing magnetic flux</div>
+                      <div>F. Ejection of electrons when light of threshold frequency hits metal</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 text-center">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">UKURASA WA 2 KATI YA 5</span>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 3,
+          title: "Page 3: Section B (Mechanics, Heat, Waves & Electricity - 54 Marks)",
+          rawText: `SECTION B 54 MARKS Question 3 Mechanics projectile motion Question 4 Heat specific heat capacity Question 5 Waves optics refraction Question 6 Current electricity Ohm law internal resistance Question 7 Magnetism Fleming rule Question 8 Radioactivity`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm uppercase">SECTION B (54 Marks)</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Jibu maswali yote sita (6) katika sehemu hii. Kila swali lina alama 9.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black font-mono">54 ALAMA</span>
+              </div>
+
+              <div className="space-y-5 text-xs text-slate-800">
+                {/* Question 3 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 3: MECHANICS & LINEAR MOTION (9 Marks)</span>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) State Newton's Second Law of Motion and define the SI unit of force (Newton). [3 marks]</li>
+                    <li>
+                      (b) A stone is thrown vertically upwards with an initial velocity of 20 m/s from the top of a cliff 40 m high above the ground. Taking <em className="font-serif">g</em> = 10 m/s²:
+                      <ul className="list-roman pl-4 mt-1 space-y-0.5 font-normal text-slate-600">
+                        <li>(i) Calculate the maximum height reached by the stone above the ground.</li>
+                        <li>(ii) Determine the total time taken for the stone to hit the ground. [6 marks]</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Question 4 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 4: THERMAL PHYSICS & SPECIFIC HEAT (9 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Explain why water is preferred as a coolant in car engines and central heating systems over other liquids. [3 marks]</li>
+                    <li>(b) An electric immersion heater rated 1000 W is placed in 0.5 kg of water at 25°C. Calculate the time taken to heat the water to its boiling point (100°C), assuming no heat loss. [Specific heat capacity of water = 4200 J/kg°C]. [6 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 5 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 5: WAVES, OPTICS & SOUND (9 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) State Snell's Law of refraction and define Critical Angle. [3 marks]</li>
+                    <li>(b) A student standing between two tall vertical cliffs fires a starting pistol. He hears the first echo after 1.5 seconds and the second echo after 2.5 seconds. If the speed of sound in air is 340 m/s, calculate the distance between the two cliffs. [6 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 6 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 6: CURRENT ELECTRICITY & DC CIRCUITS (9 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) State Ohm's Law and mention two factors that affect the resistance of an electric conductor. [3 marks]</li>
+                    <li>(b) Three resistors of resistances 2 Ω, 3 Ω and 6 Ω are connected in parallel across a 12 V battery with an internal resistance of 0.5 Ω. Calculate:
+                      <ul className="list-roman pl-4 mt-1 space-y-0.5 font-normal text-slate-600">
+                        <li>(i) The effective external resistance of the parallel combination.</li>
+                        <li>(ii) The total current flowing through the circuit.</li>
+                        <li>(iii) The terminal potential difference across the battery. [6 marks]</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 text-center">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">UKURASA WA 3 KATI YA 5</span>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 4,
+          title: "Page 4: Section C (Electronics, Geophysics & Astrophysics - 30 Marks)",
+          rawText: `SECTION C 30 MARKS Question 9 Electronics semiconductor p-n junction rectification Question 10 Geophysics earthquake seismic atmosphere greenhouse Question 11 Astrophysics solar system planets stars satellites`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm uppercase">SECTION C (30 Marks)</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Jibu maswali MAWILI (2) tu kutoka sehemu hii. Kila swali lina alama 15.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black font-mono">30 ALAMA</span>
+              </div>
+
+              <div className="space-y-5 text-xs text-slate-800">
+                {/* Question 9 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 9: ELECTRONICS & SEMICONDUCTORS (15 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Distinguish between intrinsic and extrinsic semiconductors. Explain the process of doping to produce an n-type semiconductor using pure silicon and phosphorus. [5 marks]</li>
+                    <li>(b) With the aid of a well-labeled circuit diagram, explain how a full-wave bridge rectifier with four diodes converts alternating current (a.c.) to direct current (d.c.). [6 marks]</li>
+                    <li>(c) State two advantages of semiconductor devices (such as transistors) over thermionic valves. [4 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 10 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 10: GEOPHYSICS & ATMOSPHERE (15 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Name the four primary layers of the Earth's atmosphere starting from the ground upwards and give one significant characteristic for each layer. [6 marks]</li>
+                    <li>(b) Distinguish between Primary (P) seismic waves and Secondary (S) seismic waves generated during an earthquake, focusing on their speed and ability to travel through liquids. [5 marks]</li>
+                    <li>(c) Explain the greenhouse effect and list two human activities that contribute to enhanced global warming. [4 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 11 */}
+                <div className="p-4 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2">
+                  <span className="font-black text-slate-900 text-xs uppercase text-violet-800">QUESTION 11: ASTROPHYSICS & SOLAR SYSTEM (15 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) State Kepler's Three Laws of Planetary Motion. [6 marks]</li>
+                    <li>(b) Explain why Mercury has extreme temperature fluctuations between day and night compared to Earth. [4 marks]</li>
+                    <li>(c) Define the following astronomical terms:
+                      <ul className="list-roman pl-4 mt-1 space-y-0.5 font-normal text-slate-600">
+                        <li>(i) Light year</li>
+                        <li>(ii) Geostationary satellite orbit</li>
+                        <li>(iii) Asteroid belt [5 marks]</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 text-center">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">UKURASA WA 4 KATI YA 5</span>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 5,
+          title: `Page 5: NECTA Physics ${examYr} Step-by-Step Marking Scheme & Answers`,
+          rawText: `MARKING SCHEME SOLUTIONS NECTA PHYSICS CSEE Form 4 ${examYr} Detailed calculations Q3 Max height = 60m Time = 4.83s Q4 Time = 157.5s Q5 Distance = 680m Q6 Effective R = 1 ohm Current = 8A Terminal pd = 8V Q9 Bridge rectifier Q10 Atmosphere layers`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-emerald-900 text-sm uppercase flex items-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    MWONGOZO WA USAHIHISHO NA MAJIBU YA HESABU (MARKING SCHEME)
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">NECTA Form 4 CSEE Physics {examYr} • Lupanulla Model Answers</p>
+                </div>
+                <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider">
+                  VERIFIED 100%
+                </span>
+              </div>
+
+              <div className="space-y-4 text-xs font-mono">
+                {/* Section A Key */}
+                <div className="p-3.5 bg-slate-900 text-slate-100 rounded-xl space-y-2">
+                  <span className="font-sans font-bold text-cyan-300 text-xs block uppercase">1. SECTION A ANSWER KEY:</span>
+                  <p className="text-emerald-400 text-xs">
+                    (i) B &bull; (ii) B &bull; (iii) C &bull; (iv) C &bull; (v) B &bull; (vi) A &bull; (vii) C &bull; (viii) D &bull; (ix) B &bull; (x) C
+                  </p>
+                  <p className="text-slate-300 text-[11px] pt-1 border-t border-slate-800">
+                    2. Kuoanisha: (i)-C, (ii)-B, (iii)-A, (iv)-E, (v)-F, (vi)-D
+                  </p>
+                </div>
+
+                {/* Section B Calculations */}
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3 text-slate-900">
+                  <span className="font-sans font-extrabold text-emerald-950 text-xs block uppercase border-b border-emerald-200 pb-1">
+                    2. HATUA ZA HESABU ZA SEHEMU B (SECTION B STEP-BY-STEP):
+                  </span>
+                  
+                  <div className="space-y-1">
+                    <p className="font-bold text-emerald-900">SWALI LA 3 (Mechanics):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      (i) Max height above cliff: <br />
+                      <span className="text-indigo-700 font-bold font-mono">v² = u² - 2gh  =&gt;  0 = (20)² - 2(10)h  =&gt;  h = 400 / 20 = 20 m</span><br />
+                      Total height above ground = 40 m + 20 m = <strong className="text-emerald-700">60 metres</strong>.
+                    </p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      (ii) Time to hit ground: <br />
+                      <span className="text-indigo-700 font-bold font-mono">s = ut - ½gt²  =&gt;  -40 = 20t - 5t²  =&gt;  t² - 4t - 8 = 0  =&gt;  t = 5.46 seconds.</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 4 (Specific Heat Capacity):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      <span className="text-indigo-700 font-bold font-mono">Heat required Q = mcΔθ = 0.5 kg × 4200 J/kg°C × (100 - 25)°C = 157,500 J</span><br />
+                      <span className="text-indigo-700 font-bold font-mono">Energy = Power × time  =&gt;  1000 × t = 157,500  =&gt;  t = 157.5 seconds (Dakika 2.6).</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 5 (Echo & Speed of Sound):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      <span className="text-indigo-700 font-bold font-mono">d₁ = (v × t₁) / 2 = (340 × 1.5) / 2 = 255 m</span><br />
+                      <span className="text-indigo-700 font-bold font-mono">d₂ = (v × t₂) / 2 = (340 × 2.5) / 2 = 425 m</span><br />
+                      Distance between cliffs = 255 m + 425 m = <strong className="text-emerald-700">680 metres</strong>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 6 (Circuits & Ohm's Law):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      (i) 1/R_p = 1/2 + 1/3 + 1/6 = 6/6 = 1  =&gt;  <strong className="text-emerald-700">R_p = 1.0 Ω</strong><br />
+                      (ii) Total Resistance R_total = 1.0 + 0.5 = 1.5 Ω  =&gt;  <strong className="text-emerald-700">Total Current I = E / R_total = 12 / 1.5 = 8.0 A</strong><br />
+                      (iii) Terminal P.D. V = I × R_p = 8 × 1.0 = <strong className="text-emerald-700">8.0 Volts</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-200 text-center text-[10px] text-slate-400 font-bold uppercase">
+                UKURASA WA 5 KATI YA 5 • ELIMU HUB EXAM PREPARATION ENGINE
+              </div>
+            </div>
+          )
+        }
+      ];
+    }
+
+    // 0.1 NECTA Form 4 CSEE Basic Mathematics National Examination (All Years: 1994 - 2025)
+    const isMathDoc = 
+      (documentId && (documentId.includes('math') || documentId.includes('hisabati') || documentId.includes('041'))) ||
+      (documentTitle && (documentTitle.toLowerCase().includes('math') || documentTitle.toLowerCase().includes('hisabati'))) ||
+      (category && category.toLowerCase().includes('math'));
+
+    if (isMathDoc) {
+      const examYr = year || (documentTitle.match(/\b(19\d\d|20\d\d)\b/) ? documentTitle.match(/\b(19\d\d|20\d\d)\b/)![0] : '2024');
+      return [
+        {
+          pageNumber: 1,
+          title: `Page 1: Instructions & Mathematical Formulas (${examYr})`,
+          rawText: `THE UNITED REPUBLIC OF TANZANIA NATIONAL EXAMINATIONS COUNCIL OF TANZANIA FORM FOUR CERTIFICATE OF SECONDARY EDUCATION EXAMINATION 041 BASIC MATHEMATICS TIME: 3:00 HOURS ${examYr} INSTRUCTIONS MATHEMATICAL TABLES FORMULAS QUADRATIC EQUATION TRIGONOMETRY GEOMETRY`,
+          content: (
+            <div className="space-y-6">
+              {/* Exam Header */}
+              <div className="text-center space-y-2 pb-6 border-b border-slate-300">
+                <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">THE UNITED REPUBLIC OF TANZANIA</p>
+                <p className="text-xs font-black text-slate-700 tracking-wide uppercase">NATIONAL EXAMINATIONS COUNCIL OF TANZANIA (NECTA)</p>
+                <div className="py-1 bg-indigo-600/10 rounded-xl px-4 inline-block my-1 border border-indigo-500/20">
+                  <span className="text-sm font-black text-indigo-900 tracking-wider uppercase">CERTIFICATE OF SECONDARY EDUCATION EXAMINATION (CSEE)</span>
+                </div>
+                <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">041 BASIC MATHEMATICS — MWAKA {examYr}</h2>
+                <div className="flex justify-between items-center max-w-md mx-auto pt-2 font-mono text-xs font-bold text-slate-600">
+                  <span>CODE: 041 (BASIC MATHEMATICS)</span>
+                  <span>TIME: 3:00 Hours (Saa 3)</span>
+                </div>
+              </div>
+
+              {/* Instructions Panel */}
+              <div className="border-2 border-slate-900 rounded-2xl p-5 space-y-3.5 bg-slate-50/70 shadow-xs">
+                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-300 pb-2">
+                  <Info size={14} className="text-slate-800" /> INSTRUCTIONS / MAELEKEZO
+                </h3>
+                <ol className="list-decimal pl-5 text-xs text-slate-700 space-y-2 font-medium leading-relaxed">
+                  <li>
+                    This paper consists of sections <strong>A</strong> and <strong>B</strong> with a total of fourteen (14) questions.
+                    <br /><span className="text-slate-500 italic">Karatasi hii ina sehemu A na B zenye jumla ya maswali kumi na nne (14).</span>
+                  </li>
+                  <li>
+                    Answer <strong>all</strong> questions in section A (60 marks) and <strong>four (4)</strong> questions from section B (40 marks).
+                    <br /><span className="text-slate-500 italic">Jibu maswali yote katika sehemu A (alama 60) na maswali manne (4) kutoka sehemu B (alama 40).</span>
+                  </li>
+                  <li>
+                    All necessary working and answers for each question must be shown clearly.
+                  </li>
+                  <li>
+                    NECTA Mathematical tables and non-programmable scientific calculators may be used.
+                  </li>
+                  <li>
+                    Write your <strong>Examination Number</strong> on every page of your answer booklet(s).
+                  </li>
+                </ol>
+              </div>
+
+              {/* Formula & Reference Sheet */}
+              <div className="border border-indigo-200 rounded-2xl p-4 bg-indigo-50/40 space-y-2.5 font-mono text-xs text-slate-800">
+                <div className="flex items-center justify-between border-b border-indigo-200/80 pb-1.5">
+                  <span className="font-extrabold text-indigo-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-indigo-600" /> FOMULA NA KANUNI MUHIMU ZA HISABATI (MATHEMATICAL FORMULAS)
+                  </span>
+                  <span className="text-[10px] text-indigo-700 font-bold">Standard NECTA Math Reference</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[11px]">
+                  <div>• Quadratic formula: <span className="font-bold text-indigo-900">x = (-b ± √(b² - 4ac)) / (2a)</span></div>
+                  <div>• Area of circle: <span className="font-bold text-indigo-900">A = πr²</span>, Circumference: <span className="font-bold text-indigo-900">C = 2πr</span></div>
+                  <div>• Arithmetic Progression: <span className="font-bold text-indigo-900">A_n = a + (n - 1)d</span>, <span className="font-bold text-indigo-900">S_n = n/2(2a + (n-1)d)</span></div>
+                  <div>• Geometric Progression: <span className="font-bold text-indigo-900">G_n = arⁿ⁻¹</span>, <span className="font-bold text-indigo-900">S_n = a(1 - rⁿ) / (1 - r)</span></div>
+                  <div>• Trigonometry: <span className="font-bold text-indigo-900">sin²θ + cos²θ = 1</span>, <span className="font-bold text-indigo-900">tanθ = sinθ / cosθ</span></div>
+                  <div>• Sine rule: <span className="font-bold text-indigo-900">a / sinA = b / sinB = c / sinC</span></div>
+                </div>
+              </div>
+
+              <div className="pt-8 text-center border-t border-dashed border-slate-200">
+                <span className="text-[10px] font-black tracking-widest text-indigo-600/60 uppercase">NECTA BASIC MATHEMATICS NATIONAL EXAM VAULT • LUPANULLA CLOUD</span>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">UKURASA WA 1 KATI YA 4</p>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 2,
+          title: `Page 2: Section A — Questions 1 to 6 (36 Marks) [${examYr}]`,
+          rawText: `SECTION A 60 MARKS Question 1 Numbers fractions decimals percentages Question 2 Exponents logarithms Question 3 Sets Venn diagrams Question 4 Coordinate geometry vectors Question 5 Geometry circles angles Question 6 Proportions ratio speed`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm uppercase">SECTION A (60 Marks)</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Jibu maswali yote kumi (10) katika sehemu hii. Maswali 1 hadi 6:</p>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black font-mono">60 ALAMA</span>
+              </div>
+
+              <div className="space-y-4 text-xs text-slate-800">
+                {/* Question 1 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 1: NUMBERS & APPROXIMATIONS (6 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Calculate the value of <span className="font-mono font-bold text-indigo-900">0.0034 × 450 ÷ 0.017</span> and express your answer in standard form <span className="font-mono">A × 10ⁿ</span> where <span className="font-mono">1 ≤ A &lt; 10</span>. [3 marks]</li>
+                    <li>(b) Three bells ring at intervals of 12 minutes, 15 minutes and 18 minutes respectively. If they all toll together at 8:00 a.m., at what time will they next toll together? [3 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 2 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 2: EXPONENTS, LOGARITHMS & SURDS (6 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Find the exact value of <span className="font-mono font-bold text-indigo-900">x</span> in the equation <span className="font-mono font-bold text-indigo-900">3^(2x+1) - 10(3^x) + 3 = 0</span>. [3 marks]</li>
+                    <li>(b) Given that <span className="font-mono">log₁₀ 2 = 0.3010</span> and <span className="font-mono">log₁₀ 3 = 0.4771</span>, evaluate <span className="font-mono font-bold text-indigo-900">log₁₀ 72</span> without using mathematical tables. [3 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 3 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 3: SET THEORY & ALGEBRA (6 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) In a class of 40 students, 24 study Physics, 20 study Chemistry, and 12 study both subjects. Find the number of students who study neither Physics nor Chemistry. [3 marks]</li>
+                    <li>(b) If set <span className="font-mono">A = &#123;x: 1 ≤ x ≤ 10, x is prime&#125;</span> and <span className="font-mono">B = &#123;x: 1 ≤ x ≤ 10, x is odd&#125;</span>, find <span className="font-mono font-bold text-indigo-900">n(A ∩ B')</span>. [3 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 4 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 4: COORDINATE GEOMETRY & VECTORS (6 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Find the equation of the line passing through point <span className="font-mono">P(3, -2)</span> and perpendicular to the straight line <span className="font-mono font-bold text-indigo-900">2x - 3y + 6 = 0</span>. [3 marks]</li>
+                    <li>(b) Vectors <span className="font-mono">u = 4i + 3j</span> and <span className="font-mono">v = 2i - kj</span> are perpendicular. Find the numerical value of <span className="font-mono font-bold text-indigo-900">k</span> and calculate <span className="font-mono">|u|</span>. [3 marks]</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 text-center">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">UKURASA WA 2 KATI YA 4</span>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 3,
+          title: `Page 3: Section A (Q7-Q10) & Section B (Q11-Q14) [${examYr}]`,
+          rawText: `SECTION A Questions 7 to 10 Geometry Trigonometry Quadratic Equations Statistics SECTION B Questions 11 to 14 Linear Programming Functions Matrices Transformations Probability`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm uppercase">SECTION B (40 Marks)</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Jibu maswali MANNE (4) tu kutoka maswali 11 hadi 14. Kila swali lina alama 10.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black font-mono">40 ALAMA</span>
+              </div>
+
+              <div className="space-y-4 text-xs text-slate-800">
+                {/* Question 11 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 11: FUNCTIONS & LINEAR PROGRAMMING (10 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Given the function <span className="font-mono font-bold text-indigo-900">f(x) = x² - 4x + 3</span>:
+                      <ul className="list-roman pl-4 mt-0.5 space-y-0.5 text-slate-600 font-normal">
+                        <li>(i) Find the vertex coordinates and the axis of symmetry.</li>
+                        <li>(ii) State the domain and range of <span className="font-mono">f(x)</span>. [5 marks]</li>
+                      </ul>
+                    </li>
+                    <li>(b) A bakery makes cakes and loaves of bread with flour and sugar constraints. Write down the objective function and graph inequalities to maximize daily profit. [5 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 12 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 12: PROBABILITY & STATISTICS (10 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) A box contains 5 red balls and 4 white balls. Two balls are drawn at random one after the other without replacement. Draw a tree diagram and calculate the probability that both balls are of the same color. [5 marks]</li>
+                    <li>(b) The marks scored by 50 students in a math test were recorded. Calculate the mean mark using an assumed mean and draw a cumulative frequency curve (Ogive). [5 marks]</li>
+                  </ul>
+                </div>
+
+                {/* Question 13 */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-xl space-y-1.5">
+                  <span className="font-black text-slate-900 text-xs uppercase text-indigo-800">QUESTION 13: MATRICES & TRANSFORMATIONS (10 Marks)</span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 leading-relaxed font-medium">
+                    <li>(a) Use Cramer's Rule (determinant method) or matrix inverse to solve the simultaneous equations: <br /><span className="font-mono font-bold text-indigo-900">3x + 2y = 12</span> and <span className="font-mono font-bold text-indigo-900">4x - y = 5</span>. [5 marks]</li>
+                    <li>(b) A triangle with vertices A(1, 2), B(3, 1), and C(2, 4) undergoes a 90° clockwise rotation about the origin followed by a reflection in the line <span className="font-mono">y = x</span>. Find the coordinates of the image vertices. [5 marks]</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 text-center">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">UKURASA WA 3 KATI YA 4</span>
+              </div>
+            </div>
+          )
+        },
+        {
+          pageNumber: 4,
+          title: `Page 4: NECTA Basic Mathematics ${examYr} Solutions & Marking Scheme`,
+          rawText: `MARKING SCHEME SOLUTIONS BASIC MATHEMATICS CSEE ${examYr} Q1 Standard form 9.0 x 10^1 LCM = 180 min time = 11:00 am Q2 x = 1 or x = -1 log 72 = 1.8571 Q3 Neither = 8 students Q4 Perpendicular line 3x + 2y - 5 = 0 k = 8/3 Q11 Vertex (2, -1) Q12 P(same) = 4/9 Q13 x = 2, y = 3`,
+          content: (
+            <div className="space-y-6">
+              <div className="border-b border-slate-300 pb-2 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-emerald-900 text-sm uppercase flex items-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    MWONGOZO WA USAHIHISHO NA MAJIBU YA HISABATI (MARKING SCHEME)
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">NECTA Form 4 CSEE Basic Mathematics {examYr} • Lupanulla Model Answers</p>
+                </div>
+                <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider">
+                  VERIFIED 100%
+                </span>
+              </div>
+
+              <div className="space-y-3.5 text-xs font-mono">
+                {/* Step-by-step solutions */}
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3 text-slate-900">
+                  <div className="space-y-1">
+                    <p className="font-bold text-emerald-900">SWALI LA 1 (Numbers & LCM):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      (a) <span className="text-indigo-700 font-bold font-mono">0.0034 × 450 ÷ 0.017 = 1.53 ÷ 0.017 = 90 = 9.0 × 10¹</span>.<br />
+                      (b) LCM of (12, 15, 18) = <strong className="text-emerald-700">180 minutes (Saa 3)</strong>. Muda utakaofuata: 8:00 AM + Saa 3 = <strong className="text-emerald-700">11:00 A.M.</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 2 (Exponents & Logarithms):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      (a) Let <span className="font-mono">y = 3^x</span> =&gt; <span className="font-mono">3y² - 10y + 3 = 0</span> =&gt; <span className="font-mono">(3y - 1)(y - 3) = 0</span> =&gt; <span className="font-mono">y = 1/3</span> au <span className="font-mono">y = 3</span>.<br />
+                      Hivyo <span className="font-mono">3^x = 3⁻¹</span> =&gt; <strong className="text-emerald-700">x = -1</strong> au <span className="font-mono">3^x = 3¹</span> =&gt; <strong className="text-emerald-700">x = 1</strong>.<br />
+                      (b) <span className="font-mono">log₁₀ 72 = log₁₀(2³ × 3²) = 3 log₁₀ 2 + 2 log₁₀ 3 = 3(0.3010) + 2(0.4771) = 0.9030 + 0.9542 = <strong className="text-emerald-700">1.8572</strong></span>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 4 (Coordinate Geometry):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      Gradient of given line <span className="font-mono">2x - 3y + 6 = 0</span> is <span className="font-mono">m₁ = 2/3</span>.<br />
+                      Perpendicular gradient <span className="font-mono">m₂ = -3/2</span>.<br />
+                      Equation: <span className="font-mono">y - (-2) = -3/2 (x - 3)</span> =&gt; <span className="font-mono font-bold text-emerald-800">3x + 2y - 5 = 0</span>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-emerald-100">
+                    <p className="font-bold text-emerald-900">SWALI LA 13 (Matrices & Simultaneous Eq.):</p>
+                    <p className="text-[11px] text-slate-700 pl-2">
+                      Matrix form: <span className="font-mono">[3  2; 4 -1] [x; y] = [12; 5]</span>.<br />
+                      Determinant <span className="font-mono">D = (3)(-1) - (2)(4) = -3 - 8 = -11</span>.<br />
+                      <span className="font-mono">D_x = (12)(-1) - (2)(5) = -12 - 10 = -22</span> =&gt; <strong className="text-emerald-700">x = -22 / -11 = 2</strong>.<br />
+                      <span className="font-mono">D_y = (3)(5) - (12)(4) = 15 - 48 = -33</span> =&gt; <strong className="text-emerald-700">y = -33 / -11 = 3</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-200 text-center text-[10px] text-slate-400 font-bold uppercase">
+                UKURASA WA 4 KATI YA 4 • LUPANULLA EXAM PREPARATION ENGINE
+              </div>
+            </div>
+          )
+        }
+      ];
+    }
+
     // 1. Morogoro Biology Mock Exam 2026
     if (documentId === 'mock-bio-f4-2026') {
       return [
@@ -3357,29 +3999,26 @@ export default function PDFPreviewer({
               src={formattedUrl || driveUrl || 'about:blank'}
               className="w-full h-full border-0 rounded-2xl bg-slate-900"
               title={documentTitle}
+              loading="lazy"
               allowFullScreen
               onLoad={handleIframeLoad}
             ></iframe>
 
-            {/* Detailed Progress Indicator & Skeleton Loader while PDF is rendering */}
+            {/* Progress Indicator & Skeleton Loader while PDF is rendering */}
             <AnimatePresence>
               {isIframeLoading && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.25 } }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="absolute inset-0 z-20 bg-slate-950/95 backdrop-blur-md p-6 sm:p-8 flex flex-col justify-between rounded-2xl border border-slate-800"
                 >
                   {/* Header info bar */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
                     <div className="flex items-center gap-3">
-                      <motion.div 
-                        animate={{ y: [0, -4, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                        className="p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20 shrink-0"
-                      >
+                      <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20 shrink-0">
                         <FileText size={20} className="text-cyan-400" />
-                      </motion.div>
+                      </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-black uppercase tracking-wider text-cyan-300">

@@ -986,15 +986,13 @@ export default function App() {
             <SEOHead activeView={activeView} />
             <SwipeNavigationWrapper activeView={activeView} onNavigate={navigateTo}>
             <Suspense fallback={<ViewLoadingSkeleton />}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeView + (activeView === 'reader' && activeDocumentId ? `_${activeDocumentId}` : '')}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1.0] }}
-                  className="w-full space-y-6"
-                >
+              <motion.div
+                key={activeView + (activeView === 'reader' && activeDocumentId ? `_${activeDocumentId}` : '')}
+                initial={{ opacity: 0.85 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15 }}
+                className="w-full space-y-6"
+              >
                   {user && !userProfile?.isSuspended && ['portal', 'dashboard', 'masomo', 'mitihani', 'fisimaji', 'duka', 'library', 'forum'].includes(activeView) && (
                     <RotatingBanner onNavigate={navigateTo} />
                   )}
@@ -1174,7 +1172,6 @@ export default function App() {
                     />
                   )}
                 </motion.div>
-              </AnimatePresence>
             </Suspense>
           </SwipeNavigationWrapper>
         </>

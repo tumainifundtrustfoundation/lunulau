@@ -809,8 +809,16 @@ export default function MitihaniView({
       (doc.subject && (doc.subject.toLowerCase() === selectedSubject.toLowerCase() || doc.subject.toLowerCase().includes(selectedSubject.toLowerCase()))) ||
       (doc.category && (doc.category.toLowerCase() === selectedSubject.toLowerCase() || doc.category.toLowerCase().includes(selectedSubject.toLowerCase())));
 
-    const docYear = doc.year || ((doc.tags && doc.tags.includes('2023')) ? 2023 : (doc.tags && doc.tags.includes('2022')) ? 2022 : 2024);
-    const matchesYear = !selectedYear || String(docYear) === selectedYear;
+    const docYear = doc.year || (() => {
+      const match = doc.title?.match(/\b(19\d\d|20\d\d)\b/);
+      if (match) return parseInt(match[0], 10);
+      if (doc.tags) {
+        const yrTag = doc.tags.find(t => /^(19\d\d|20\d\d)$/.test(t.trim()));
+        if (yrTag) return parseInt(yrTag.trim(), 10);
+      }
+      return 2024;
+    })();
+    const matchesYear = !selectedYear || String(docYear) === String(selectedYear);
 
     const isPrimary = doc.tags && doc.tags.some(t => ['primary', 'msingi', 'darasa'].includes(t.toLowerCase()));
     const isAlevel = doc.tags && doc.tags.some(t => ['advanced', 'a-level', 'form v', 'form vi', 'kidato cha tano', 'kidato cha sita'].includes(t.toLowerCase()));
@@ -1006,8 +1014,14 @@ export default function MitihaniView({
       const subCompare = subA.localeCompare(subB);
       if (subCompare !== 0) return subCompare;
       
-      const yrA = a.year || (a.tags?.includes('2023') ? 2023 : a.tags?.includes('2022') ? 2022 : a.tags?.includes('2024') ? 2024 : 2026);
-      const yrB = b.year || (b.tags?.includes('2023') ? 2023 : b.tags?.includes('2022') ? 2022 : b.tags?.includes('2024') ? 2024 : 2026);
+      const getExactDocYear = (d: DocumentMetadata) => {
+        if (d.year) return d.year;
+        const match = d.title?.match(/\b(19\d\d|20\d\d)\b/);
+        if (match) return parseInt(match[0], 10);
+        return 2024;
+      };
+      const yrA = getExactDocYear(a);
+      const yrB = getExactDocYear(b);
       return yrB - yrA; // Newer year first
     } else if (sortBy === 'newest') {
       return b.createdAt - a.createdAt;
@@ -1036,10 +1050,26 @@ export default function MitihaniView({
 
     // Subject match logic
     const subClean = nectaWizardSubject.toLowerCase();
-    const subjectMatch = tagsStr.includes(subClean) || 
-                         d.title?.toLowerCase().includes(subClean) ||
-                         (d.subject?.toLowerCase().includes('math') && subClean.includes('math')) ||
-                         ((subClean === 'basic-math' || subClean === 'mathematics') && (tagsStr.includes('math') || tagsStr.includes('hisabati')));
+    const isMathWizard = subClean.includes('math') || subClean === 'mathematics' || subClean === 'basic-math';
+    const isPhysicsWizard = subClean.includes('physic') || subClean.includes('fizikia');
+
+    let subjectMatch = false;
+    if (isMathWizard) {
+      subjectMatch = d.category?.toLowerCase() === 'mathematics' ||
+                     d.subject?.toLowerCase().includes('math') ||
+                     tagsStr.includes('basic mathematics') ||
+                     tagsStr.includes('basic-math') ||
+                     tagsStr.includes('hisabati');
+    } else if (isPhysicsWizard) {
+      subjectMatch = d.category?.toLowerCase() === 'physics' ||
+                     d.subject?.toLowerCase().includes('physics') ||
+                     tagsStr.includes('physics') ||
+                     tagsStr.includes('fizikia');
+    } else {
+      subjectMatch = tagsStr.includes(subClean) || 
+                     d.title?.toLowerCase().includes(subClean) ||
+                     (d.subject?.toLowerCase() === subClean);
+    }
 
     return matchesYear && matchesType && levelMatch && subjectMatch;
   });
@@ -1697,12 +1727,11 @@ export default function MitihaniView({
                     type="button"
                     onClick={() => {
                       setShowTimer(true);
-                      alert(`⏱️ Kipima muda kimeanzishwa! Una dakika 180 (Masaa 3) kufanya mtihani huu. Unaweza kuona saa inayorudi nyuma juu ya skrini yako sasa.`);
                     }}
                     className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.01]"
                   >
                     <Clock size={15} />
-                    Zoezi la Saa (Timer)
+                    Zoezi la Saa (Masaa 3)
                   </button>
                 </div>
               </div>
