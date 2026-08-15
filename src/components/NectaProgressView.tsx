@@ -986,6 +986,33 @@ export default function NectaProgressView({ userProfile, onNavigate }: NectaProg
             {/* Form body */}
             <form onSubmit={handleSaveModalChanges} className="p-5 space-y-4">
               
+              {/* Direct Open / Read Exam button */}
+              <div className="p-3 bg-cyan-50/70 border border-cyan-200/80 rounded-xl flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-black uppercase text-cyan-800 tracking-wider flex items-center gap-1">
+                    <FileText size={12} className="text-cyan-600" />
+                    Karatasi ya Mtihani
+                  </span>
+                  <p className="text-xs font-bold text-slate-700">Soma mtihani wa {editingItem.subject.name} {editingItem.year}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const docId = editingItem.subject.id === 'physics' 
+                      ? `necta-f4-physics-${editingItem.year}`
+                      : editingItem.subject.id === 'basic-math'
+                      ? `necta-f4-basic-math-${editingItem.year}`
+                      : `necta-${editingItem.level}-${editingItem.subject.id}-${editingItem.year}`;
+                    setEditingItem(null);
+                    onNavigate('reader', docId);
+                  }}
+                  className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                >
+                  <ExternalLink size={12} />
+                  <span>Soma Sasa</span>
+                </button>
+              </div>
+
               {/* Status Radio Toggles */}
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Hali ya Maandalizi</label>

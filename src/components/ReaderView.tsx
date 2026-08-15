@@ -538,13 +538,17 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
       setLoading(true);
       setError(null);
 
-      // 1. Check local seed docs first for exact match or year-match (e.g., verified NECTA Math past papers)
+      // 1. Check local seed docs first for exact match or year-match (e.g., verified NECTA Math & Physics past papers)
       let seedMatch = localSeedDocs.find(d => d.id === documentId);
-      if (!seedMatch && documentId && (documentId.includes('basic-math') || documentId.includes('hisabati') || documentId.includes('math'))) {
+      if (!seedMatch && documentId) {
         const yearMatch = documentId.match(/\d{4}/);
         if (yearMatch) {
           const yr = parseInt(yearMatch[0], 10);
-          seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA');
+          if (documentId.includes('basic-math') || documentId.includes('hisabati') || documentId.includes('math')) {
+            seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA' && (d.subject === 'Basic Mathematics' || d.category === 'Mathematics'));
+          } else if (documentId.includes('physics') || documentId.includes('fizikia') || documentId.includes('phy')) {
+            seedMatch = localSeedDocs.find(d => d.year === yr && d.type === 'NECTA' && (d.subject === 'Physics' || d.category === 'Physics'));
+          }
         }
       }
       if (seedMatch) {

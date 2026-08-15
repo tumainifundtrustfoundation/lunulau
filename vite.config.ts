@@ -111,6 +111,9 @@ export default defineConfig(() => {
       },
       dedupe: ['react', 'react-dom'],
     },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'motion', 'motion/react', 'lucide-react'],
+    },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

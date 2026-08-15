@@ -87,8 +87,7 @@ export default function LibraryView({ onNavigate, userProfile }: LibraryViewProp
       const docs = await fetchDocuments({ status: 'approved' });
       const realDocs = docs.filter(d => 
         !d.fileId?.startsWith('sample-drive-id') && 
-        !d.driveUrl?.includes('orimi.com') &&
-        !d.id?.startsWith('necta-phy-f4-2023')
+        !d.driveUrl?.includes('orimi.com')
       );
       const mergedMap = new Map<string, DocumentMetadata>();
       realDocs.forEach(d => mergedMap.set(d.id, d));

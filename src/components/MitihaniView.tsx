@@ -742,8 +742,7 @@ export default function MitihaniView({
       // Filter out any leftover test documents with sample-drive-id or orimi dummy URLs
       const realDocs = fetched.filter(d => 
         !d.fileId?.startsWith('sample-drive-id') && 
-        !d.driveUrl?.includes('orimi.com') &&
-        !d.id?.startsWith('necta-phy-f4-2023')
+        !d.driveUrl?.includes('orimi.com')
       );
 
       // Merge local seed docs (such as NECTA Math papers) ensuring local verified seed docs take precedence
@@ -805,7 +804,10 @@ export default function MitihaniView({
     const docType = doc.type || ((doc.tags && doc.tags.some(t => t.toLowerCase() === 'necta')) ? 'NECTA' : 'Mtihani');
     const matchesType = !selectedType || docType.toLowerCase() === selectedType.toLowerCase();
 
-    const matchesSubject = !selectedSubject || (doc.tags && doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase()));
+    const matchesSubject = !selectedSubject || 
+      (doc.tags && doc.tags.some(t => t.toLowerCase() === selectedSubject.toLowerCase() || t.toLowerCase().includes(selectedSubject.toLowerCase()))) ||
+      (doc.subject && (doc.subject.toLowerCase() === selectedSubject.toLowerCase() || doc.subject.toLowerCase().includes(selectedSubject.toLowerCase()))) ||
+      (doc.category && (doc.category.toLowerCase() === selectedSubject.toLowerCase() || doc.category.toLowerCase().includes(selectedSubject.toLowerCase())));
 
     const docYear = doc.year || ((doc.tags && doc.tags.includes('2023')) ? 2023 : (doc.tags && doc.tags.includes('2022')) ? 2022 : 2024);
     const matchesYear = !selectedYear || String(docYear) === selectedYear;
@@ -838,32 +840,20 @@ export default function MitihaniView({
   });
 
   const getDocSubject = (doc: DocumentMetadata) => {
+    const rawSub = `${doc.subject || ''} ${doc.category || ''} ${doc.title || ''} ${(doc.tags || []).join(' ')}`.toLowerCase();
+    if (rawSub.includes('physics') || rawSub.includes('fizikia')) return 'Physics (Fizikia)';
+    if (rawSub.includes('basic math') || rawSub.includes('math') || rawSub.includes('hisabati')) return 'Mathematics (Hisabati)';
+    if (rawSub.includes('chem') || rawSub.includes('kemia')) return 'Chemistry (Kemia)';
+    if (rawSub.includes('bio') || rawSub.includes('biolojia')) return 'Biology (Biolojia)';
+    if (rawSub.includes('hist') || rawSub.includes('historia')) return 'History (Historia)';
+    if (rawSub.includes('geo') || rawSub.includes('jiografia')) return 'Geography (Jiografia)';
+    if (rawSub.includes('civ') || rawSub.includes('uraia')) return 'Civics (Uraia)';
+    if (rawSub.includes('eng') || rawSub.includes('kiingereza')) return 'English Language';
+    if (rawSub.includes('kisw')) return 'Kiswahili';
+    if (rawSub.includes('comm') || rawSub.includes('biashara')) return 'Commerce (Biashara)';
+    if (rawSub.includes('book') || rawSub.includes('uhasibu')) return 'Book-keeping';
+
     if (doc.subject) return doc.subject;
-    // Look through standard subjects
-    const subjects = [
-      'Mathematics', 'Basic Mathematics', 'Advanced Mathematics', 'Physics', 'Chemistry', 'Biology', 
-      'History', 'Geography', 'Civics', 'English', 'Kiswahili', 'Commerce', 'Bookkeeping', 'Physical Education', 'Chinese'
-    ];
-    for (const s of subjects) {
-      if (
-        doc.title.toLowerCase().includes(s.toLowerCase()) || 
-        doc.tags.some(t => t.toLowerCase() === s.toLowerCase() || t.toLowerCase().includes(s.toLowerCase()))
-      ) {
-        // Normalize names
-        if (s.toLowerCase().includes('math')) return 'Mathematics (Hisabati)';
-        if (s.toLowerCase().includes('phy')) return 'Physics (Fizikia)';
-        if (s.toLowerCase().includes('chem')) return 'Chemistry (Kemia)';
-        if (s.toLowerCase().includes('bio')) return 'Biology (Biolojia)';
-        if (s.toLowerCase().includes('hist')) return 'History (Historia)';
-        if (s.toLowerCase().includes('geo')) return 'Geography (Jiografia)';
-        if (s.toLowerCase().includes('civ')) return 'Civics (Uraia)';
-        if (s.toLowerCase().includes('eng')) return 'English Language';
-        if (s.toLowerCase().includes('kisw')) return 'Kiswahili';
-        if (s.toLowerCase().includes('comm')) return 'Commerce (Biashara)';
-        if (s.toLowerCase().includes('book')) return 'Book-keeping';
-        return s;
-      }
-    }
     return doc.category || 'Masomo Mengine';
   };
 

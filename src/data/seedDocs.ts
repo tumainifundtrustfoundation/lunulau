@@ -36,7 +36,32 @@ export const NECTA_FORM4_MATH_PAPERS_DATA: { year: number; paperNo?: string; fil
   { year: 1994, fileId: '1q2rmwfiOaqbayvLYOHRfy5Lb2Ewxd-fM' },
 ];
 
-const generatedDocs: DocumentMetadata[] = [];
+export const NECTA_FORM4_PHYSICS_PAPERS_DATA: { year: number; paperNo?: string; fileId: string }[] = [
+  { year: 2025, fileId: '1V2rizF5lclncEJ_ufWmrMZVpZVMsqUH_' },
+  { year: 2024, fileId: '12oHzoGS2-_eZ5Wo6rlqICzkoZUPEtmD_' },
+  { year: 2023, fileId: '1GpUmdDRkkq9e8Te7Uhoww18PNWwOQX9t' },
+  { year: 2022, fileId: '17mhcfYh82HDZ8jLn_CfUvIssxLXW7qq8' },
+  { year: 2021, fileId: '1Nr1wlrhxsK41kLKnrS0cZJhLsy-HJ4vr' },
+  { year: 2020, fileId: '1FTCpzmAZUUk9id6dsqXfLqIfeElxss6J' },
+  { year: 2019, fileId: '1Cm8J1fognpDXz6CUnOssbGrDFzLfzTEC' },
+  { year: 2018, fileId: '1lVdjxhNTuCDAEa3ZISz78JJsAsXYQuDv' },
+  { year: 2017, fileId: '1bRz6EHkRZIOhqBl0WVw76TquGC98CwJB' },
+  { year: 2016, fileId: '1cCuhf_mRlS0yK2hykwWCfASTyYx4zVtH' },
+  { year: 2015, fileId: '1cOdME9fBOnZ4lkxLYt81SXjLmy7dBxKp' },
+  { year: 2014, fileId: '1mfFGifqejnLH4sXpASBR1MO5NHXqFhR6' },
+  { year: 2013, fileId: '1GhJP_zrxj6JtfDgr5gC9pWcNx3gYdTPm' },
+  { year: 2012, fileId: '1Wb6PPzpl05K1NDWqWJ2q-8SiUBSAJI_V' },
+  { year: 2011, fileId: '1rNr8hu8v1HkvvXwJ2OET8kyCrQ_PtrTu' },
+  { year: 2010, fileId: '1R8WY1PS08TF9H2x1sEBR6YJSZaP_ytje' },
+  { year: 2009, fileId: '10___mZCCp_YJpO80amOmTs9NjWczHq9Z' },
+  { year: 2008, fileId: '1E6Jf9gd1hrqzgqXXwUsIog2YqefQVgqN' },
+  { year: 2007, fileId: '1YrOUvQyu7o51Ey-Szh7_uG5TrnncZLLA' },
+  { year: 2006, fileId: '137k2tDqh7iB462J_YETkVgOAe0M4hDTy' },
+  { year: 2005, fileId: '1EVTJRXa_4dL-oiyPzsts10_jJ5w9FoWy' },
+  { year: 2004, fileId: '1hTLbL76sjSUpefctOo2Fz78Ox4lE8LVK' },
+];
+
+const generatedMathDocs: DocumentMetadata[] = [];
 
 NECTA_FORM4_MATH_PAPERS_DATA.forEach((paper) => {
   const paperSuffix = paper.paperNo ? ` (${paper.paperNo})` : '';
@@ -64,7 +89,7 @@ NECTA_FORM4_MATH_PAPERS_DATA.forEach((paper) => {
     sizeKB: 320
   };
 
-  generatedDocs.push(baseDoc);
+  generatedMathDocs.push(baseDoc);
 
   // Add standard alias ID without paperNo suffix if Paper 1 or default
   if (paper.paperNo === 'Paper 1' || !paper.paperNo) {
@@ -72,12 +97,48 @@ NECTA_FORM4_MATH_PAPERS_DATA.forEach((paper) => {
       ...baseDoc,
       id: `necta-f4-basic-math-${paper.year}`
     };
-    generatedDocs.push(aliasDoc);
+    generatedMathDocs.push(aliasDoc);
   }
 });
 
-export const nectaMathDocs: DocumentMetadata[] = generatedDocs;
-export const localSeedDocs: DocumentMetadata[] = [...nectaMathDocs];
+const generatedPhysicsDocs: DocumentMetadata[] = [];
 
+NECTA_FORM4_PHYSICS_PAPERS_DATA.forEach((paper) => {
+  const paperSuffix = paper.paperNo ? ` (${paper.paperNo})` : '';
+  const paperSlug = paper.paperNo ? `-${paper.paperNo.toLowerCase().replace(/\s+/g, '')}` : '';
 
+  const baseDoc: DocumentMetadata = {
+    id: `necta-f4-physics-${paper.year}${paperSlug}`,
+    title: `NECTA Form 4 Physics${paperSuffix} - ${paper.year}`,
+    description: `Mtihani wa Taifa wa Kidato cha Nne (CSEE) - Fizikia (Physics${paperSuffix}) wa Mwaka ${paper.year}. Karatasi rasmi ya NECTA kwa ajili ya mazoezi, marudio na maandalizi ya mitihani.`,
+    category: 'Physics',
+    subject: 'Physics',
+    tags: ['NECTA', 'CSEE', 'Physics', 'physics', 'Fizikia', 'fizikia', 'Past Papers', 'Kidato cha Nne', 'Form 4', 'f4', String(paper.year), paper.paperNo || 'Paper 1'],
+    fileId: paper.fileId,
+    driveUrl: `https://drive.google.com/file/d/${paper.fileId}/preview`,
+    uploadedBy: 'system',
+    uploadedByName: 'Baraza la Mitihani la Tanzania (NECTA)',
+    createdAt: Date.now() - (2026 - paper.year) * 86400000 * 30,
+    views: 1350 + (2026 - paper.year) * 140,
+    status: 'approved',
+    downloadsCount: 480 + (2026 - paper.year) * 75,
+    rating: 5.0,
+    type: 'NECTA',
+    paperNo: paper.paperNo || 'Paper 1',
+    year: paper.year,
+    sizeKB: 350
+  };
 
+  generatedPhysicsDocs.push(baseDoc);
+
+  // Add standard alias IDs like necta-phy-f4-YYYY for direct links from past paper widgets
+  const aliasDoc = {
+    ...baseDoc,
+    id: `necta-phy-f4-${paper.year}`
+  };
+  generatedPhysicsDocs.push(aliasDoc);
+});
+
+export const nectaMathDocs: DocumentMetadata[] = generatedMathDocs;
+export const nectaPhysicsDocs: DocumentMetadata[] = generatedPhysicsDocs;
+export const localSeedDocs: DocumentMetadata[] = [...nectaMathDocs, ...nectaPhysicsDocs];

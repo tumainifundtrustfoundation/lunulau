@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { nectaMathDocs } from './data/seedDocs';
+import { nectaMathDocs, nectaPhysicsDocs } from './data/seedDocs';
 import {
   getAuth,
   signInWithPopup,
@@ -46,12 +46,12 @@ export const auth = getAuth(app);
 
 // Suppress verbose internal Firestore transport warnings in sandboxed iframe environments
 try {
-  setLogLevel('error');
+  setLogLevel('silent');
 } catch {
   // Ignore if unsupported
 }
 
-// Initialize Firestore with memory cache and auto-long polling for iframe compatibility
+// Initialize Firestore with robust long-polling settings and persistent/memory cache fallback
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
 const dbId = firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : undefined;
 
@@ -59,16 +59,23 @@ let dbInstance: any;
 
 try {
   dbInstance = initializeFirestore(app, {
-    localCache: memoryLocalCache(),
-    experimentalAutoDetectLongPolling: true
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    experimentalForceLongPolling: true,
   }, dbId);
 } catch (err1) {
   try {
     dbInstance = initializeFirestore(app, {
-      localCache: memoryLocalCache()
+      localCache: memoryLocalCache(),
+      experimentalForceLongPolling: true,
     }, dbId);
   } catch (err2) {
-    dbInstance = getFirestore(app, dbId);
+    try {
+      dbInstance = initializeFirestore(app, {
+        experimentalForceLongPolling: true
+      }, dbId);
+    } catch (err3) {
+      dbInstance = getFirestore(app, dbId);
+    }
   }
 }
 
@@ -552,7 +559,8 @@ export const fetchDocuments = async (filters?: {
           rating: 5,
           type: "books"
         },
-        ...nectaMathDocs
+        ...nectaMathDocs,
+        ...nectaPhysicsDocs
       ];
 
       for (const docData of INITIAL_DOCS) {
