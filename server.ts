@@ -2035,6 +2035,17 @@ app.get('/google9672e38aa649a8ad.html', (req, res) => {
   res.send('google-site-verification: google9672e38aa649a8ad.html');
 });
 
+app.get(['/dev-sw.js', '/dev-sw.js*'], (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.send(`
+    self.addEventListener('install', () => self.skipWaiting());
+    self.addEventListener('activate', (e) => {
+      self.registration.unregister();
+    });
+  `);
+});
+
 // Setup Vite or static serving based on environment
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {

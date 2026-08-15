@@ -149,11 +149,36 @@ export default function App() {
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
 
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
+    const prefetchNectaPapers = () => {
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // Proactively pre-cache NECTA past papers for all academic levels in background
+        ['f4', 'f2', 'f6', 'std7', 'std4'].forEach((lvl) => {
+          navigator.serviceWorker.controller?.postMessage({
+            type: 'PREFETCH_ACADEMIC_LEVEL_PAPERS',
+            level: lvl,
+          });
+        });
+      }
+    };
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      prefetchNectaPapers();
+    };
     const handleOffline = () => setIsOffline(true);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Trigger initial background prefetch when app loads while online
+    if (navigator.onLine) {
+      const initialTimer = setTimeout(prefetchNectaPapers, 2500);
+      return () => {
+        clearTimeout(initialTimer);
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);

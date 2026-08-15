@@ -36,7 +36,7 @@ export const NECTA_FORM4_MATH_PAPERS_DATA: { year: number; paperNo?: string; fil
   { year: 1994, fileId: '1q2rmwfiOaqbayvLYOHRfy5Lb2Ewxd-fM' },
 ];
 
-export const NECTA_FORM4_PHYSICS_PAPERS_DATA: { year: number; paperNo?: string; fileId: string }[] = [
+export const NECTA_FORM4_PHYSICS_PAPERS_DATA: { year: number; paperNo?: string; fileId: string; driveUrl?: string }[] = [
   { year: 2025, fileId: '1V2rizF5lclncEJ_ufWmrMZVpZVMsqUH_' },
   { year: 2024, fileId: '12oHzoGS2-_eZ5Wo6rlqICzkoZUPEtmD_' },
   { year: 2023, fileId: '1GpUmdDRkkq9e8Te7Uhoww18PNWwOQX9t' },
@@ -59,6 +59,16 @@ export const NECTA_FORM4_PHYSICS_PAPERS_DATA: { year: number; paperNo?: string; 
   { year: 2006, fileId: '137k2tDqh7iB462J_YETkVgOAe0M4hDTy' },
   { year: 2005, fileId: '1EVTJRXa_4dL-oiyPzsts10_jJ5w9FoWy' },
   { year: 2004, fileId: '1hTLbL76sjSUpefctOo2Fz78Ox4lE8LVK' },
+  { year: 2003, fileId: '1JXHfL5szNALPslX_NxMw6MOfToEM71GT' },
+  { year: 2002, fileId: '1gtIqA89iwwWVUUPeYZheze-F9s4puGKW' },
+  { year: 2001, fileId: '1ZRm4jywHA1McitZTozZOmOh6hFqYW90V' },
+  { year: 2000, fileId: '1NasOpJiXaYG2i7OebZTvpHn-x1B0pGWg' },
+  { year: 1999, fileId: '1bkyMhutcQFxNYm0CWtIhRy7bHVKLgPZn' },
+  { year: 1998, fileId: 'necta-phy-1998-pdf', driveUrl: 'https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-1998-1.pdf&embedded=true' },
+  { year: 1997, fileId: 'necta-phy-1997-pdf', driveUrl: 'https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-1997-1.pdf&embedded=true' },
+  { year: 1996, fileId: 'necta-phy-1996-pdf', driveUrl: 'https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-1996-1.pdf&embedded=true' },
+  { year: 1995, fileId: 'necta-phy-1995-pdf', driveUrl: 'https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-1995-1.pdf&embedded=true' },
+  { year: 1994, fileId: 'necta-phy-1994-pdf', driveUrl: 'https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-1994-1.pdf&embedded=true' },
 ];
 
 const generatedMathDocs: DocumentMetadata[] = [];
@@ -98,6 +108,8 @@ NECTA_FORM4_PHYSICS_PAPERS_DATA.forEach((paper) => {
   const paperSuffix = paper.paperNo ? ` (${paper.paperNo})` : '';
   const paperSlug = paper.paperNo ? `-${paper.paperNo.toLowerCase().replace(/\s+/g, '')}` : '';
 
+  const calculatedDriveUrl = paper.driveUrl || (paper.fileId.startsWith('1') ? `https://drive.google.com/file/d/${paper.fileId}/preview` : `https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/csee/physics/Physics-${paper.year}-1.pdf&embedded=true`);
+
   const baseDoc: DocumentMetadata = {
     id: `necta-f4-physics-${paper.year}${paperSlug}`,
     title: `NECTA Form 4 Physics${paperSuffix} - ${paper.year}`,
@@ -106,7 +118,7 @@ NECTA_FORM4_PHYSICS_PAPERS_DATA.forEach((paper) => {
     subject: 'Physics',
     tags: ['NECTA', 'CSEE', 'Physics', 'physics', 'Fizikia', 'fizikia', 'Past Papers', 'Kidato cha Nne', 'Form 4', 'f4', String(paper.year), paper.paperNo || 'Paper 1'],
     fileId: paper.fileId,
-    driveUrl: `https://drive.google.com/file/d/${paper.fileId}/preview`,
+    driveUrl: calculatedDriveUrl,
     uploadedBy: 'system',
     uploadedByName: 'Baraza la Mitihani la Tanzania (NECTA)',
     createdAt: Date.now() - (2026 - paper.year) * 86400000 * 30,

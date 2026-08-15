@@ -1594,7 +1594,13 @@ export default function MitihaniView({
             'basic-math': 'basic-math',
             'adv-math': 'adv-math',
             'kiswahili': 'kiswahili',
-            'english': 'english'
+            'english': 'english',
+            'physics': 'physics',
+            'chemistry': 'chemistry',
+            'biology': 'biology',
+            'geography': 'geography',
+            'history': 'history',
+            'civics': 'civics',
           };
           const maktabaSubject = maktabaSubjectMap[nectaWizardSubject] || nectaWizardSubject;
 
@@ -1602,6 +1608,9 @@ export default function MitihaniView({
                             nectaWizardSubject === 'adv-math' ? 'Advanced-Mathematics' :
                             nectaWizardSubject === 'kiswahili' ? 'Kiswahili' :
                             nectaWizardSubject === 'english' ? 'English-Language' :
+                            nectaWizardSubject === 'physics' ? 'Physics' :
+                            nectaWizardSubject === 'chemistry' ? 'Chemistry' :
+                            nectaWizardSubject === 'biology' ? 'Biology' :
                             nectaWizardSubject === 'science' ? 'Science-and-Technology' :
                             nectaWizardSubject === 'social-studies' ? 'Social-Studies' :
                             nectaWizardSubject === 'civic-moral' ? 'Civic-and-Moral-Education' :
@@ -1615,7 +1624,8 @@ export default function MitihaniView({
             }
           }
 
-          const autoDocDriveUrl = formatGoogleDriveUrl(matchingDoc?.driveUrl || 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/preview');
+          const fallbackDirectUrl = `https://docs.google.com/viewer?url=https://maktaba.tetea.org/past-papers/${maktabaLevel}/${maktabaSubject}/${fileSubject}-${nectaWizardYear}${paperSuffix}.pdf&embedded=true`;
+          const autoDocDriveUrl = formatGoogleDriveUrl(matchingDoc?.driveUrl || fallbackDirectUrl);
 
           return (
             <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-6 mt-2 shadow-2xl">

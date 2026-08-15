@@ -66,10 +66,120 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,json,woff2}'],
-          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 15 * 1024 * 1024, // 15MB
           cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//, /^\/oauth\//],
           runtimeCaching: [
+            // 1. Google Drive & Docs Previews for NECTA Past Papers (Background prefetching & offline fallback)
+            {
+              urlPattern: /^https:\/\/(?:drive|docs)\.google\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'necta-past-papers-drive-cache',
+                expiration: {
+                  maxEntries: 500,
+                  maxAgeSeconds: 90 * 24 * 60 * 60, // 90 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 2. Google User Content CDN (PDF previews, thumbnails, diagram images)
+            {
+              urlPattern: /^https:\/\/.*\.googleusercontent\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'necta-google-usercontent-cache',
+                expiration: {
+                  maxEntries: 500,
+                  maxAgeSeconds: 90 * 24 * 60 * 60, // 90 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 3. Direct PDF Documents & NECTA Exam Files (Cache-first for instant offline viewing)
+            {
+              urlPattern: /\.(?:pdf|doc|docx|epub)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'necta-past-papers-pdf-vault',
+                expiration: {
+                  maxEntries: 400,
+                  maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 4. Maktaba Tetea & National Examination Repositories
+            {
+              urlPattern: /^https:\/\/maktaba\.tetea\.org\/past-papers\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'necta-tetea-papers-cache',
+                expiration: {
+                  maxEntries: 300,
+                  maxAgeSeconds: 120 * 24 * 60 * 60, // 120 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 5. Firestore & Firebase Academic Documents & Exam Metadata
+            {
+              urlPattern: /^https:\/\/(?:firestore|firebasestorage)\.googleapis\.com\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'necta-firestore-documents-cache',
+                networkTimeoutSeconds: 3,
+                expiration: {
+                  maxEntries: 300,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 6. Internal Academic APIs, Exam Metadata & Local Data
+            {
+              urlPattern: /^\/api\/(?:documents|mitihani|pastpapers|exams|necta|notes|masomo|search).*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'necta-api-past-papers-cache',
+                expiration: {
+                  maxEntries: 200,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 7. Static Diagrams, Educational Images & Web Assets
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'necta-static-images-cache',
+                expiration: {
+                  maxEntries: 250,
+                  maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            // 8. Google Fonts Stylesheets
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',
@@ -84,6 +194,7 @@ export default defineConfig(() => {
                 },
               },
             },
+            // 9. Google Fonts Webfonts
             {
               urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
               handler: 'CacheFirst',
@@ -101,7 +212,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
       }),
     ],

@@ -1,0 +1,5 @@
+// Development fallback service worker
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => {
+  self.registration.unregister();
+});

@@ -803,8 +803,16 @@ export default function PDFPreviewer({
     handleResize(); // trigger initial check
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>('interactive');
+  // Default to iframe view mode when a Google Drive URL is available to show genuine PDF, otherwise interactive mode
+  const [viewMode, setViewMode] = useState<'interactive' | 'iframe'>(() => driveUrl ? 'iframe' : 'interactive');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // Auto-switch to direct PDF mode when a valid driveUrl is supplied or changes
+  useEffect(() => {
+    if (driveUrl) {
+      setViewMode('iframe');
+    }
+  }, [driveUrl, documentId]);
 
   // PDF loading progress & skeleton states
   const [isIframeLoading, setIsIframeLoading] = useState<boolean>(false);
@@ -965,8 +973,8 @@ export default function PDFPreviewer({
     setCurrentPage(1);
     setRotation(0);
     setSearchQuery('');
-    setViewMode('interactive');
-  }, [documentId]);
+    setViewMode(driveUrl ? 'iframe' : 'interactive');
+  }, [documentId, driveUrl]);
 
   // High-fidelity page content database
   const documentPages = useMemo((): PageData[] => {
@@ -998,6 +1006,13 @@ export default function PDFPreviewer({
                   <span>CODE: 031/1 (PHYSICS)</span>
                   <span>TIME: 3:00 Hours (Saa 3)</span>
                 </div>
+                {driveUrl && (
+                  <div className="mt-3 p-2 bg-indigo-50 border border-indigo-200/80 rounded-xl text-center">
+                    <p className="text-[11px] text-indigo-900 font-semibold">
+                      📄 <strong>Kidokezo:</strong> Karatasi halisi ya mtihani wa mwaka huu wa {examYr} inapatikana kwenye kichupo cha <button type="button" onClick={() => setViewMode('iframe')} className="text-indigo-600 underline font-bold hover:text-indigo-800 cursor-pointer">Karatasi Halisi (PDF)</button>.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Instructions Panel */}
@@ -3862,23 +3877,23 @@ export default function PDFPreviewer({
           </div>
         </div>
 
-        {/* Middle: Render View Toggle (Interactive vs. direct iframe) */}
+        {/* Middle: Render View Toggle (Official PDF vs Interactive Study) */}
         <div className="flex bg-slate-800 p-1 rounded-xl text-[10px] font-bold uppercase tracking-wider shrink-0 border border-slate-700">
           <button
-            onClick={() => setViewMode('interactive')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
-              viewMode === 'interactive' ? 'bg-cyan-500 text-slate-950 shadow-sm font-black' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sparkles size={12} /> Interactive HD Reader
-          </button>
-          <button
             onClick={() => setViewMode('iframe')}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === 'iframe' ? 'bg-cyan-500 text-slate-950 shadow-sm font-black' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Eye size={12} /> Direct PDF File
+            <Eye size={12} /> Karatasi Halisi (PDF)
+          </button>
+          <button
+            onClick={() => setViewMode('interactive')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === 'interactive' ? 'bg-cyan-500 text-slate-950 shadow-sm font-black' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Sparkles size={12} /> Majibu & Marking Scheme
           </button>
         </div>
 
