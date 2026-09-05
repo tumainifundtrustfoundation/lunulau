@@ -118,22 +118,6 @@
   <body class="bg-slate-50 antialiased font-sans">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-              console.log('[Lupanulla PWA] Service Worker registered:', registration.scope);
-            })
-            .catch(err => {
-              console.warn('[Lupanulla PWA] Retrying registration with /sw.js...', err);
-              navigator.serviceWorker.register('/sw.js').catch(swErr => {
-                console.error('[Lupanulla PWA] SW registration failed:', swErr);
-              });
-            });
-        });
-      }
-    </script>
   </body>
 </html>
 

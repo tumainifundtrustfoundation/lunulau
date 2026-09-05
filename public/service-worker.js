@@ -144,13 +144,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // B. Skip Non-GET requests, Firebase WebSockets/Auth, and Vite HMR
+  // B. Skip Non-GET requests, Firebase WebSockets/Auth, and Vite Dev/HMR
   if (
     request.method !== 'GET' ||
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('identitytoolkit.googleapis.com') ||
     url.pathname.includes('/ws') ||
-    url.search.includes('hmr')
+    url.search.includes('hmr') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.includes('/node_modules/') ||
+    url.pathname.includes('.vite') ||
+    url.search.includes('v=') ||
+    url.pathname.endsWith('.tsx') ||
+    url.pathname.endsWith('.ts')
   ) {
     return;
   }

@@ -96,15 +96,22 @@ export default function QuoteWidget() {
     }, 400); // Small delay for the spinning transition feel
   };
 
-  const handleCopy = () => {
-    const current = TANZANIAN_QUOTES[currentIndex];
-    const textToCopy = `"${current.swahili}" — ${current.author} (${current.role})`;
-    navigator.clipboard.writeText(textToCopy);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      const current = TANZANIAN_QUOTES[currentIndex] || TANZANIAN_QUOTES[0];
+      const textToCopy = `"${current.swahili}" — ${current.author} (${current.role})`;
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Ignore clipboard restrictions in iframe
+    }
   };
 
-  const current = TANZANIAN_QUOTES[currentIndex];
+  const current = TANZANIAN_QUOTES[currentIndex] || TANZANIAN_QUOTES[0];
+  if (!current) return null;
 
   return (
     <div 

@@ -10,6 +10,14 @@ import nodemailer from 'nodemailer';
 // Load environment variables
 dotenv.config();
 
+// Global server crash protection
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER UNCAUGHT EXCEPTION]:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[SERVER UNHANDLED REJECTION]:', reason);
+});
+
 const app = express();
 const PORT = 3000;
 
