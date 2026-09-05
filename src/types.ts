@@ -27,6 +27,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone?: string;
+  photoURL?: string;
   role: UserRole;
   subscription: SubscriptionTier;
   createdAt?: number;

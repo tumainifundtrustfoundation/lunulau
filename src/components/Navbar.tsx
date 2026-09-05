@@ -56,6 +56,7 @@ interface NavbarProps {
   onChangeTheme: (theme: AppTheme) => void;
   language: 'sw' | 'en';
   onChangeLanguage: (lang: 'sw' | 'en') => void;
+  onProfileUpdate?: () => void;
 }
 
 export default function Navbar({
@@ -69,7 +70,8 @@ export default function Navbar({
   theme,
   onChangeTheme,
   language,
-  onChangeLanguage
+  onChangeLanguage,
+  onProfileUpdate
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -447,8 +449,16 @@ export default function Navbar({
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 bg-slate-900 hover:bg-slate-850 rounded-xl p-1.5 border border-slate-800 transition-all text-left"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500 text-slate-950 flex items-center justify-center font-extrabold text-sm uppercase">
-                    {userProfile.name.charAt(0)}
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500 text-slate-950 flex items-center justify-center font-extrabold text-sm uppercase overflow-hidden shrink-0 ring-1 ring-cyan-500/30">
+                    {userProfile.photoURL ? (
+                      <img 
+                        src={userProfile.photoURL} 
+                        alt={userProfile.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      userProfile.name.charAt(0)
+                    )}
                   </div>
                   <div className="pr-2 hidden sm:block">
                     <p className="text-xs font-bold text-white line-clamp-1 max-w-[120px]">{userProfile.name}</p>
@@ -849,8 +859,16 @@ export default function Navbar({
                 {userProfile ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 px-2 py-1 bg-slate-900/50 rounded-xl border border-slate-800/40">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 text-slate-950 flex items-center justify-center font-black text-sm">
-                        {userProfile.name.charAt(0)}
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-500 text-slate-950 flex items-center justify-center font-black text-sm overflow-hidden shrink-0 ring-1 ring-cyan-500/30">
+                        {userProfile.photoURL ? (
+                          <img 
+                            src={userProfile.photoURL} 
+                            alt={userProfile.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          userProfile.name.charAt(0)
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-black text-white truncate">{userProfile.name}</p>
@@ -931,6 +949,7 @@ export default function Navbar({
         userProfile={userProfile}
         onNavigate={onNavigate}
         language={language}
+        onProfileUpdate={onProfileUpdate}
       />
     </nav>
   );

@@ -941,6 +941,11 @@ export default function App() {
         onChangeTheme={setTheme}
         language={language}
         onChangeLanguage={setLanguage}
+        onProfileUpdate={() => {
+          if (user?.uid) {
+            refreshProfile(user.uid);
+          }
+        }}
       />
 
       {/* Main Container Area */}

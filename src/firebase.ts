@@ -250,6 +250,7 @@ export const ensureUserProfile = async (user: User, displayName: string, additio
     uid: user.uid,
     name: displayName,
     email: user.email || '',
+    photoURL: user.photoURL || undefined,
     role: isSuperAdmin ? 'super_admin' : 'student',
     subscription: isSuperAdmin ? 'premium' : 'free',
     createdAt: Date.now(),

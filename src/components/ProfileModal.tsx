@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   User, 
   Mail, 
@@ -6,10 +6,16 @@ import {
   Crown, 
   ShieldCheck, 
   X, 
-  Zap
+  Zap,
+  Camera,
+  Upload,
+  Trash2,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import AchievementsModule from './AchievementsModule';
 import { UserProfile } from '../types';
+import { updateUserProfile } from '../firebase';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -17,6 +23,7 @@ interface ProfileModalProps {
   userProfile: Partial<UserProfile> | null;
   onNavigate?: (view: string) => void;
   language?: 'sw' | 'en';
+  onProfileUpdate?: () => void;
 }
 
 export default function ProfileModal({
@@ -24,9 +31,14 @@ export default function ProfileModal({
   onClose,
   userProfile,
   onNavigate,
-  language = 'sw'
+  language = 'sw',
+  onProfileUpdate
 }: ProfileModalProps) {
   const [activeTab, setActiveTab] = useState<'achievements' | 'info'>('achievements');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -34,6 +46,111 @@ export default function ProfileModal({
   const studyTime = userProfile?.studyTime || 120;
   const level = Math.max(1, Math.floor(xp / 450));
   const isPremium = userProfile?.subscription === 'premium' || userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+
+  // Handle image upload and resize to safe base64
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!file.type.startsWith('image/')) {
+      setUploadError(language === 'sw' ? 'Tafadhali chagua faili la picha (JPEG, PNG, WebP).' : 'Please choose an image file (JPEG, PNG, WebP).');
+      return;
+    }
+
+    // Validate size (max 5MB raw)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError(language === 'sw' ? 'Picha ni kubwa mno. Tafadhali chagua picha chini ya 5MB.' : 'Image is too large. Please select an image under 5MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          // Resize image on an off-screen canvas to max 256x256 for fast loading and low storage footprint
+          const canvas = document.createElement('canvas');
+          const maxDim = 256;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            if (userProfile?.uid) {
+              await updateUserProfile(userProfile.uid, { photoURL: compressedDataUrl });
+            }
+
+            if (onProfileUpdate) {
+              onProfileUpdate();
+            }
+
+            setUploadSuccess(language === 'sw' ? 'Picha ya wasifu imebadilishwa kikamilifu!' : 'Profile picture updated successfully!');
+            setTimeout(() => setUploadSuccess(null), 3000);
+          }
+        } catch (err: any) {
+          console.error('Failed to save profile picture:', err);
+          setUploadError(language === 'sw' ? 'Imeshindwa kuhifadhi picha. Jaribu tena.' : 'Failed to save picture. Please try again.');
+        } finally {
+          setIsUploading(false);
+        }
+      };
+
+      img.onerror = () => {
+        setIsUploading(false);
+        setUploadError(language === 'sw' ? 'Hitilafu ya kufungua picha.' : 'Error opening image file.');
+      };
+
+      img.src = readerEvent.target?.result as string;
+    };
+
+    reader.onerror = () => {
+      setIsUploading(false);
+      setUploadError(language === 'sw' ? 'Hitilafu ya kusoma faili.' : 'Failed to read file.');
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!userProfile?.uid) return;
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+    try {
+      await updateUserProfile(userProfile.uid, { photoURL: '' });
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+      setUploadSuccess(language === 'sw' ? 'Picha ya wasifu imeondolewa!' : 'Profile picture removed!');
+      setTimeout(() => setUploadSuccess(null), 3000);
+    } catch (err) {
+      setUploadError(language === 'sw' ? 'Hitilafu ya kuondoa picha.' : 'Failed to remove picture.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
@@ -51,12 +168,60 @@ export default function ProfileModal({
           </button>
 
           <div className="flex flex-wrap items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 flex items-center justify-center font-black text-2xl uppercase shadow-xl ring-4 ring-cyan-500/20 shrink-0">
-              {userProfile?.name ? userProfile.name.charAt(0) : 'M'}
+            {/* Profile Avatar with Change Trigger */}
+            <div className="relative group shrink-0">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handlePhotoSelect} 
+                accept="image/png, image/jpeg, image/webp" 
+                className="hidden" 
+              />
+              
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 flex items-center justify-center font-black text-2xl uppercase shadow-xl ring-4 ring-cyan-500/20 cursor-pointer relative transition-transform hover:scale-105"
+                title={language === 'sw' ? 'Bonyeza kubadili picha ya wasifu' : 'Click to change profile picture'}
+              >
+                {userProfile?.photoURL ? (
+                  <img 
+                    src={userProfile.photoURL} 
+                    alt={userProfile.name || 'User Profile'} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{userProfile?.name ? userProfile.name.charAt(0) : 'M'}</span>
+                )}
+
+                {/* Hover overlay with camera */}
+                <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity gap-1">
+                  {isUploading ? (
+                    <Loader2 size={20} className="animate-spin text-cyan-400" />
+                  ) : (
+                    <>
+                      <Camera size={20} className="text-cyan-300" />
+                      <span className="text-[9px] font-extrabold uppercase tracking-tight text-white">
+                        {language === 'sw' ? 'Badili' : 'Change'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick action button for Camera */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl flex items-center justify-center shadow-lg border-2 border-slate-900 cursor-pointer transition-transform hover:scale-110"
+                title={language === 'sw' ? 'Pakia picha mpya' : 'Upload new picture'}
+              >
+                <Camera size={13} strokeWidth={2.5} />
+              </button>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
+            <div className="space-y-1 flex-1 min-w-[200px]">
+              <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg sm:text-xl font-black text-white">
                   {userProfile?.name || 'Mwanafunzi Lupanulla'}
                 </h2>
@@ -74,6 +239,45 @@ export default function ProfileModal({
                 <Mail size={12} className="text-cyan-400" />
                 <span>{userProfile?.email || 'mwanafunzi@lupanulla.co.tz'}</span>
               </p>
+
+              {/* Photo Action Buttons */}
+              <div className="flex items-center gap-2 pt-1 pb-1">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-cyan-500/40 cursor-pointer transition-all"
+                >
+                  <Upload size={11} />
+                  <span>{language === 'sw' ? 'Badili Picha' : 'Change Photo'}</span>
+                </button>
+
+                {userProfile?.photoURL && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    disabled={isUploading}
+                    className="px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-rose-500/30 cursor-pointer transition-all"
+                  >
+                    <Trash2 size={11} />
+                    <span>{language === 'sw' ? 'Futa' : 'Remove'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Success / Error Messages */}
+              {uploadSuccess && (
+                <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold">
+                  <CheckCircle2 size={13} />
+                  <span>{uploadSuccess}</span>
+                </div>
+              )}
+              {uploadError && (
+                <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-bold">
+                  <X size={13} />
+                  <span>{uploadError}</span>
+                </div>
+              )}
 
               {/* Level & XP Stats Row */}
               <div className="flex items-center gap-3 pt-1 text-xs font-bold">
