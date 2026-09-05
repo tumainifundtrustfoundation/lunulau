@@ -46,7 +46,9 @@ import {
   Fingerprint,
   MapPin,
   RefreshCw,
-  CreditCard
+  CreditCard,
+  BookOpen,
+  ExternalLink
 } from 'lucide-react';
 import {
   AreaChart,
@@ -236,6 +238,22 @@ export default function AdminView({
   const [docStatus, setDocStatus] = useState<'pending' | 'approved' | 'rejected'>('approved');
   const [isDocSaving, setIsDocSaving] = useState<boolean>(false);
   const [adminDocSearch, setAdminDocSearch] = useState<string>( '');
+
+  // --- MASOMO DRIVE NOTES (ADMIN TO MASOMO VIEW) ---
+  const [noteTitle, setNoteTitle] = useState<string>('');
+  const [noteDescription, setNoteDescription] = useState<string>('');
+  const [noteSubject, setNoteSubject] = useState<string>('Physics');
+  const [noteEducationLevel, setNoteEducationLevel] = useState<string>('O-Level');
+  const [noteClassLevel, setNoteClassLevel] = useState<string>('Form 4');
+  const [noteDriveUrl, setNoteDriveUrl] = useState<string>('');
+  const [noteTagsInput, setNoteTagsInput] = useState<string>('');
+  const [noteYear, setNoteYear] = useState<number>(2026);
+  const [isNoteSaving, setIsNoteSaving] = useState<boolean>(false);
+  const [noteSearch, setNoteSearch] = useState<string>('');
+  const [noteSubjectFilter, setNoteSubjectFilter] = useState<string>('all');
+  const [noteClassFilter, setNoteClassFilter] = useState<string>('all');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [isNoteFormOpen, setIsNoteFormOpen] = useState<boolean>(false);
 
   // --- NEW: Exam Manager Tab State Variables ---
   const [examLevel, setExamLevel] = useState<string>('f4');
@@ -449,7 +467,7 @@ export default function AdminView({
         const pDocs = await fetchDocuments({ status: 'pending' });
         pDocs.sort((a, b) => b.createdAt - a.createdAt);
         setPendingDocs(pDocs);
-      } else if (activeTab === 'documents' || activeTab === 'exam_manager') {
+      } else if (activeTab === 'documents' || activeTab === 'exam_manager' || activeTab === 'masomo_notes') {
         const aDocs = await fetchDocuments();
         aDocs.sort((a, b) => b.createdAt - a.createdAt);
         setAllDocs(aDocs);
@@ -1629,6 +1647,165 @@ export default function AdminView({
     }
   };
 
+  // --- MASOMO DRIVE NOTES HANDLERS ---
+  const handleOpenAddMasomoNote = () => {
+    setEditingNoteId(null);
+    setNoteTitle('');
+    setNoteDescription('');
+    setNoteSubject('Physics');
+    setNoteEducationLevel('O-Level');
+    setNoteClassLevel('Form 4');
+    setNoteDriveUrl('');
+    setNoteTagsInput('');
+    setNoteYear(2026);
+    setIsNoteFormOpen(true);
+  };
+
+  const handleOpenEditMasomoNote = (docItem: DocumentMetadata) => {
+    setEditingNoteId(docItem.id);
+    setNoteTitle(docItem.title);
+    setNoteDescription(docItem.description || '');
+    setNoteSubject((docItem as any).subject || 'Physics');
+    setNoteEducationLevel((docItem as any).educationLevel || 'O-Level');
+    setNoteClassLevel((docItem as any).classLevel || 'Form 4');
+    setNoteDriveUrl(docItem.driveUrl || '');
+    setNoteTagsInput(Array.isArray(docItem.tags) ? docItem.tags.join(', ') : '');
+    setNoteYear(docItem.year || 2026);
+    setIsNoteFormOpen(true);
+  };
+
+  const handleSaveMasomoNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteTitle.trim()) {
+      alert('Tafadhali weka jina au kichwa cha notisi.');
+      return;
+    }
+    if (!noteDriveUrl.trim()) {
+      alert('Tafadhali weka kiungo halali cha Google Drive.');
+      return;
+    }
+
+    let cleanUrl = noteDriveUrl.trim();
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    setIsNoteSaving(true);
+    try {
+      let fileId = `drive-note-${Date.now()}`;
+      const driveMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        fileId = driveMatch[1];
+      }
+
+      const tags = noteTagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+      if (!tags.includes(noteSubject)) tags.push(noteSubject);
+      if (!tags.includes(noteClassLevel)) tags.push(noteClassLevel);
+      if (!tags.includes('Notes')) tags.push('Notes');
+
+      if (editingNoteId) {
+        await updateDocument(editingNoteId, {
+          title: noteTitle.trim(),
+          description: noteDescription.trim() || `Notisi kamili za ${noteSubject} (${noteClassLevel})`,
+          category: 'Notes',
+          documentType: 'Notes',
+          type: 'notes',
+          subject: noteSubject,
+          educationLevel: noteEducationLevel,
+          classLevel: noteClassLevel,
+          driveUrl: cleanUrl,
+          fileId: fileId,
+          tags: tags,
+          year: Number(noteYear) || 2026,
+          status: 'approved',
+        });
+
+        await logAdminAction(
+          'update_masomo_note',
+          editingNoteId,
+          noteTitle.trim(),
+          `Notisi ya masomo ya ${noteSubject} (${noteClassLevel}) imesasishwa.`
+        );
+        alert('Notisi imesasishwa kikamilifu!');
+      } else {
+        const newDoc: Omit<DocumentMetadata, 'id'> = {
+          title: noteTitle.trim(),
+          description: noteDescription.trim() || `Notisi kamili za somo la ${noteSubject} kwa wanafunzi wa ${noteClassLevel}.`,
+          category: 'Notes',
+          documentType: 'Notes',
+          type: 'notes',
+          subject: noteSubject,
+          educationLevel: noteEducationLevel,
+          classLevel: noteClassLevel,
+          driveUrl: cleanUrl,
+          fileId: fileId,
+          tags: tags,
+          year: Number(noteYear) || 2026,
+          status: 'approved',
+          uploadedBy: userProfile?.uid || 'admin',
+          uploadedByName: userProfile?.name || 'Msimamizi Lupanulla',
+          createdAt: Date.now(),
+          views: 0,
+          downloadsCount: 0,
+          rating: 5,
+        };
+
+        const newId = await saveDocumentMetadata(newDoc);
+        if (newId) {
+          await updateDocument(newId, { status: 'approved' });
+        }
+        await logAdminAction(
+          'create_masomo_note',
+          newId || `note-${Date.now()}`,
+          noteTitle.trim(),
+          `Imepakiwa notisi mpya ya ${noteSubject} (${noteClassLevel}) kutoka Google Drive.`
+        );
+        alert('Notisi imepakiwa na sasa inapatikana moja kwa moja kwenye Ukurasa wa Masomo!');
+      }
+
+      const freshDocs = await fetchDocuments();
+      freshDocs.sort((a, b) => b.createdAt - a.createdAt);
+      setAllDocs(freshDocs);
+
+      setIsNoteFormOpen(false);
+      setEditingNoteId(null);
+      setNoteTitle('');
+      setNoteDescription('');
+      setNoteDriveUrl('');
+      setNoteTagsInput('');
+    } catch (err: any) {
+      console.error('Error saving masomo note:', err);
+      alert(`Kosa limetokea: ${err.message || 'Haikuweza kuhifadhiwa'}`);
+    } finally {
+      setIsNoteSaving(false);
+    }
+  };
+
+  const handleDeleteMasomoNote = async (id: string, title: string) => {
+    if (!window.confirm(`Je, una uhakika unataka kuiondoa notisi hii ya Masomo: "${title}"?`)) {
+      return;
+    }
+    try {
+      await deleteDocumentMetadata(id);
+      await logAdminAction(
+        'delete_masomo_note',
+        id,
+        title,
+        `Notisi ya masomo imefutwa kutoka kwenye orodha na ukurasa wa masomo.`
+      );
+      const freshDocs = await fetchDocuments();
+      freshDocs.sort((a, b) => b.createdAt - a.createdAt);
+      setAllDocs(freshDocs);
+      alert('Notisi imefutwa kikamilifu.');
+    } catch (err: any) {
+      console.error('Error deleting note:', err);
+      alert(`Imeshindwa kufuta: ${err.message || 'Kosa la mtandao'}`);
+    }
+  };
+
   const handleAddSubject = async () => {
     if (!newSubject.trim()) return;
     const clean = newSubject.trim();
@@ -2490,6 +2667,17 @@ export default function AdminView({
           Nyaraka Zote
         </button>
         <button
+          onClick={() => setActiveTab('masomo_notes')}
+          className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'masomo_notes'
+              ? 'border-indigo-600 text-indigo-600 font-extrabold'
+              : 'border-transparent text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <BookOpen size={16} className="text-cyan-600" />
+          Pakia Notisi za Masomo (Drive)
+        </button>
+        <button
           onClick={() => setActiveTab('exam_manager')}
           className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'exam_manager'
@@ -3204,6 +3392,414 @@ export default function AdminView({
                         Kamilisha na Funga
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: MASOMO DRIVE NOTES */}
+          {activeTab === 'masomo_notes' && (
+            <div className="bg-white border border-gray-100 rounded-3xl p-5 sm:p-6 shadow-sm space-y-6 animate-fade-in">
+              {/* Header Bar */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-50">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 rounded-xl bg-cyan-50 text-cyan-600 border border-cyan-100">
+                      <BookOpen size={18} />
+                    </span>
+                    <h2 className="text-lg font-sans font-extrabold text-gray-900">
+                      Notisi za Masomo (Google Drive Link)
+                    </h2>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Pakia na dhibiti viungo vya Google Drive vya notisi za masomo vinavyosomeka na kupakuliwa moja kwa moja kwenye Ukurasa wa Masomo kwa wanafunzi wote.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => onNavigate('masomo')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-700 hover:text-cyan-700 bg-slate-50 hover:bg-cyan-50 border border-slate-200 hover:border-cyan-200 rounded-xl transition-all shadow-sm"
+                  >
+                    <Eye size={14} />
+                    Tazama Ukurasa wa Masomo
+                  </button>
+                  <button
+                    onClick={handleOpenAddMasomoNote}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl transition-all shadow-sm"
+                  >
+                    <PlusCircle size={14} />
+                    Pakia Notisi Mpya ya Drive
+                  </button>
+                </div>
+              </div>
+
+              {/* Instructions / Google Drive Sharing Guide Card */}
+              <div className="bg-gradient-to-r from-cyan-50/70 via-indigo-50/50 to-blue-50/60 border border-cyan-100/80 rounded-2xl p-4 text-xs space-y-2">
+                <div className="flex items-center gap-2 font-extrabold text-cyan-950">
+                  <span className="p-1 rounded-lg bg-cyan-500 text-white font-mono text-[10px] font-bold">DRIVE</span>
+                  <span>Mwongozo wa Kupakia Notisi Kutoka Google Drive:</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-slate-600 pt-1">
+                  <div className="flex items-start gap-2 bg-white/70 p-2.5 rounded-xl border border-cyan-100/50">
+                    <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">1</span>
+                    <span>Pakia PDF au faili la notisi kwenye akaunti yako ya <strong>Google Drive</strong>.</span>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/70 p-2.5 rounded-xl border border-cyan-100/50">
+                    <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">2</span>
+                    <span>Bofya <strong>Share</strong> (Shiriki) kisha weka General Access iwe <strong>"Anyone with the link can view"</strong>.</span>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/70 p-2.5 rounded-xl border border-cyan-100/50">
+                    <span className="w-5 h-5 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">3</span>
+                    <span>Bofya <strong>Copy Link</strong> na ubandike kiungo hicho hapa. Notisi itaonekana mara moja kwenye Ukurasa wa Masomo!</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Search and Filters Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-6 relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                    <Search size={16} />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Tafuta notisi kwa jina, somo, kidato au mada..."
+                    value={noteSearch}
+                    onChange={(e) => setNoteSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50/60 hover:bg-gray-50 focus:bg-white text-xs text-gray-800 placeholder-gray-400 border border-gray-200 focus:border-cyan-500 rounded-xl outline-none transition-all shadow-inner font-semibold"
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <select
+                    value={noteSubjectFilter}
+                    onChange={(e) => setNoteSubjectFilter(e.target.value)}
+                    className="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 focus:border-cyan-500 outline-none"
+                  >
+                    <option value="all">📚 Masomo Yote</option>
+                    {libConfig.subjects.map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-3">
+                  <select
+                    value={noteClassFilter}
+                    onChange={(e) => setNoteClassFilter(e.target.value)}
+                    className="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 focus:border-cyan-500 outline-none"
+                  >
+                    <option value="all">🎓 Madarasa / Vidato Vyote</option>
+                    {libConfig.classes.map(cls => (
+                      <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                    <option value="Standard 7">Standard 7 (Darasa la 7)</option>
+                    <option value="Shule ya Msingi">Shule ya Msingi</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Uploaded Notes Table / Catalog */}
+              {(() => {
+                const filteredNotes = allDocs.filter(doc => {
+                  const isNote = doc.category === 'Notes' || (doc as any).documentType === 'Notes' || (doc as any).type === 'notes' || (doc.driveUrl && doc.driveUrl.length > 5);
+                  if (!isNote) return false;
+
+                  const s = noteSearch.toLowerCase();
+                  const matchesSearch = !s || 
+                    doc.title.toLowerCase().includes(s) ||
+                    (doc.description || '').toLowerCase().includes(s) ||
+                    ((doc as any).subject || '').toLowerCase().includes(s) ||
+                    ((doc as any).classLevel || '').toLowerCase().includes(s);
+
+                  const matchesSubject = noteSubjectFilter === 'all' || ((doc as any).subject || '') === noteSubjectFilter;
+                  const matchesClass = noteClassFilter === 'all' || ((doc as any).classLevel || '') === noteClassFilter;
+
+                  return matchesSearch && matchesSubject && matchesClass;
+                });
+
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 px-1 font-semibold">
+                      <span>Jumla ya Notisi za Drive zilizopo: <strong className="text-cyan-700">{filteredNotes.length}</strong></span>
+                      {(noteSearch || noteSubjectFilter !== 'all' || noteClassFilter !== 'all') && (
+                        <button
+                          onClick={() => {
+                            setNoteSearch('');
+                            setNoteSubjectFilter('all');
+                            setNoteClassFilter('all');
+                          }}
+                          className="text-rose-600 hover:underline font-bold"
+                        >
+                          Futa Vichujio
+                        </button>
+                      )}
+                    </div>
+
+                    {filteredNotes.length === 0 ? (
+                      <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-2xl p-8 text-center space-y-3">
+                        <BookOpen size={32} className="mx-auto text-gray-300" />
+                        <p className="text-sm font-bold text-gray-600">Bado hakuna notisi ya somo iliyopakiwa inayolingana na vigezo hivi.</p>
+                        <button
+                          onClick={handleOpenAddMasomoNote}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl transition-all shadow-sm"
+                        >
+                          <PlusCircle size={14} />
+                          Pakia Notisi ya Kwanza
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
+                        <table className="w-full text-sm text-left text-gray-500">
+                          <thead className="text-[11px] text-gray-400 uppercase font-black bg-gray-50/80">
+                            <tr>
+                              <th scope="col" className="px-4 py-3">Kichwa cha Notisi</th>
+                              <th scope="col" className="px-4 py-3">Somo & Kidato</th>
+                              <th scope="col" className="px-4 py-3">Google Drive Link</th>
+                              <th scope="col" className="px-4 py-3">Mtazamaji</th>
+                              <th scope="col" className="px-4 py-3 text-right">Vitendo</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {filteredNotes.map((doc) => (
+                              <tr key={doc.id} className="hover:bg-cyan-50/30 transition-colors">
+                                <td className="px-4 py-3.5">
+                                  <div className="flex flex-col">
+                                    <span className="font-extrabold text-gray-800 hover:text-cyan-700 cursor-pointer" onClick={() => onNavigate('reader', doc.id)}>
+                                      {doc.title}
+                                    </span>
+                                    {doc.description && (
+                                      <span className="text-[11px] text-gray-400 line-clamp-1 mt-0.5">{doc.description}</span>
+                                    )}
+                                    <span className="text-[9px] text-gray-400 font-mono mt-0.5">ID: {doc.id}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3.5">
+                                  <div className="flex flex-col">
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded-md w-fit">
+                                      {(doc as any).subject || 'General'}
+                                    </span>
+                                    <span className="text-[10px] text-gray-500 font-semibold mt-0.5">
+                                      {(doc as any).classLevel || 'Form 1-4'} ({((doc as any).educationLevel || 'O-Level')})
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3.5">
+                                  {doc.driveUrl ? (
+                                    <a
+                                      href={doc.driveUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs font-bold text-cyan-600 hover:text-cyan-800 hover:underline max-w-[200px] truncate"
+                                      title={doc.driveUrl}
+                                    >
+                                      <ExternalLink size={12} className="shrink-0" />
+                                      <span className="truncate">Fungua Drive</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">Hakuna link</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3.5 text-xs text-gray-600">
+                                  <span className="font-bold text-gray-800">{doc.views || 0}</span> views
+                                </td>
+                                <td className="px-4 py-3.5 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      onClick={() => onNavigate('reader', doc.id)}
+                                      className="p-1.5 text-slate-600 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all"
+                                      title="Soma kwenye App"
+                                    >
+                                      <Eye size={15} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleOpenEditMasomoNote(doc)}
+                                      className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                      title="Hariri Maelezo"
+                                    >
+                                      <Pencil size={15} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMasomoNote(doc.id, doc.title)}
+                                      className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                      title="Futa Notisi"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* DRIVE NOTE UPLOAD / EDIT MODAL */}
+              {isNoteFormOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+                  <div className="bg-white border border-gray-100 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col my-8">
+                    <div className="flex justify-between items-center bg-gradient-to-r from-cyan-600 to-indigo-600 px-6 py-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <BookOpen size={18} />
+                        <h3 className="font-sans font-extrabold text-base">
+                          {editingNoteId ? 'Hariri Notisi ya Masomo' : 'Pakia Notisi Mpya kutoka Google Drive'}
+                        </h3>
+                      </div>
+                      <button onClick={() => setIsNoteFormOpen(false)} className="text-white/85 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-all">
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveMasomoNote} className="p-6 overflow-y-auto max-h-[75vh] space-y-4 text-left">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Kichwa / Jina la Notisi (Topic Title) *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Mfano: Physics Form 4 - Radioactivity & Nuclear Physics Notes"
+                          value={noteTitle}
+                          onChange={(e) => setNoteTitle(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-700">Somo (Subject) *</label>
+                          <select
+                            value={noteSubject}
+                            onChange={(e) => setNoteSubject(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800 bg-white"
+                          >
+                            {libConfig.subjects.map(sub => (
+                              <option key={sub} value={sub}>{sub}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-700">Ngazi ya Elimu (Level) *</label>
+                          <select
+                            value={noteEducationLevel}
+                            onChange={(e) => setNoteEducationLevel(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800 bg-white"
+                          >
+                            <option value="O-Level">O-Level (Kidato cha 1-4)</option>
+                            <option value="A-Level">A-Level (Kidato cha 5-6)</option>
+                            <option value="Primary">Primary (Shule ya Msingi)</option>
+                            <option value="University">Chuo & Ualimu</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-700">Darasa / Kidato (Class Level) *</label>
+                          <select
+                            value={noteClassLevel}
+                            onChange={(e) => setNoteClassLevel(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800 bg-white"
+                          >
+                            {libConfig.classes.map(cls => (
+                              <option key={cls} value={cls}>{cls}</option>
+                            ))}
+                            <option value="Standard 7">Standard 7 (Darasa la 7)</option>
+                            <option value="Shule ya Msingi">Shule ya Msingi (Jumla)</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-700">Mwaka (Year)</label>
+                          <input
+                            type="number"
+                            value={noteYear}
+                            onChange={(e) => setNoteYear(Number(e.target.value) || 2026)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Google Drive Link Input */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                            <span>Google Drive Link (URL) *</span>
+                          </label>
+                          {noteDriveUrl && (
+                            <a
+                              href={noteDriveUrl.startsWith('http') ? noteDriveUrl : `https://${noteDriveUrl}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] font-bold text-cyan-600 hover:text-cyan-800 flex items-center gap-0.5"
+                            >
+                              <ExternalLink size={11} />
+                              Jaribu Kiungo
+                            </a>
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                          value={noteDriveUrl}
+                          onChange={(e) => setNoteDriveUrl(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800 font-mono"
+                        />
+                        <p className="text-[10px] text-gray-400">
+                          Hakikisha faili kwenye Google Drive limewekwa <em>"Anyone with the link can view"</em> ili wanafunzi waweze kulisoma bila vikwazo.
+                        </p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Maelezo Mafupi (Description)</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Eleza muhtasari wa notisi hii, mada zilizopo, au maelekezo ya somo..."
+                          value={noteDescription}
+                          onChange={(e) => setNoteDescription(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Lebo / Tags (Zitenganishe kwa koma)</label>
+                        <input
+                          type="text"
+                          placeholder="Mfano: NECTA, Form 4, Summary, Radioactivity"
+                          value={noteTagsInput}
+                          onChange={(e) => setNoteTagsInput(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => setIsNoteFormOpen(false)}
+                          className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                        >
+                          Ghairi
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isNoteSaving}
+                          className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 rounded-xl transition-all shadow-md"
+                        >
+                          {isNoteSaving ? (
+                            <>
+                              <RefreshCw size={14} className="animate-spin" />
+                              Inahifadhi...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle size={14} />
+                              {editingNoteId ? 'Sasisha Notisi' : 'Hifadhi Kwenye Masomo'}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               )}

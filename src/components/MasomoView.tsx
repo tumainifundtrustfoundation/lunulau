@@ -45,8 +45,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import AdSenseWidget from './AdSenseWidget';
 import { jsPDF } from 'jspdf';
-import { toggleTopicFavorite, awardStudyPoints, updateUserProfile, db } from '../firebase';
-import { CustomPersonalNote, CustomFlashcardDeck } from '../types';
+import { toggleTopicFavorite, awardStudyPoints, updateUserProfile, db, fetchDocuments } from '../firebase';
+import { CustomPersonalNote, CustomFlashcardDeck, DocumentMetadata } from '../types';
 import { getQuizQuestions, QuizQuestion } from './MasomoQuizData';
 import { getExamTips } from './MasomoNectaTips';
 import { getFlashcardsForTopic, Flashcard as MasomoFlashcard } from './MasomoFlashcardData';
@@ -81,10 +81,43 @@ export interface SavedBookmark {
 
 export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps) {
   // Navigation & Categorization states
-  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'msingi' | 'olevel' | 'alevel' | 'my-notes' | 'favorites' | 'saved' | 'flashcards-suite'>('all');
+  const [activeLevelTab, setActiveLevelTab] = useState<'all' | 'drive-notes' | 'msingi' | 'olevel' | 'alevel' | 'my-notes' | 'favorites' | 'saved' | 'flashcards-suite'>('all');
   const [activeStreamTab, setActiveStreamTab] = useState<'all' | 'PCB' | 'HGE' | 'EGM'>('all');
   const [openSubject, setOpenSubject] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+
+  // Drive Notes (Admin uploaded notes via Google Drive)
+  const [driveNotes, setDriveNotes] = useState<DocumentMetadata[]>([]);
+  const [isDriveNotesLoading, setIsDriveNotesLoading] = useState<boolean>(false);
+  const [driveNoteSearch, setDriveNoteSearch] = useState<string>('');
+  const [driveNoteSubjectFilter, setDriveNoteSubjectFilter] = useState<string>('all');
+  const [driveNoteClassFilter, setDriveNoteClassFilter] = useState<string>('all');
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDriveNotes = async () => {
+      setIsDriveNotesLoading(true);
+      try {
+        const docs = await fetchDocuments({ status: 'approved' });
+        if (isMounted) {
+          const notes = docs.filter(d => 
+            d.category === 'Notes' || 
+            (d as any).documentType === 'Notes' || 
+            (d as any).type === 'notes' || 
+            Boolean(d.driveUrl && d.driveUrl.length > 5)
+          );
+          notes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          setDriveNotes(notes);
+        }
+      } catch (err) {
+        console.warn('Could not load drive notes:', err);
+      } finally {
+        if (isMounted) setIsDriveNotesLoading(false);
+      }
+    };
+    loadDriveNotes();
+    return () => { isMounted = false; };
+  }, []);
 
   // Custom Personal Notes state
   const [customNotes, setCustomNotes] = useState<CustomPersonalNote[]>(() => {
@@ -1791,6 +1824,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'all', name: 'Zote' },
+                { id: 'drive-notes', name: `📁 Notisi za Masomo (${driveNotes.length})` },
                 { id: 'msingi', name: 'Shule ya Msingi' },
                 { id: 'olevel', name: 'Kidato 1-4' },
                 { id: 'alevel', name: 'Kidato 5-6' },
@@ -1978,7 +2012,214 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
       <AdSenseWidget slotId="3000300303" className="my-2" />
 
       {/* Accordion List + Document Preview Grid */}
-      {activeLevelTab === 'flashcards-suite' ? (
+      {activeLevelTab === 'drive-notes' ? (
+        <div className="space-y-6 animate-fade-in">
+          {/* Hero / Header Card */}
+          <div className="bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-md border border-cyan-900/40 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <BookOpen size={22} />
+                </div>
+                <div>
+                  <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wide">
+                    Notisi za Masomo (Google Drive)
+                  </h2>
+                  <p className="text-xs text-cyan-200/80 font-medium">
+                    Nyaraka na notisi zilizopakiwa moja kwa moja kutoka Google Drive
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl leading-relaxed">
+                Pata nukuu zote za masomo zilizohifadhiwa kwenye Google Drive. Unaweza kuzisoma moja kwa moja kwenye programu (In-App Reader) au kuzifungua na kuzipakua kwenye Google Drive.
+              </p>
+            </div>
+
+            {userProfile?.role === 'admin' && (
+              <button
+                onClick={() => onNavigate('admin')}
+                className="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 shrink-0 active:scale-95"
+              >
+                <Plus size={16} />
+                Pakia Notisi (Admin Panel)
+              </button>
+            )}
+          </div>
+
+          {/* Search and Filters */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div className="sm:col-span-6 relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <Search size={16} />
+              </span>
+              <input
+                type="text"
+                placeholder="Tafuta notisi kwa jina, somo, mada au kidato..."
+                value={driveNoteSearch}
+                onChange={(e) => setDriveNoteSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-50/80 focus:bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-cyan-500 rounded-xl outline-none transition-all shadow-inner"
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <select
+                value={driveNoteSubjectFilter}
+                onChange={(e) => setDriveNoteSubjectFilter(e.target.value)}
+                className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:border-cyan-500 outline-none"
+              >
+                <option value="all">📚 Masomo Yote</option>
+                {Array.from(new Set(driveNotes.map(n => (n as any).subject).filter(Boolean))).map(subj => (
+                  <option key={subj} value={subj}>{subj}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-3">
+              <select
+                value={driveNoteClassFilter}
+                onChange={(e) => setDriveNoteClassFilter(e.target.value)}
+                className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:border-cyan-500 outline-none"
+              >
+                <option value="all">🎓 Madarasa / Vidato Vyote</option>
+                <option value="Form 1">Kidato cha 1 (Form 1)</option>
+                <option value="Form 2">Kidato cha 2 (Form 2)</option>
+                <option value="Form 3">Kidato cha 3 (Form 3)</option>
+                <option value="Form 4">Kidato cha 4 (Form 4)</option>
+                <option value="Form 5">Kidato cha 5 (Form 5)</option>
+                <option value="Form 6">Kidato cha 6 (Form 6)</option>
+                <option value="Standard 7">Darasa la 7 (Standard 7)</option>
+                <option value="Primary">Shule ya Msingi</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          {(() => {
+            const filtered = driveNotes.filter(item => {
+              const q = driveNoteSearch.toLowerCase();
+              const matchQ = !q ||
+                item.title.toLowerCase().includes(q) ||
+                (item.description || '').toLowerCase().includes(q) ||
+                ((item as any).subject || '').toLowerCase().includes(q) ||
+                ((item as any).classLevel || '').toLowerCase().includes(q);
+
+              const matchSubj = driveNoteSubjectFilter === 'all' || ((item as any).subject || '') === driveNoteSubjectFilter;
+              const matchCls = driveNoteClassFilter === 'all' || ((item as any).classLevel || '') === driveNoteClassFilter;
+
+              return matchQ && matchSubj && matchCls;
+            });
+
+            if (isDriveNotesLoading) {
+              return (
+                <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3">
+                  <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-xs font-bold text-slate-500">Inapakia notisi za masomo kutoka Google Drive...</p>
+                </div>
+              );
+            }
+
+            if (filtered.length === 0) {
+              return (
+                <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center mx-auto">
+                    <BookOpen size={28} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-extrabold text-slate-800">
+                      Bado hakuna notisi inayolingana na utafutaji wako
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      Msimamizi wa mfumo anapakia notisi mpya mara kwa mara. Jaribu kubadilisha vigezo vya somo au kidato.
+                    </p>
+                  </div>
+                  {userProfile?.role === 'admin' && (
+                    <button
+                      onClick={() => onNavigate('admin')}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+                    >
+                      <Plus size={14} />
+                      Pakia Notisi Mpya Sasa
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filtered.map((note) => (
+                  <div
+                    key={note.id}
+                    className="bg-white border border-slate-200/90 hover:border-cyan-400/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-cyan-50 text-cyan-800 border border-cyan-100">
+                          <BookOpen size={12} />
+                          {(note as any).subject || 'General'}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {(note as any).classLevel || 'Masomo'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4
+                          onClick={() => onNavigate('reader', note.id)}
+                          className="font-sans font-extrabold text-slate-900 group-hover:text-cyan-700 cursor-pointer transition-colors text-sm sm:text-base leading-snug line-clamp-2"
+                        >
+                          {note.title}
+                        </h4>
+                        {note.description && (
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 leading-relaxed">
+                            {note.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {Array.isArray(note.tags) && note.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {note.tags.slice(0, 3).map((tag, idx) => (
+                            <span key={idx} className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="text-[11px] text-slate-400 font-semibold">
+                        <span>{note.views || 0} views</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onNavigate('reader', note.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-extrabold text-cyan-700 hover:text-white bg-cyan-50 hover:bg-cyan-600 rounded-xl transition-all"
+                        >
+                          <BookOpen size={13} />
+                          Soma
+                        </button>
+                        {note.driveUrl && (
+                          <a
+                            href={note.driveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                            title="Fungua Google Drive"
+                          >
+                            <ExternalLink size={13} />
+                            Drive
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      ) : activeLevelTab === 'flashcards-suite' ? (
         <div className="animate-fade-in space-y-4">
           <InteractiveFlashcards 
             userProfile={userProfile} 
@@ -2410,7 +2651,49 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 )}
               </div>
             ) : (
-              filteredLevels.map((level) => {
+              <>
+                {/* Google Drive Notes Quick-Banner */}
+                {driveNotes.length > 0 && (
+                  <div className="bg-gradient-to-r from-cyan-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-4 shadow-sm border border-cyan-700/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shrink-0">
+                        <BookOpen size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-black uppercase tracking-wide text-white">
+                            Notisi za Masomo (Google Drive)
+                          </h4>
+                          <span className="bg-cyan-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-md">
+                            {driveNotes.length} Notisi
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 font-medium line-clamp-1">
+                          Nukuu na notisi rasmi za masomo zilizopakiwa moja kwa moja kutoka Google Drive.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setActiveLevelTab('drive-notes')}
+                        className="px-3.5 py-1.5 text-xs font-extrabold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-xl transition-all shadow-sm flex items-center gap-1"
+                      >
+                        <span>Fungua Notisi Zote</span>
+                        <ExternalLink size={12} />
+                      </button>
+                      {userProfile?.role === 'admin' && (
+                        <button
+                          onClick={() => onNavigate('admin')}
+                          className="px-3 py-1.5 text-xs font-bold text-cyan-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10"
+                        >
+                          + Pakia
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {filteredLevels.map((level) => {
                 // Filter subjects if level is alevel and a stream is selected
                 const displaySubjects = level.id === 'alevel' && activeStreamTab !== 'all'
                   ? level.subjects.filter(s => (streams as any)[activeStreamTab].includes(s.name))
@@ -2521,8 +2804,9 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                     </div>
                   </motion.div>
                 );
-              })
-            )}
+              })}
+            </>
+          )}
           </div>
 
           {/* ── Google AdSense Responsive Ad Unit (Masomo-sidebar) ── */}
