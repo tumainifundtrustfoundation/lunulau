@@ -230,7 +230,7 @@ export function parseGoogleDriveExamText(inputText: string, defaultSubject = 'Ki
   const rawMatches = inputText.match(urlRegex) || [];
 
   if (rawMatches.length > 0) {
-    rawMatches.forEach(url => {
+    (rawMatches as string[]).forEach((url: string) => {
       const idMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
       if (idMatch && idMatch[1]) {
         const lineWithUrl = lines.find(l => l.includes(url)) || url;
@@ -663,7 +663,7 @@ export default function MitihaniView({
         isMarkingScheme: pe.isMarkingScheme,
         markingSchemeDocId: pe.markingSchemeDocId,
         markingSchemeDriveUrl: pe.markingSchemeDriveUrl,
-        documentType: pe.type
+        documentType: (pe.type === 'Notes' || pe.type === 'Books' ? pe.type : 'Past Papers') as 'Notes' | 'Books' | 'Past Papers'
       }));
 
       const res = await syncExamDocsToFirestore(docsToSave);

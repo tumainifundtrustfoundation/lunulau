@@ -447,82 +447,6 @@ export const saveDocumentMetadata = async (
   return docRef.id;
 };
 
-/**
- * Save or update a document with a specific custom document ID (e.g. necta-kisw-2024)
- */
-export const saveOrUpdateDocumentWithId = async (
-  docId: string,
-  docData: Partial<DocumentMetadata>
-): Promise<string> => {
-  try {
-    const docRef = doc(db, 'documents', docId);
-    const existingSnap = await getDoc(docRef);
-    const now = Date.now();
-    
-    if (existingSnap.exists()) {
-      const merged: DocumentMetadata = {
-        ...(existingSnap.data() as DocumentMetadata),
-        ...docData,
-        id: docId,
-      };
-      await setDoc(docRef, merged, { merge: true });
-      return docId;
-    } else {
-      const fullDoc: DocumentMetadata = {
-        id: docId,
-        title: docData.title || 'Mtihani wa NECTA',
-        description: docData.description || '',
-        category: docData.category || 'Kiswahili',
-        subject: docData.subject || docData.category || 'Kiswahili',
-        tags: docData.tags || ['NECTA', 'Past Papers'],
-        fileId: docData.fileId || docId,
-        driveUrl: docData.driveUrl || '',
-        uploadedBy: docData.uploadedBy || 'system',
-        uploadedByName: docData.uploadedByName || 'NECTA Archive',
-        createdAt: docData.createdAt || now,
-        views: docData.views || 0,
-        status: docData.status || 'approved',
-        downloadsCount: docData.downloadsCount || 0,
-        rating: docData.rating || 5,
-        type: docData.type || 'NECTA',
-        year: docData.year,
-        classLevel: docData.classLevel || 'Form 4',
-        markingSchemeDocId: docData.markingSchemeDocId,
-        markingSchemeDriveUrl: docData.markingSchemeDriveUrl,
-        isMarkingScheme: docData.isMarkingScheme || false,
-        seriesName: docData.seriesName,
-        isForSale: docData.isForSale || false,
-        price: docData.price || 0,
-        documentType: docData.documentType || 'Past Papers',
-      };
-      await setDoc(docRef, fullDoc);
-      return docId;
-    }
-  } catch (err: any) {
-    console.warn(`saveOrUpdateDocumentWithId error for ${docId}:`, err.message || err);
-    throw err;
-  }
-};
-
-/**
- * Bulk sync a list of documents into Firestore
- */
-export const syncExamDocsToFirestore = async (
-  examDocs: DocumentMetadata[]
-): Promise<{ success: number; failed: number }> => {
-  let success = 0;
-  let failed = 0;
-  for (const item of examDocs) {
-    try {
-      await saveOrUpdateDocumentWithId(item.id, item);
-      success++;
-    } catch (e) {
-      console.warn(`Failed to sync doc ${item.id}:`, e);
-      failed++;
-    }
-  }
-  return { success, failed };
-};
 
 /**
  * Get a specific document by its Firestore ID
@@ -683,25 +607,40 @@ export const fetchDocuments = async (filters?: {
 /**
  * Save or update a specific document using its explicit ID in Firestore
  */
-export const saveOrUpdateDocumentWithId = async (docData: DocumentMetadata): Promise<void> => {
+export async function saveOrUpdateDocumentWithId(
+  docData: DocumentMetadata
+): Promise<string>;
+export async function saveOrUpdateDocumentWithId(
+  docId: string,
+  docData: Partial<DocumentMetadata>
+): Promise<string>;
+export async function saveOrUpdateDocumentWithId(
+  arg1: string | DocumentMetadata,
+  arg2?: Partial<DocumentMetadata>
+): Promise<string> {
+  const docId = typeof arg1 === 'string' ? arg1 : arg1.id;
+  const docData: Partial<DocumentMetadata> = typeof arg1 === 'string' ? (arg2 || {}) : arg1;
   const path = 'documents';
   try {
-    const docRef = doc(db, path, docData.id);
+    const docRef = doc(db, path, docId);
+    const existingSnap = await getDoc(docRef);
+    const now = Date.now();
+
     const cleanPayload: any = {
-      id: docData.id,
-      title: docData.title,
+      id: docId,
+      title: docData.title || 'Mtihani wa NECTA',
       description: docData.description || '',
       category: docData.category || 'NECTA',
-      tags: docData.tags || [],
-      fileId: docData.fileId,
-      driveUrl: docData.driveUrl,
+      tags: docData.tags || ['NECTA', 'Past Papers'],
+      fileId: docData.fileId || docId,
+      driveUrl: docData.driveUrl || '',
       uploadedBy: docData.uploadedBy || 'system',
       uploadedByName: docData.uploadedByName || 'Baraza la Mitihani la Tanzania (NECTA)',
-      createdAt: docData.createdAt || Date.now(),
-      views: docData.views || 0,
+      createdAt: docData.createdAt || (existingSnap.exists() ? (existingSnap.data() as any).createdAt : now),
+      views: docData.views ?? (existingSnap.exists() ? (existingSnap.data() as any).views : 0),
       status: docData.status || 'approved',
-      downloadsCount: docData.downloadsCount || 0,
-      rating: docData.rating || 5,
+      downloadsCount: docData.downloadsCount ?? (existingSnap.exists() ? (existingSnap.data() as any).downloadsCount : 0),
+      rating: docData.rating ?? 5,
       type: docData.type || 'NECTA',
       year: docData.year || 2024,
       paperNo: docData.paperNo || 'Paper 1',
@@ -718,18 +657,22 @@ export const saveOrUpdateDocumentWithId = async (docData: DocumentMetadata): Pro
     if (docData.isForSale !== undefined) cleanPayload.isForSale = docData.isForSale;
     if (docData.price !== undefined) cleanPayload.price = docData.price;
     if (docData.sizeKB !== undefined) cleanPayload.sizeKB = docData.sizeKB;
+    if (docData.seriesName) cleanPayload.seriesName = docData.seriesName;
 
     await setDoc(docRef, cleanPayload, { merge: true });
+    return docId;
   } catch (err: any) {
-    handleFirestoreError(err, OperationType.WRITE, `${path}/${docData.id}`);
+    handleFirestoreError(err, OperationType.WRITE, `${path}/${docId}`);
     throw err;
   }
-};
+}
 
 /**
  * Batch synchronize a list of Exam documents to Firestore
  */
-export const syncExamDocsToFirestore = async (docsToSync: DocumentMetadata[]): Promise<{ saved: number; errors: number }> => {
+export const syncExamDocsToFirestore = async (
+  docsToSync: DocumentMetadata[]
+): Promise<{ saved: number; errors: number; success: number; failed: number }> => {
   let saved = 0;
   let errors = 0;
   for (const item of docsToSync) {
@@ -741,7 +684,7 @@ export const syncExamDocsToFirestore = async (docsToSync: DocumentMetadata[]): P
       errors++;
     }
   }
-  return { saved, errors };
+  return { saved, errors, success: saved, failed: errors };
 };
 
 /**

@@ -151,6 +151,7 @@ export interface DocumentMetadata {
   markingSchemeDocId?: string;
   isMarkingScheme?: boolean;
   seriesName?: string;
+  educationLevel?: string;
 }
 
 export interface Comment {
