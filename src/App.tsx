@@ -648,9 +648,12 @@ export default function App() {
         // Double check super admin status to ensure auto-elevation
         const isSuperAdmin = auth.currentUser.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2' || 
                              auth.currentUser.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' ||
-                             profile.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com';
+                             auth.currentUser.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' ||
+                             profile.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' ||
+                             profile.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com';
         if (isSuperAdmin && profile.role !== 'super_admin') {
           profile.role = 'super_admin';
+          profile.subscription = 'premium';
           // Ensure it's updated in Firestore as well
           try {
             await ensureUserProfile(auth.currentUser, profile.name);
@@ -668,7 +671,8 @@ export default function App() {
       // Fallback to local profile based on auth state if Firestore is offline or fails
       if (auth.currentUser) {
         const isSuperAdmin = auth.currentUser.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2' || 
-                             auth.currentUser.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com';
+                             auth.currentUser.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' ||
+                             auth.currentUser.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com';
         const fallbackProfile: UserProfile = {
           uid: uid,
           name: fallbackName || auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Mwanafunzi Lupanulla',

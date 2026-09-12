@@ -6,6 +6,8 @@ import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
+import { getOrCreateUser, getUserEntries, createEntry } from './src/db/users.ts';
 
 // Load environment variables
 dotenv.config();
@@ -245,6 +247,56 @@ app.get('/api/workspace/assignments', async (req, res) => {
   } catch (error: any) {
     console.error('Assignments API Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ── CLOUD SQL RELATIONAL DATABASE ENDPOINTS ──
+
+app.get('/api/sql/me', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const uid = req.user?.uid;
+    const email = req.user?.email || '';
+    const name = (req.user as any)?.name || '';
+    if (!uid) {
+      return res.status(401).json({ error: 'User UID missing from token' });
+    }
+    const userRecord = await getOrCreateUser(uid, email, name);
+    res.json({ success: true, user: userRecord });
+  } catch (error: any) {
+    console.error('Failed to get or create Cloud SQL user:', error);
+    res.status(500).json({ error: error.message || 'Database user sync failed' });
+  }
+});
+
+app.get('/api/sql/entries', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) {
+      return res.status(401).json({ error: 'User UID missing from token' });
+    }
+    const entries = await getUserEntries(uid);
+    res.json({ entries });
+  } catch (error: any) {
+    console.error('Failed to fetch entries:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch entries' });
+  }
+});
+
+app.post('/api/sql/entries', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) {
+      return res.status(401).json({ error: 'User UID missing from token' });
+    }
+    const { content, date } = req.body;
+    if (!content || !date) {
+      return res.status(400).json({ error: 'Missing content or date' });
+    }
+    const entry = await createEntry(uid, content, date);
+    res.json({ success: true, entry });
+  } catch (error: any) {
+    console.error('Failed to create entry:', error);
+    res.status(500).json({ error: error.message || 'Failed to create entry' });
   }
 });
 
@@ -601,6 +653,12 @@ async function callGeminiWithRetry(fn: () => Promise<any>, retries = 3, delay = 
         throw error;
       }
 
+      // If it's a permanent quota restriction (e.g. limit: 0 on free tier), do not retry — immediately allow caller fallback
+      const isPermanentQuota = errStr.includes('limit: 0') || errStr.includes('RESOURCE_EXHAUSTED');
+      if (isPermanentQuota) {
+        throw error;
+      }
+
       const isTransient = error.status === 503 || 
                           error.status === 429 || 
                           errStr.includes('503') || 
@@ -701,13 +759,13 @@ app.post('/api/claude.php', async (req, res) => {
     }
 
     // Model selection based on features and user preference
-    let selectedModel = 'gemini-3.1-flash-lite';
+    let selectedModel = 'gemini-3.8-flash';
     if (thinking) {
       selectedModel = 'gemini-3.1-pro-preview';
     } else if (modelChoice === 'pro') {
       selectedModel = 'gemini-3.1-pro-preview';
     } else if (modelChoice === 'flash') {
-      selectedModel = 'gemini-3.5-flash';
+      selectedModel = 'gemini-3.8-flash';
     } else if (modelChoice === 'lite') {
       selectedModel = 'gemini-3.1-flash-lite';
     }
@@ -717,16 +775,16 @@ app.post('/api/claude.php', async (req, res) => {
       temperature: 0.7,
     };
 
-    // Set search or maps grounding if selected (Forces gemini-3.5-flash as requested)
+    // Set search or maps grounding if selected
     if (grounding === 'search') {
-      selectedModel = 'gemini-3.5-flash';
+      selectedModel = 'gemini-3.8-flash';
       config.tools = [{ googleSearch: {} }];
     } else if (grounding === 'maps') {
-      selectedModel = 'gemini-3.5-flash';
+      selectedModel = 'gemini-3.8-flash';
       config.tools = [{ googleMaps: {} }];
     }
 
-    // Force gemini-3.1-pro-preview if there are image or video attachments (for photo & video understanding)
+    // Check for image or video attachments (gemini-3.8-flash has excellent multimodal vision & video support)
     let hasMediaAttachment = false;
     if (messages && Array.isArray(messages)) {
       for (const m of messages) {
@@ -742,8 +800,8 @@ app.post('/api/claude.php', async (req, res) => {
       }
     }
 
-    if (hasMediaAttachment) {
-      selectedModel = 'gemini-3.1-pro-preview';
+    if (hasMediaAttachment && selectedModel === 'gemini-3.1-flash-lite') {
+      selectedModel = 'gemini-3.8-flash';
     }
 
     // Set thinking level to HIGH on gemini-3.1-pro-preview if thinking is enabled
@@ -754,7 +812,7 @@ app.post('/api/claude.php', async (req, res) => {
       // Do not set maxOutputTokens as per instructions
     }
 
-    // Call Gemini API with automatic fallback to gemini-3.1-flash-lite
+    // Call Gemini API with automatic robust fallback to gemini-3.8-flash and gemini-3.1-flash-lite
     let response;
     try {
       response = await callGeminiWithRetry(() => ai.models.generateContent({
@@ -775,21 +833,28 @@ app.post('/api/claude.php', async (req, res) => {
         throw primaryError;
       }
 
-      console.warn(`Primary model ${selectedModel} failed. Falling back to gemini-3.1-flash-lite... Error:`, primaryError.message || primaryError);
-      if (selectedModel !== 'gemini-3.1-flash-lite') {
-        const fallbackConfig = { ...config };
-        delete fallbackConfig.thinkingConfig;
-        if (fallbackConfig.tools) {
-          // gemini-3.1-flash-lite doesn't support search/maps tools under some free-tier quotas, remove if fallback
-          delete fallbackConfig.tools;
-        }
+      console.warn(`Primary model ${selectedModel} failed. Falling back to gemini-3.8-flash / gemini-3.1-flash-lite... Error:`, primaryError.message || primaryError);
+      
+      const fallbackConfig = { ...config };
+      delete fallbackConfig.thinkingConfig;
+      if (fallbackConfig.tools) {
+        // If tools like googleSearch or googleMaps caused quota limits, remove them in fallback
+        delete fallbackConfig.tools;
+      }
+
+      try {
+        response = await callGeminiWithRetry(() => ai.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: contents,
+          config: fallbackConfig
+        }), 2, 1000);
+      } catch (fallbackError) {
+        console.warn('Fallback to gemini-3.8-flash failed, trying gemini-3.1-flash-lite...', fallbackError);
         response = await callGeminiWithRetry(() => ai.models.generateContent({
           model: 'gemini-3.1-flash-lite',
           contents: contents,
           config: fallbackConfig
-        }));
-      } else {
-        throw primaryError;
+        }), 2, 1000);
       }
     }
 
@@ -803,12 +868,10 @@ app.post('/api/claude.php', async (req, res) => {
     const isAuthError = 
       error.status === 401 ||
       error.status === 403 ||
-      error.status === 400 ||
       errStr.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') ||
       errStr.includes('UNAUTHENTICATED') ||
       errStr.includes('API_KEY_INVALID') ||
-      errStr.includes('API key') ||
-      errStr.includes('credentials') ||
+      errStr.includes('invalid authentication credentials') ||
       errStr.includes('PERMISSION_DENIED');
 
     let friendlyMessage = '';

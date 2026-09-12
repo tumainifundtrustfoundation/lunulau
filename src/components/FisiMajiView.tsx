@@ -23,7 +23,8 @@ import {
   Globe,
   Settings,
   Download,
-  Info
+  Info,
+  RotateCcw
 } from 'lucide-react';
 import { addNotification } from '../firebase';
 import PremiumLock from './PremiumLock';
@@ -51,14 +52,18 @@ interface FisiMajiViewProps {
 export default function FisiMajiView({ onNavigate, userProfile }: FisiMajiViewProps) {
   const [activeTab, setActiveTab] = useState<'chat' | 'image-generator'>('chat');
   
-  const isPremium = userProfile?.subscription === 'premium' || userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+  const isPremium = userProfile?.subscription === 'premium' || 
+                    userProfile?.role === 'admin' || 
+                    userProfile?.role === 'super_admin' ||
+                    userProfile?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' ||
+                    userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com';
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   
   // Free Messages Limit configurations
   const userMessagesCount = messages.filter(m => m.role === 'user').length;
-  const freeMessagesLimit = 5;
+  const freeMessagesLimit = 8;
   const hasRemainingFreeMessages = userMessagesCount < freeMessagesLimit;
   const canChat = isPremium || hasRemainingFreeMessages;
   const [input, setInput] = useState('');
@@ -666,17 +671,27 @@ Unajua kikamilifu mtaala wa TIE (Tanzania Institute of Education). `;
                         Lupanulla Premium Inahitajika 🚀
                       </h4>
                       <p className="text-[11px] sm:text-xs text-amber-900/90 font-bold leading-relaxed">
-                        Umefikia kikomo cha maswali ya bure (maswali 5). Jiunge na Premium sasa upate majibu yasiyo na kikomo, uchoraji picha kwa AI, na mbinu zote za ufaulu wa NECTA!
+                        Umefikia kikomo cha maswali ya bure ({freeMessagesLimit} maswali). Jiunge na Premium kwa maswali bila kikomo, au bonyeza &quot;Futa &amp; Anza Upya&quot; kuendelea.
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('premium')}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 relative z-10 transform hover:scale-102 active:scale-95"
-                  >
-                    <Crown size={14} /> Go Premium
-                  </button>
+                  <div className="flex items-center gap-2 relative z-10 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={handleClearChat}
+                      className="w-full sm:w-auto px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0"
+                      title="Futa maongezi ili kuanzisha mazungumzo mapya"
+                    >
+                      <RotateCcw size={14} /> Futa &amp; Anza Upya
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('premium')}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 transform hover:scale-102 active:scale-95"
+                    >
+                      <Crown size={14} /> Go Premium
+                    </button>
+                  </div>
                 </div>
               )}
 

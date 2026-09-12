@@ -409,7 +409,7 @@ export default function AdminView({
       try {
         setLoadingFreshRole(true);
         const freshProfile = await fetchUserProfile(userProfile.uid);
-        const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
+        const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || userProfile?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
         if (isSuperAdminEmail) {
           setFreshRole('super_admin');
         } else if (freshProfile) {
@@ -419,7 +419,7 @@ export default function AdminView({
         }
       } catch (err) {
         console.error('Failed to verify user role directly from Firestore:', err);
-        const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
+        const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || userProfile?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
         if (isSuperAdminEmail) {
           setFreshRole('super_admin');
         } else {
@@ -2406,7 +2406,7 @@ export default function AdminView({
     localStorage.setItem('lup_sec_logs', JSON.stringify(freshLogs));
   };
 
-  const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
+  const isSuperAdminEmail = auth.currentUser?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || userProfile?.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' || auth.currentUser?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || userProfile?.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com' || auth.currentUser?.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2';
 
   if (!isSuperAdminEmail && userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin' && freshRole !== 'admin' && freshRole !== 'super_admin') {
     return (

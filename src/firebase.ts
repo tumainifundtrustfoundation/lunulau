@@ -156,16 +156,18 @@ export const signInWithGoogle = async (): Promise<{ user: User; accessToken: str
     
     return { user: result.user, accessToken: token };
   } catch (err: any) {
-    console.error('Google Sign In Error:', err);
-    
     if (err.code === 'auth/popup-closed-by-user') {
+      console.warn('Google Sign In: Dirisha la kuingia limefungwa kabla ya kumaliza.');
       throw new Error('Dirisha la kuingia limefungwa kabla ya kumaliza. Tafadhali ruhusu "Popups" kwenye kivinjari chako na usifunge dirisha mapema.');
     } else if (err.code === 'auth/cancelled-popup-request') {
+      console.warn('Google Sign In: Ombi la popup lilighairiwa.');
       throw new Error('Ombi la kuingia lilighairiwa. Tafadhali jaribu tena.');
     } else if (err.code === 'auth/popup-blocked') {
+      console.warn('Google Sign In: Popup imezuiwa na kivinjari.');
       throw new Error('Kivinjari chako kimezuia dirisha la kuingia (Popup). Tafadhali ruhusu Popups kwa tovuti hii ili uweze kuingia.');
     } else if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('auth/unauthorized-domain'))) {
       const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      console.warn(`Google Sign In Notice: Domain '${hostname}' haijaidhinishwa kwenye Firebase Console ya mradi (${firebaseConfig.projectId}).`);
       const customErr: any = new Error(`Domain '${hostname}' haijaidhinishwa kwenye Firebase Console yako ya mradi wa Lupanulla (${firebaseConfig.projectId}). Tafadhali ongeza domain hii kwenye Firebase Console > Authentication > Settings > Authorized Domains.`);
       customErr.code = 'auth/unauthorized-domain';
       customErr.hostname = hostname;
@@ -173,6 +175,7 @@ export const signInWithGoogle = async (): Promise<{ user: User; accessToken: str
       throw customErr;
     }
     
+    console.error('Google Sign In Error:', err);
     throw err;
   } finally {
     isSigningIn = false;
@@ -240,7 +243,9 @@ export const submitFeedback = async (feedback: Omit<Feedback, 'id' | 'createdAt'
  * Helper to ensure a profile exists in Firestore for the authenticated user
  */
 export const ensureUserProfile = async (user: User, displayName: string, additionalFields?: Partial<UserProfile>): Promise<UserProfile> => {
-  const isSuperAdmin = user.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2' || user.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com';
+  const isSuperAdmin = user.uid === 'a9wJ0DcKpkN9I9iyO2yQzcI7VlT2' || 
+                       user.email?.toLowerCase() === 'lupanulla.co.tz@gmail.com' ||
+                       user.email?.toLowerCase() === 'tumainifundtrustfoundation@gmail.com';
   
   // Google sign in or anonymous guest sign in should be pre-verified. 
   // Custom email/password signups should specify emailVerified: false in additionalFields.

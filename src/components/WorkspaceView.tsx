@@ -102,7 +102,12 @@ export default function WorkspaceView({ theme, onChangeTheme }: WorkspaceViewPro
         throw new Error('Hukuweza kuunganisha akaunti ya Google.');
       }
     } catch (err: any) {
-      setError(err.message || 'Kuingia kwa Google kumeshindikana. Tafadhali jaribu tena.');
+      if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('auth/unauthorized-domain'))) {
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        setError(`Domain '${hostname}' haijaidhinishwa kwenye Firebase Console. Tafadhali ongeza domain hii kwenye Firebase Console > Authentication > Settings > Authorized Domains.`);
+      } else {
+        setError(err.message || 'Kuingia kwa Google kumeshindikana. Tafadhali jaribu tena.');
+      }
     } finally {
       setLoading(false);
     }

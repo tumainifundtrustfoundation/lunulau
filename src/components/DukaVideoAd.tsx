@@ -17,8 +17,7 @@ import {
   Upload,
   Trash2,
   X,
-  Video,
-  HelpCircle
+  Video
 } from 'lucide-react';
 import { Product, DukaVideoAdItem, UserVideoProgress } from '../types';
 import { fetchDukaVideoAds, saveDukaVideoAd, deleteDukaVideoAd, saveVideoProgress, fetchVideoProgress } from '../firebase';
@@ -755,22 +754,6 @@ export default function DukaVideoAd({ onAddToCart, products = [], userProfile }:
                     <span>Video imeteuliwa vyema!</span>
                   </div>
                 )}
-              </div>
-
-              {/* Video Upload Tips Guide Box inside Modal */}
-              <div className="bg-slate-950/90 border border-slate-800 p-3.5 rounded-2xl space-y-2">
-                <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs">
-                  <HelpCircle size={14} className="text-amber-400 shrink-0" />
-                  <span>Dondoo za Kuweka Link za Google Drive au YouTube (Tips):</span>
-                </div>
-                <ul className="text-[11px] text-slate-300 space-y-1 list-disc pl-4 leading-relaxed">
-                  <li>
-                    <strong className="text-cyan-300">Google Drive:</strong> Weka video kwenye Drive &rarr; Share &rarr; Set Access to <em>"Anyone with the link"</em> &rarr; Copy Link kisha weka hapa au mtumie Admin.
-                  </li>
-                  <li>
-                    <strong className="text-red-400">YouTube:</strong> Weka video kama <em>"Unlisted"</em> au <em>"Public"</em> &rarr; Copy Share Link &rarr; Pasting kwenye uwanja wa Link hapo juu.
-                  </li>
-                </ul>
               </div>
 
               {/* Poster Image */}
