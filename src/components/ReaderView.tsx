@@ -39,6 +39,7 @@ import {
 import { fetchDocuments, saveHighlight, fetchHighlights, deleteHighlight, toggleBookmark, fetchUserBookmarks, submitFeedback, updateDocument, saveReadingProgress, fetchReadingProgress, saveUserPrivateNote } from '../firebase';
 import { DocumentMetadata, HighlightAnnotation, UserBookmark, UserReadingProgress } from '../types';
 import { localSeedDocs } from '../data/seedDocs';
+import { officialAdminNotes } from '../data/seedNotes';
 import FlashcardsModal from './FlashcardsModal';
 import PDFPreviewer from './PDFPreviewer';
 import MarkdownRenderer from './MarkdownRenderer';
@@ -276,6 +277,11 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
 
   const fetchSmartNotesContent = async () => {
     if (smartNotes) return;
+
+    if (doc?.content) {
+      setSmartNotes(doc.content);
+      return;
+    }
 
     const preAuthored: Record<string, string> = {
       'necta-phy-f4-2023': `SURA YA KWANZA: MECHANICS AND FORCE IN EQUILIBRIUM\n\nMechanics ni tawi la fizikia linalohusika na mwendo wa vitu na nguvu zinazasababisha mwendo huo. Kanuni muhimu ya Archimedes (Archimedes' Principle) inasema kwamba: "Wakati kitu kinapozamishwa kabisa au nusu katika maji, kinakabiliwa na nguvu ya juu (upthrust) inayolingana na uzito wa maji yaliyohamishwa na kitu hicho."\n\nMfumo wa Upthrust unakokotolewa kama:\nUpthrust = V * ρ * g (ambapo V ni ujazo, ρ ni density ya maji, na g ni acceleration ya gravity).\n\nSURA YA PILI: NEWTON'S LAWS OF MOTION\n\n- Sheria ya Kwanza ya Newton (Inertia): Kila kitu kitaendelea kuwa katika hali yake ya utulivu au mwendo wa kasi mfululizo katika mtaro ulionyooka isipokuwa kilazimishwe kubadilisha hali hiyo na nguvu ya nje.\n- Sheria ya Pili ya Newton: Kiwango cha mabadiliko ya momentum ya kitu kinalingana moja kwa moja na nguvu inayotumika na hutokea katika mwelekeo wa nguvu hiyo (F = m * a).\n- Sheria ya Tatu ya Newton: Kwa kila nguvu ya utendaji (action), kuna nguvu sawa na ya kinyume ya upinzani (reaction).\n\nSURA YA TATU: HEAT AND THERMODYNAMICS\n\nKiwango cha joto kinachohitajika kubadilisha hali ya dutu bila kubadilisha joto lake kinaitwa Latent Heat.\nMfumo wa joto la jumla: Q = m * c * ΔT (ambapo c ni specific heat capacity).\n\nSURA YA NNE: ELECTRICITY AND ELECTROMAGNETISM\n\nSheria ya Ohm (Ohm's Law) inasema kwamba sasa ya umeme (I) inayopita kwenye kondakta inalingana moja kwa moja na voltage (V) katika ncha zake, mradi joto na hali nyingine za kimaumbile zibaki thabiti.\nV = I * R (ambapo R ni upinzani/resistance).`,
@@ -541,6 +547,9 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
 
       // 1. Check local seed docs first for exact match or year-match (e.g., verified NECTA Math & Physics past papers)
       let seedMatch = localSeedDocs.find(d => d.id === documentId);
+      if (!seedMatch) {
+        seedMatch = officialAdminNotes.find(d => d.id === documentId);
+      }
       if (!seedMatch && documentId) {
         const yearMatch = documentId.match(/\d{4}/);
         if (yearMatch) {
@@ -557,6 +566,12 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
       }
       if (seedMatch) {
         setDoc(seedMatch);
+        if (seedMatch.content) {
+          setSmartNotes(seedMatch.content);
+          setReaderMode('notes');
+        } else if (seedMatch.documentType === 'Notes' || seedMatch.category === 'Notes') {
+          setReaderMode('notes');
+        }
         setLoading(false);
         return;
       }
@@ -572,6 +587,12 @@ export default function ReaderView({ documentId, onNavigate, userProfile }: Read
       const found = fetched.find(d => d.id === documentId);
       if (found) {
         setDoc(found);
+        if (found.content) {
+          setSmartNotes(found.content);
+          setReaderMode('notes');
+        } else if (found.documentType === 'Notes' || found.category === 'Notes') {
+          setReaderMode('notes');
+        }
         setLoading(false);
         return;
       }

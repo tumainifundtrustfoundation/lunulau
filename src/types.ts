@@ -80,6 +80,11 @@ export interface SystemConfig {
   stripeSecretKey?: string;
   paypalClientId?: string;
   paypalSecretKey?: string;
+  googlePayMerchantId?: string;
+  googlePayMerchantName?: string;
+  googlePayEnvironment?: 'TEST' | 'PRODUCTION';
+  googlePayGateway?: string;
+  googlePayGatewayMerchantId?: string;
   geminiApiKey?: string;
   googleMeetClientId?: string;
   zoomClientId?: string;
@@ -122,7 +127,7 @@ export interface DocumentMetadata {
   description: string;
   category: string;
   tags: string[];
-  fileId: string;
+  fileId?: string;
   driveUrl: string;
   uploadedBy: string;
   uploadedByName: string;
@@ -153,6 +158,9 @@ export interface DocumentMetadata {
   isMarkingScheme?: boolean;
   seriesName?: string;
   educationLevel?: string;
+  content?: string;
+  topic?: string;
+  author?: string;
 }
 
 export interface Comment {

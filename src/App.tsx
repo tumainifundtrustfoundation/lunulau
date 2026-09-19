@@ -49,6 +49,7 @@ import {
 } from './firebase';
 
 import { runFirebaseDiagnostics, DiagnosticsResult } from './utils/firebaseDiagnostics';
+import firebaseConfig from '../firebase-applet-config.json';
 
 import metadata from '../metadata.json';
 
@@ -730,7 +731,7 @@ export default function App() {
     } catch (err: any) {
       console.warn('Google authorization notice:', err?.message || err);
       const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
-      const defaultProjectId = 'gen-lang-client-0775792411';
+      const defaultProjectId = firebaseConfig.projectId || 'lupanulla-elimu-hub-57b19';
 
       if (err?.code === 'auth/unauthorized-domain' || err?.hostname) {
         setUnauthorizedDomainInfo({

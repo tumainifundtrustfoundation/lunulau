@@ -30,9 +30,11 @@ import {
   removeFromWishlist, 
   fetchUserWishlist,
   saveQuickBuyOrder,
-  fetchDocuments
+  fetchDocuments,
+  updateQuickBuyOrderStatus
 } from '../firebase';
-import { Product, Order, QuickBuyOrder } from '../types';
+import { Product, Order, QuickBuyOrder, SystemConfig } from '../types';
+import { requestGooglePayment, getGooglePayConfig } from '../services/googlePay';
 import DukaVideoAd from './DukaVideoAd';
 
 interface DukaViewProps {
@@ -79,6 +81,15 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
   const [quickBuyPhone, setQuickBuyPhone] = useState('');
   const [isQuickBuying, setIsQuickBuying] = useState(false);
   const [quickBuySuccess, setQuickBuySuccess] = useState(false);
+  const [isGpayQuickBuying, setIsGpayQuickBuying] = useState(false);
+  const [gpayConfig, setGpayConfig] = useState<SystemConfig | null>(null);
+  const [quickBuyError, setQuickBuyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getGooglePayConfig().then(cfg => {
+      if (cfg) setGpayConfig(cfg);
+    });
+  }, []);
 
   // Wishlist state
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -248,6 +259,61 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
       } catch (err) {
         console.error("Failed to add to wishlist:", err);
       }
+    }
+  };
+
+  const handleGooglePayQuickBuy = async () => {
+    if (!quickBuyProduct || !userProfile?.uid) {
+      setQuickBuyError('Tafadhali ingia kwenye akaunti yako kwanza ili kununua kitabu hiki.');
+      return;
+    }
+
+    try {
+      setIsGpayQuickBuying(true);
+      setQuickBuyError(null);
+
+      const result = await requestGooglePayment({
+        amount: quickBuyProduct.price,
+        currencyCode: 'TZS',
+        countryCode: 'TZ',
+        merchantName: gpayConfig?.googlePayMerchantName || 'Lupanulla Elimu Hub',
+        merchantId: gpayConfig?.googlePayMerchantId,
+        environment: gpayConfig?.googlePayEnvironment || 'TEST',
+        gateway: gpayConfig?.googlePayGateway || 'example',
+        gatewayMerchantId: gpayConfig?.googlePayGatewayMerchantId || 'exampleGatewayMerchantId'
+      });
+
+      if (!result.success) {
+        if (result.error && !result.error.includes('imeghairiwa')) {
+          setQuickBuyError(result.error);
+        }
+        setIsGpayQuickBuying(false);
+        return;
+      }
+
+      const verifiedTxId = result.transactionId || ('GPAY-' + Date.now().toString(36).toUpperCase());
+
+      // Save order with verified status
+      const orderData: Omit<QuickBuyOrder, 'id'> = {
+        userId: userProfile.uid,
+        productId: quickBuyProduct.id,
+        productName: quickBuyProduct.name,
+        amount: quickBuyProduct.price,
+        transactionId: verifiedTxId,
+        phoneNumber: userProfile.phoneNumber || '0700000000',
+        status: 'verified',
+        createdAt: Date.now()
+      };
+
+      const orderId = await saveQuickBuyOrder(orderData);
+      await updateQuickBuyOrderStatus(orderId, 'verified', userProfile.uid, quickBuyProduct.name);
+      
+      setQuickBuySuccess(true);
+    } catch (err: any) {
+      console.error('Google Pay Quick Buy failed:', err);
+      setQuickBuyError(err.message || 'Hitilafu imetokea wakati wa kulipa kwa Google Pay. Tafadhali jaribu njia ya simu.');
+    } finally {
+      setIsGpayQuickBuying(false);
     }
   };
 
@@ -1080,11 +1146,66 @@ export default function DukaView({ onNavigate, userProfile }: DukaViewProps) {
                         Nunua Haraka
                       </h3>
                       <button 
-                        onClick={() => setQuickBuyProduct(null)}
+                        onClick={() => {
+                          setQuickBuyProduct(null);
+                          setQuickBuyError(null);
+                        }}
                         className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
                       >
                         <X size={20} />
                       </button>
+                    </div>
+
+                    {quickBuyError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl flex items-center gap-2 font-semibold">
+                        <AlertCircle size={15} className="flex-shrink-0" />
+                        <span>{quickBuyError}</span>
+                      </div>
+                    )}
+
+                    {/* Google Pay Instant Automated Option */}
+                    <div className="bg-slate-950 text-white rounded-2xl p-4 border border-slate-800 shadow-md space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          Malipo ya Haraka na Moja kwa Moja
+                        </span>
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase">
+                          Papohapo
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                        Lipa moja kwa moja kwa kadi au pochi yako ya Google Pay. Hakuna haja ya kusubiri uhakiki wa mikono, kitabu kinathibitishwa mara moja.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleGooglePayQuickBuy}
+                        disabled={isGpayQuickBuying}
+                        className="w-full py-3 bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {isGpayQuickBuying ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                            Inafungua Google Pay...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                            </svg>
+                            <span>Lipa TSh {quickBuyProduct.price.toLocaleString()} kwa Google Pay</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="relative flex py-1 items-center">
+                      <div className="flex-grow border-t border-slate-200"></div>
+                      <span className="flex-shrink mx-3 text-slate-400 text-[10px] font-extrabold uppercase tracking-widest bg-white px-2">AU LIPA KWA SIMU</span>
+                      <div className="flex-grow border-t border-slate-200"></div>
                     </div>
 
                     <div className="bg-cyan-50 border border-cyan-100 rounded-2xl p-4 space-y-3">

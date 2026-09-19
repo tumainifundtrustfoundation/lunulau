@@ -23,6 +23,7 @@ import {
   DollarSign,
   Plus,
   TrendingUp,
+  Sparkles,
   HelpCircle,
   Megaphone,
   Search,
@@ -241,7 +242,9 @@ export default function AdminView({
 
   // --- MASOMO DRIVE NOTES (ADMIN TO MASOMO VIEW) ---
   const [noteTitle, setNoteTitle] = useState<string>('');
+  const [noteTopic, setNoteTopic] = useState<string>('');
   const [noteDescription, setNoteDescription] = useState<string>('');
+  const [noteContent, setNoteContent] = useState<string>('');
   const [noteSubject, setNoteSubject] = useState<string>('Physics');
   const [noteEducationLevel, setNoteEducationLevel] = useState<string>('O-Level');
   const [noteClassLevel, setNoteClassLevel] = useState<string>('Form 4');
@@ -517,6 +520,11 @@ export default function AdminView({
             stripeSecretKey: '',
             paypalClientId: '',
             paypalSecretKey: '',
+            googlePayMerchantId: '',
+            googlePayMerchantName: 'Lupanulla Elimu Hub',
+            googlePayEnvironment: 'TEST',
+            googlePayGateway: 'example',
+            googlePayGatewayMerchantId: 'exampleGatewayMerchantId',
             geminiApiKey: '',
             googleMeetClientId: '',
             zoomClientId: '',
@@ -1661,10 +1669,27 @@ export default function AdminView({
     setIsNoteFormOpen(true);
   };
 
+  const handleOpenCreateMasomoNote = () => {
+    setEditingNoteId(null);
+    setNoteTitle('');
+    setNoteTopic('');
+    setNoteDescription('');
+    setNoteContent('');
+    setNoteSubject(libConfig.subjects[0] || 'Physics');
+    setNoteEducationLevel('O-Level');
+    setNoteClassLevel(libConfig.classes[3] || 'Form 4');
+    setNoteDriveUrl('');
+    setNoteTagsInput('');
+    setNoteYear(2026);
+    setIsNoteFormOpen(true);
+  };
+
   const handleOpenEditMasomoNote = (docItem: DocumentMetadata) => {
     setEditingNoteId(docItem.id);
     setNoteTitle(docItem.title);
+    setNoteTopic((docItem as any).topic || '');
     setNoteDescription(docItem.description || '');
+    setNoteContent(docItem.content || '');
     setNoteSubject((docItem as any).subject || 'Physics');
     setNoteEducationLevel((docItem as any).educationLevel || 'O-Level');
     setNoteClassLevel((docItem as any).classLevel || 'Form 4');
@@ -1680,22 +1705,24 @@ export default function AdminView({
       alert('Tafadhali weka jina au kichwa cha notisi.');
       return;
     }
-    if (!noteDriveUrl.trim()) {
-      alert('Tafadhali weka kiungo halali cha Google Drive.');
+    if (!noteContent.trim() && !noteDriveUrl.trim()) {
+      alert('Tafadhali andika maudhui ya notisi (Yaliyomo ya Notisi) au weka kiungo cha Google Drive.');
       return;
     }
 
     let cleanUrl = noteDriveUrl.trim();
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    if (cleanUrl && !cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
       cleanUrl = `https://${cleanUrl}`;
     }
 
     setIsNoteSaving(true);
     try {
-      let fileId = `drive-note-${Date.now()}`;
-      const driveMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        fileId = driveMatch[1];
+      let fileId = `note-${Date.now()}`;
+      if (cleanUrl) {
+        const driveMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+          fileId = driveMatch[1];
+        }
       }
 
       const tags = noteTagsInput
@@ -1705,6 +1732,7 @@ export default function AdminView({
       if (!tags.includes(noteSubject)) tags.push(noteSubject);
       if (!tags.includes(noteClassLevel)) tags.push(noteClassLevel);
       if (!tags.includes('Notes')) tags.push('Notes');
+      if (noteTopic.trim() && !tags.includes(noteTopic.trim())) tags.push(noteTopic.trim());
 
       if (editingNoteId) {
         await updateDocument(editingNoteId, {
@@ -1721,6 +1749,8 @@ export default function AdminView({
           tags: tags,
           year: Number(noteYear) || 2026,
           status: 'approved',
+          content: noteContent.trim(),
+          topic: noteTopic.trim(),
         });
 
         await logAdminAction(
@@ -1729,7 +1759,7 @@ export default function AdminView({
           noteTitle.trim(),
           `Notisi ya masomo ya ${noteSubject} (${noteClassLevel}) imesasishwa.`
         );
-        alert('Notisi imesasishwa kikamilifu!');
+        alert('Notisi imesasishwa kikamilifu na sasa inapatikana kwenye Ukurasa wa Masomo!');
       } else {
         const newDoc: Omit<DocumentMetadata, 'id'> = {
           title: noteTitle.trim(),
@@ -1751,6 +1781,8 @@ export default function AdminView({
           views: 0,
           downloadsCount: 0,
           rating: 5,
+          content: noteContent.trim(),
+          topic: noteTopic.trim(),
         };
 
         const newId = await saveDocumentMetadata(newDoc);
@@ -1761,9 +1793,9 @@ export default function AdminView({
           'create_masomo_note',
           newId || `note-${Date.now()}`,
           noteTitle.trim(),
-          `Imepakiwa notisi mpya ya ${noteSubject} (${noteClassLevel}) kutoka Google Drive.`
+          `Imepakiwa notisi mpya ya ${noteSubject} (${noteClassLevel}) moja kwa moja kutoka kwa Admin.`
         );
-        alert('Notisi imepakiwa na sasa inapatikana moja kwa moja kwenye Ukurasa wa Masomo!');
+        alert('Notisi imechapishwa kikamilifu na sasa wanafunzi wanaweza kuisoma moja kwa moja kwenye Ukurasa wa Masomo!');
       }
 
       const freshDocs = await fetchDocuments();
@@ -1773,7 +1805,9 @@ export default function AdminView({
       setIsNoteFormOpen(false);
       setEditingNoteId(null);
       setNoteTitle('');
+      setNoteTopic('');
       setNoteDescription('');
+      setNoteContent('');
       setNoteDriveUrl('');
       setNoteTagsInput('');
     } catch (err: any) {
@@ -3666,6 +3700,17 @@ export default function AdminView({
                         />
                       </div>
 
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Mada Husika (Specific Topic / Subtopic)</label>
+                        <input
+                          type="text"
+                          placeholder="Mfano: Radioactivity, Coordinate Geometry, Genetics, Ushairi"
+                          value={noteTopic}
+                          onChange={(e) => setNoteTopic(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800"
+                        />
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-xs font-bold text-gray-700">Somo (Subject) *</label>
@@ -3720,11 +3765,61 @@ export default function AdminView({
                         </div>
                       </div>
 
-                      {/* Google Drive Link Input */}
+                      {/* FULL STUDY NOTES CONTENT EDITOR */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                            <Sparkles size={14} className="text-amber-500" />
+                            <span>Yaliyomo Kamili ya Notisi (Full Study Notes Content)</span>
+                          </label>
+                          <div className="flex items-center gap-1 text-[11px]">
+                            <button
+                              type="button"
+                              onClick={() => setNoteContent(prev => prev + '\n\n### SURA MPYA: JINA LA MADA\nMaelezo ya kina...\n')}
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold transition-all"
+                            >
+                              + Kichwa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNoteContent(prev => prev + '\n\n- Dondoo muhimu 1\n- Dondoo muhimu 2\n- Dondoo muhimu 3\n')}
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold transition-all"
+                            >
+                              + Dondoo
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNoteContent(prev => prev + '\n\n**Mfano wa Hesabu/Mlinganyo:**\nKanuni: F = m * a\nJibu: ...\n')}
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold transition-all"
+                            >
+                              + Mfano
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNoteContent(prev => prev + '\n\n**MASWALI YA KUJIPIMA (REVISION QUESTIONS):**\n1. Eleza maana ya...\n2. Taja sifa tatu za...\n')}
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold transition-all"
+                            >
+                              + Maswali
+                            </button>
+                          </div>
+                        </div>
+                        <textarea
+                          rows={8}
+                          placeholder="Andika au bandika hapa notisi kamili za somo hili. Wanafunzi watazisoma moja kwa moja kwenye Ukurasa wa Masomo bila kulazimika kupakua au kuondoka kwenye tovuti..."
+                          value={noteContent}
+                          onChange={(e) => setNoteContent(e.target.value)}
+                          className="w-full px-3 py-2 text-xs font-mono border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-medium text-gray-800 leading-relaxed bg-slate-50/50"
+                        />
+                        <p className="text-[10px] text-gray-500">
+                          Unaweza kutumia Markdown (### kwa vichwa, - kwa dondoo, **kwa maneno mazito**) kufanya notisi ziwe na mvuto na wepesi wa kusomeka.
+                        </p>
+                      </div>
+
+                      {/* Google Drive Link Input (Optional) */}
                       <div className="space-y-1.5 pt-1">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                            <span>Google Drive Link (URL) *</span>
+                            <span>Kiungo cha Google Drive (Hiari / Optional Link)</span>
                           </label>
                           {noteDriveUrl && (
                             <a
@@ -3740,21 +3835,20 @@ export default function AdminView({
                         </div>
                         <input
                           type="url"
-                          required
-                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing (Ukipenda kuweka faili la PDF pia)"
                           value={noteDriveUrl}
                           onChange={(e) => setNoteDriveUrl(e.target.value)}
                           className="w-full px-3 py-2 text-sm border border-gray-200 focus:border-cyan-500 rounded-xl outline-none font-semibold text-gray-800 font-mono"
                         />
                         <p className="text-[10px] text-gray-400">
-                          Hakikisha faili kwenye Google Drive limewekwa <em>"Anyone with the link can view"</em> ili wanafunzi waweze kulisoma bila vikwazo.
+                          Hiari: Ukishaandika notisi kamili hapo juu, kiungo cha Drive si lazima, ila unaweza kukiweka kama mbadala wa PDF.
                         </p>
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-700">Maelezo Mafupi (Description)</label>
                         <textarea
-                          rows={3}
+                          rows={2}
                           placeholder="Eleza muhtasari wa notisi hii, mada zilizopo, au maelekezo ya somo..."
                           value={noteDescription}
                           onChange={(e) => setNoteDescription(e.target.value)}
@@ -5487,7 +5581,15 @@ export default function AdminView({
                               </td>
                               <td className="px-4 py-3.5">
                                 <div className="font-bold text-slate-900">TSh {t.amount.toLocaleString()}</div>
-                                <div className="text-[9px] uppercase font-semibold text-slate-500">{t.payMethod}</div>
+                                <div className="text-[9px] uppercase font-semibold text-slate-500 flex items-center gap-1">
+                                  {t.payMethod === 'googlepay' ? (
+                                    <span className="bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded text-[8px] flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Google Pay
+                                    </span>
+                                  ) : (
+                                    <span>{t.payMethod}</span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-4 py-3.5 text-slate-400 font-medium">
                                 {new Date(t.createdAt).toLocaleString('sw-TZ', { dateStyle: 'short', timeStyle: 'short' })}
@@ -6604,6 +6706,76 @@ export default function AdminView({
                                 placeholder="••••••••••••••••••••"
                                 className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-blue-600 font-mono text-[11px]"
                               />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Google Pay Payment config */}
+                        <div className="bg-slate-50/60 p-4 rounded-2xl border border-gray-100 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="font-extrabold text-emerald-700 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                              Google Pay Integration (API)
+                            </p>
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                              {systemConfig?.googlePayEnvironment || 'TEST'} MODE
+                            </span>
+                          </div>
+                          <div className="space-y-2.5">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block font-semibold text-gray-650 text-[10px]">Mazingira (Environment)</label>
+                                <select
+                                  value={systemConfig?.googlePayEnvironment || 'TEST'}
+                                  onChange={(e) => setSystemConfig(prev => prev ? { ...prev, googlePayEnvironment: e.target.value as 'TEST' | 'PRODUCTION' } : null)}
+                                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-emerald-600 text-[11px] font-semibold"
+                                >
+                                  <option value="TEST">TEST (Sandbox)</option>
+                                  <option value="PRODUCTION">PRODUCTION (Live)</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block font-semibold text-gray-650 text-[10px]">Merchant Name</label>
+                                <input 
+                                  type="text"
+                                  value={systemConfig?.googlePayMerchantName || ''}
+                                  onChange={(e) => setSystemConfig(prev => prev ? { ...prev, googlePayMerchantName: e.target.value } : null)}
+                                  placeholder="Lupanulla Elimu Hub"
+                                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-emerald-600 text-[11px]"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block font-semibold text-gray-650 text-[10px]">Google Pay Merchant ID (Live)</label>
+                              <input 
+                                type="text"
+                                value={systemConfig?.googlePayMerchantId || ''}
+                                onChange={(e) => setSystemConfig(prev => prev ? { ...prev, googlePayMerchantId: e.target.value } : null)}
+                                placeholder="12345678901234567890 (Google Pay Console ID)"
+                                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-emerald-600 font-mono text-[11px]"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block font-semibold text-gray-650 text-[10px]">Payment Gateway</label>
+                                <input 
+                                  type="text"
+                                  value={systemConfig?.googlePayGateway || ''}
+                                  onChange={(e) => setSystemConfig(prev => prev ? { ...prev, googlePayGateway: e.target.value } : null)}
+                                  placeholder="stripe / example"
+                                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-emerald-600 font-mono text-[11px]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block font-semibold text-gray-650 text-[10px]">Gateway Merchant ID</label>
+                                <input 
+                                  type="text"
+                                  value={systemConfig?.googlePayGatewayMerchantId || ''}
+                                  onChange={(e) => setSystemConfig(prev => prev ? { ...prev, googlePayGatewayMerchantId: e.target.value } : null)}
+                                  placeholder="acct_... / exampleGatewayMerchantId"
+                                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:border-emerald-600 font-mono text-[11px]"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>

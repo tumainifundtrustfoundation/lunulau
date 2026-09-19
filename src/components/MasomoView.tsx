@@ -47,6 +47,7 @@ import AdSenseWidget from './AdSenseWidget';
 import { jsPDF } from 'jspdf';
 import { toggleTopicFavorite, awardStudyPoints, updateUserProfile, db, fetchDocuments } from '../firebase';
 import { CustomPersonalNote, CustomFlashcardDeck, DocumentMetadata } from '../types';
+import { officialAdminNotes } from '../data/seedNotes';
 import { getQuizQuestions, QuizQuestion } from './MasomoQuizData';
 import { getExamTips } from './MasomoNectaTips';
 import { getFlashcardsForTopic, Flashcard as MasomoFlashcard } from './MasomoFlashcardData';
@@ -98,13 +99,28 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
     const loadDriveNotes = async () => {
       setIsDriveNotesLoading(true);
       try {
-        const docs = await fetchDocuments({ status: 'approved' });
+        let docs: DocumentMetadata[] = [];
+        try {
+          docs = await fetchDocuments({ status: 'approved' });
+        } catch (e) {
+          console.warn('Could not fetch approved documents, falling back to official seed notes:', e);
+        }
+
+        // Combine firestore docs and officialAdminNotes (avoiding duplicates by id)
+        const combined = [...docs];
+        for (const seedNote of officialAdminNotes) {
+          if (!combined.some(d => d.id === seedNote.id)) {
+            combined.push(seedNote);
+          }
+        }
+
         if (isMounted) {
-          const notes = docs.filter(d => 
+          const notes = combined.filter(d => 
             d.category === 'Notes' || 
             (d as any).documentType === 'Notes' || 
             (d as any).type === 'notes' || 
-            Boolean(d.driveUrl && d.driveUrl.length > 5)
+            Boolean(d.driveUrl && d.driveUrl.length > 5) ||
+            Boolean(d.content && d.content.length > 15)
           );
           notes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
           setDriveNotes(notes);
@@ -1824,7 +1840,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'all', name: 'Zote' },
-                { id: 'drive-notes', name: `📁 Notisi za Masomo (${driveNotes.length})` },
+                { id: 'drive-notes', name: `📖 Notisi za Admin (${driveNotes.length})` },
                 { id: 'msingi', name: 'Shule ya Msingi' },
                 { id: 'olevel', name: 'Kidato 1-4' },
                 { id: 'alevel', name: 'Kidato 5-6' },
@@ -2023,15 +2039,15 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 </div>
                 <div>
                   <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wide">
-                    Notisi za Masomo (Google Drive)
+                    Notisi za Masomo kutoka kwa Msimamizi (Admin Notes)
                   </h2>
                   <p className="text-xs text-cyan-200/80 font-medium">
-                    Nyaraka na notisi zilizopakiwa moja kwa moja kutoka Google Drive
+                    Nukuu kamili na nyaraka rasmi zilizopakiwa moja kwa moja na Admin kwa wanafunzi
                   </p>
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl leading-relaxed">
-                Pata nukuu zote za masomo zilizohifadhiwa kwenye Google Drive. Unaweza kuzisoma moja kwa moja kwenye programu (In-App Reader) au kuzifungua na kuzipakua kwenye Google Drive.
+                Hapa utapata nukuu kamili na mwongozo wa mada mbalimbali za masomo zilizoandaliwa na Msimamizi. Wanafunzi wanaweza kuzisoma mtandaoni moja kwa moja kwenye Tovuti (In-App Reader) au kupitia viungo vya Google Drive.
               </p>
             </div>
 
@@ -2041,7 +2057,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 className="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 shrink-0 active:scale-95"
               >
                 <Plus size={16} />
-                Pakia Notisi (Admin Panel)
+                Andika / Pakia Notisi (Admin Panel)
               </button>
             )}
           </div>
@@ -2098,6 +2114,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
               const matchQ = !q ||
                 item.title.toLowerCase().includes(q) ||
                 (item.description || '').toLowerCase().includes(q) ||
+                ((item as any).topic || '').toLowerCase().includes(q) ||
                 ((item as any).subject || '').toLowerCase().includes(q) ||
                 ((item as any).classLevel || '').toLowerCase().includes(q);
 
@@ -2111,7 +2128,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
               return (
                 <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3">
                   <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs font-bold text-slate-500">Inapakia notisi za masomo kutoka Google Drive...</p>
+                  <p className="text-xs font-bold text-slate-500">Inapakia notisi za masomo...</p>
                 </div>
               );
             }
@@ -2136,7 +2153,7 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
                     >
                       <Plus size={14} />
-                      Pakia Notisi Mpya Sasa
+                      Andika Notisi Mpya Sasa
                     </button>
                   )}
                 </div>
@@ -2148,14 +2165,21 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                 {filtered.map((note) => (
                   <div
                     key={note.id}
-                    className="bg-white border border-slate-200/90 hover:border-cyan-400/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                    className="bg-white border border-slate-200/90 hover:border-cyan-500 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative"
                   >
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-cyan-50 text-cyan-800 border border-cyan-100">
-                          <BookOpen size={12} />
-                          {(note as any).subject || 'General'}
-                        </span>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-cyan-50 text-cyan-800 border border-cyan-100">
+                            <BookOpen size={12} />
+                            {(note as any).subject || 'General'}
+                          </span>
+                          {note.content && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ✍️ Notisi Rasmi
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                           {(note as any).classLevel || 'Masomo'}
                         </span>
@@ -2168,8 +2192,13 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
                         >
                           {note.title}
                         </h4>
+                        {(note as any).topic && (
+                          <p className="text-[11px] font-bold text-amber-600 mt-1">
+                            Mada: {(note as any).topic}
+                          </p>
+                        )}
                         {note.description && (
-                          <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 leading-relaxed">
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
                             {note.description}
                           </p>
                         )}
@@ -2188,16 +2217,16 @@ export default function MasomoView({ onNavigate, userProfile }: MasomoViewProps)
 
                     <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                       <div className="text-[11px] text-slate-400 font-semibold">
-                        <span>{note.views || 0} views</span>
+                        <span>{note.author || note.uploadedByName || 'Msimamizi Lupanulla'}</span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onNavigate('reader', note.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-extrabold text-cyan-700 hover:text-white bg-cyan-50 hover:bg-cyan-600 rounded-xl transition-all"
+                          className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-black text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl transition-all shadow-sm"
                         >
                           <BookOpen size={13} />
-                          Soma
+                          Soma Notisi
                         </button>
                         {note.driveUrl && (
                           <a
