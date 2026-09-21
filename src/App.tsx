@@ -833,16 +833,25 @@ export default function App() {
       console.error('Email Authentication Error:', err);
       let errorMsg = 'Mchakato wa uthibitishaji umeshindwa. Tafadhali thibitisha barua pepe na nenosiri.';
       
+      if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
+        const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        setUnauthorizedDomainInfo({
+          hostname: currentHostname,
+          projectId: firebaseConfig.projectId || 'lupanulla-elimu-hub-57b19'
+        });
+        return;
+      }
+
       if (err.code === 'auth/email-already-in-use') {
-        errorMsg = 'Barua pepe hii inatumiwa tayari na mtumiaji mwingine.';
+        errorMsg = 'Barua pepe hii inatumiwa tayari na mtumiaji mwingine. Bonyeza "Ingia (Sign In)" kuingia.';
       } else if (err.code === 'auth/weak-password') {
         errorMsg = 'Nenosiri linapaswa kuwa na angalau herufi 6 au namba.';
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-        errorMsg = 'Barua pepe au nenosiri si sahihi au akaunti hii haipo. Kama bado hujasajiliwa, bonyeza tab ya "Sajili (Sign Up)" hapo juu.';
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        errorMsg = 'Barua pepe au nenosiri si sahihi, au akaunti hii bado haijasajiliwa kwenye mradi mpya. Kama bado hujasajiliwa, bonyeza kichupo cha "Sajili (Sign Up)" hapo juu kujisajili kwa sekunde chache!';
       } else if (err.code === 'auth/operation-not-allowed') {
         errorMsg = 'Njia ya kuingia kwa Barua Pepe na Nenosiri haijawezeshwa bado kwenye Firebase Console. Tafadhali wasiliana na msimamizi kuiruhusu kwenye: (Build > Authentication > Sign-in method), au tumia kitufe cha "Endelea na Google" kuingia sasa.';
-      } else if (err.code === 'auth/internal-error' || err.message?.includes('internal') || err.message?.includes('auth/')) {
-        errorMsg = `Hitilafu ya Firebase (${err.code || 'auth/internal-error'}): Tafadhali hakikisha kwamba: 1. Umeruhusu mbinu ya "Email/Password" kwenye Firebase Console yako (Authentication > Sign-in method). 2. Umeongeza domain yako "lupanulla.co.tz" na domain za AI Studio kwenye orodha ya Authorized Domains katika Firebase Console yako (Authentication > Settings). 3. API Key yako haina vizuizi vya kuzuia domain hizi kwenye Google Cloud Console > Credentials. Kama bado inaleta shida, tumia kitufe cha "Endelea na Google" uendelee mara moja!`;
+      } else if (err.code === 'auth/internal-error' || err.message?.includes('internal')) {
+        errorMsg = `Hitilafu ya mawasiliano na seva (${err.code || 'auth/internal-error'}). Tafadhali thibitisha intaneti yako au tumia kuingia kwa Google.`;
       } else if (err.message) {
         errorMsg = `Hitilafu: ${err.message}`;
       }

@@ -32,7 +32,7 @@ import {
   AppTheme 
 } from '../types';
 import FocusTimer from './FocusTimer';
-import { getAccessToken, signInWithGoogle } from '../firebase';
+import { getAccessToken, signInWithWorkspaceGoogle } from '../firebase';
 import { openGooglePicker, PickedFile } from '../utils/googlePicker';
 
 interface WorkspaceViewProps {
@@ -94,7 +94,7 @@ export default function WorkspaceView({ theme, onChangeTheme }: WorkspaceViewPro
     setLoading(true);
     setError(null);
     try {
-      const res = await signInWithGoogle();
+      const res = await signInWithWorkspaceGoogle();
       if (res) {
         setTokenLocal(res.accessToken);
         fetchData(res.accessToken);
